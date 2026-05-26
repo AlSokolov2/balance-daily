@@ -9,6 +9,8 @@ on:
 jobs:
   ci-testing:
     runs-on: ubuntu-latest
+    env:
+      LARAVEL_BYPASS_ENV_CHECK: 1
     steps:
       - uses: actions/checkout@v4
 
@@ -39,6 +41,8 @@ jobs:
 
       - name: Run Vitest Tests
         run: npm test
+        env:
+          LARAVEL_BYPASS_ENV_CHECK: 1
 
   deploy:
     needs: ci-testing
