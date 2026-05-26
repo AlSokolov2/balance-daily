@@ -48,13 +48,10 @@ class AuthController extends Controller
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
-            // Redirect back to frontend with token
-            // In production, this would be /daily/
-            $frontendUrl = config('app.url') . '/daily';
-            if (app()->environment('local')) {
-                $frontendUrl = 'http://localhost:8000'; // Or where Vite is
-            }
-
+            // Redirect back to frontend
+            // url('/') will respect APP_URL from .env (e.g. https://site.com/daily)
+            $frontendUrl = url('/');
+            
             return redirect($frontendUrl . '?token=' . $token);
             
         } catch (\Exception $e) {

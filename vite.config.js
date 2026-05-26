@@ -5,6 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
+    base: process.env.VITE_BASE_URL || '/',
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.js'],
