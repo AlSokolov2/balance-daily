@@ -21,6 +21,7 @@ export const useBalanceStore = defineStore('balance', {
 
         activeTasks: (state) => {
             const now = new Date();
+            if (!Array.isArray(state.tasks)) return [];
             return state.tasks.filter(t => {
                 if (t.completed) return false;
                 if (t.hidden_until && new Date(t.hidden_until) > now) return false;
@@ -29,12 +30,12 @@ export const useBalanceStore = defineStore('balance', {
         },
 
         bubbleTasks: (state) => {
-            const active = state.tasks.filter(t => {
+            const active = state.tasks && Array.isArray(state.tasks) ? state.tasks.filter(t => {
                 const now = new Date();
                 if (t.completed) return false;
                 if (t.hidden_until && new Date(t.hidden_until) > now) return false;
                 return true;
-            }).sort((a, b) => b.calculatedPriority - a.calculatedPriority);
+            }).sort((a, b) => b.calculatedPriority - a.calculatedPriority) : [];
 
             if (state.filterCat === 'all') return active;
             if (state.filterCat === 'archive' || state.filterCat === 'hidden') return [];
@@ -43,6 +44,7 @@ export const useBalanceStore = defineStore('balance', {
 
         filteredTasks: (state) => {
             const now = new Date();
+            if (!Array.isArray(state.tasks)) return [];
             let tasks = [...state.tasks];
             
             if (state.filterCat === 'hidden') {
@@ -120,17 +122,18 @@ export const useBalanceStore = defineStore('balance', {
                     axios.get('categories'),
                     axios.get('settings')
                 ]);
-                this.categories = catsRes.data;
-                this.tasks = tasksRes.data;
-                this.notepadText = settingsRes.data.notepad_text || '';
+                this.categories = Array.isArray(catsRes.data) ? catsRes.data : [];
+                this.tasks = Array.isArray(tasksRes.data) ? tasksRes.data : [];
+                this.notepadText = settingsRes.data?.notepad_text || '';
                 
-                // Get subcat coeffs from export/stats endpoint for simplicity
                 const subRes = await axios.get('export');
-                this.subcatCoeffs = subRes.data.subcatCoeffs || {};
+                this.subcatCoeffs = subRes.data?.subcatCoeffs || {};
                 
                 this.recalculateAll();
             } catch (e) {
                 console.error('Fetch error:', e);
+                this.tasks = [];
+                this.categories = [];
             } finally {
                 this.loading = false;
             }
@@ -141,7 +144,8 @@ export const useBalanceStore = defineStore('balance', {
          */
         recalculateAll() {
             const now = new Date();
-            if (!this.categories || !this.categories.length) return;
+            if (!this.categories || !Array.isArray(this.categories) || !this.categories.length) return;
+            if (!this.tasks || !Array.isArray(this.tasks)) { this.tasks = []; return; }
 
             // 1. Calculate missed counts for repeat tasks
             this.tasks.forEach(t => {
