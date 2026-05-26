@@ -6,7 +6,7 @@
     <title>Баланс.Дейли</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <script>
-        window.apiBaseUrl = '{{ url('/') }}';
+        window.apiBaseUrl = '{{ config('app.url') }}';
     </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
