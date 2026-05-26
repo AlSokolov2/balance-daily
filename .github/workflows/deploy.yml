@@ -109,8 +109,13 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd ${{ secrets.REMOTE_PATH }}
+            # Гарантируем наличие папок
+            mkdir -p storage/logs storage/framework/sessions storage/framework/views storage/framework/cache
+            chmod -R 775 storage bootstrap/cache || true
+
             # Используем PHP_BINARY из секретов или по умолчанию 'php'
             PHP_BIN=${{ secrets.PHP_BINARY || 'php' }}
+            $PHP_BIN artisan config:clear
             $PHP_BIN artisan migrate --force
             $PHP_BIN artisan config:cache
             $PHP_BIN artisan route:cache
