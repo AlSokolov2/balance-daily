@@ -1,43 +1,43 @@
-# Алгоритм приоритизации и визуализации
+# Prioritization & Visualization Algorithm
 
-Главная особенность "Баланс.Дейли" — автоматическое управление фокусом внимания пользователя через динамические приоритеты.
+The core feature of **Balance.Daily** is its ability to automatically manage user focus through dynamic task priorities.
 
-## 🧬 Расчет приоритета задачи
+## 🧬 Task Priority Calculation
 
-Приоритет задачи (`calculatedPriority`) вычисляется в Pinia Store при каждой загрузке или изменении данных. Формула:
+Task priority (`calculatedPriority`) is computed in the Pinia Store every time data is loaded or modified. The formula is:
 
 `P = (CategoryWeight * Importance * SubcategoryCoeff * PostponePenalty * MissedBoost) + DeadlineBonus`
 
-### 1. Вес категории (CategoryWeight)
-У каждой категории есть базовый вес (например, Работа — 0.5, Дом — 0.2).
-*   **Динамический буст:** Если в категории сегодня не выполнено **ни одной** задачи, её вес временно умножается на **1.5**. Это заставляет систему "подталкивать" вас к забытым сферам жизни.
-*   **Нормализация:** После всех изменений сумма весов всех категорий приводится к 1.0 (100%).
+### 1. Category Weight (CategoryWeight)
+Each category has a base weight (e.g., Work — 0.5, Home — 0.2).
+*   **Dynamic Boost:** If a category has **zero** completed tasks today, its weight is temporarily multiplied by **1.5**. This pushes the system to "nudge" you toward neglected areas of your life.
+*   **Normalization:** After all adjustments, the sum of all category weights is normalized to 1.0 (100%).
 
-### 2. Важность (Importance)
-Задается пользователем при создании задачи:
-*   Очень высокая: 4.0
-*   Высокая: 3.0
-*   Средняя: 2.0
-*   Низкая: 1.0
+### 2. Importance
+Defined by the user during task creation:
+*   Very High: 4.0
+*   High: 3.0
+*   Medium: 2.0
+*   Low: 1.0
 
-### 3. Штрафы и бонусы
-*   **Откладывание:** Если задача отложена (`postpone_until`), её приоритет умножается на **0.7**.
-*   **Пропуск дней:** Если повторяющаяся задача просрочена, её приоритет растет: `*(1 + missed_days * 0.5)`.
-*   **Дедлайны:**
-    *   Просрочено: +5.0
-    *   Сегодня: +4.0
-    *   1-2 дня осталось: +3.0
-    *   До недели: +1.0
+### 3. Penalties & Bonuses
+*   **Postponement:** If a task is postponed (`postpone_until`), its priority is multiplied by **0.7**.
+*   **Overdue Days:** For recurring tasks, priority grows as days are missed: `*(1 + missed_days * 0.5)`.
+*   **Deadlines:**
+    *   Overdue: +5.0
+    *   Due Today: +4.0
+    *   1-2 days remaining: +3.0
+    *   Up to a week remaining: +1.0
 
 ---
 
-## 🔮 Визуализация (Пузырьки)
+## 🔮 Visualization (Bubble Chart)
 
-Алгоритм упаковки кругов (Packing Algorithm) в `BubbleChart.vue` работает следующим образом:
+The circle packing algorithm in `BubbleChart.vue` works as follows:
 
-1.  **Размер:** Диаметр пузырька прямо пропорционален значению `calculatedPriority`.
-2.  **Группировка:** 
-    *   **Центр:** Основные актуальные задачи.
-    *   **Края (Side):** Задачи со статусом "High Attention" (HA) или отложенные задачи.
-3.  **Итерации:** Система совершает несколько проходов, пытаясь разместить все круги без наложений. Если места не хватает, масштаб всех пузырьков уменьшается, пока они не поместятся в контейнер.
-4.  **Зум:** Пользователь может вручную изменить масштаб всей диаграммы для удобства чтения на разных устройствах.
+1.  **Size:** Bubble diameter is directly proportional to the `calculatedPriority` value.
+2.  **Grouping:** 
+    *   **Center:** Primary active tasks.
+    *   **Side:** Tasks marked as "High Attention" (HA) or postponed tasks.
+3.  **Iterations:** The system makes several passes to place all circles without overlapping. If space is insufficient, the scale of all bubbles is reduced until they fit.
+4.  **Zoom:** Users can manually adjust the chart's scale for better readability across different devices.

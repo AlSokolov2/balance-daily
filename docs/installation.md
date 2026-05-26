@@ -1,66 +1,66 @@
-# Локальная установка и настройка
+# Local Installation & Setup
 
-Это руководство поможет вам развернуть проект "Баланс.Дейли" на локальном компьютере для разработки и тестирования.
+This guide will help you set up the **Balance.Daily** project on your local machine for development and testing.
 
-## Требования
+## Requirements
 
-Для запуска проекта вам понадобятся:
-1.  **Docker** и **Docker Compose**.
-2.  **Node.js** версии 20 или выше (для разработки фронтенда).
+To run the project, you will need:
+1.  **Docker** and **Docker Compose**.
+2.  **Node.js** version 20 or higher (for frontend development).
 3.  **Git**.
 
 ---
 
-## 1. Подготовка файлов
-Клонируйте репозиторий и перейдите в папку проекта:
+## 1. Prepare Files
+Clone the repository and enter the project folder:
 ```bash
 git clone <repository-url>
 cd balance-daily
 ```
 
-## 2. Настройка окружения
-Создайте локальный файл конфигурации:
+## 2. Environment Setup
+Create a local configuration file:
 ```bash
 cp .env.example .env
 ```
-Отредактируйте `.env`, если вам нужно изменить порты или учетные данные БД. По умолчанию проект использует порт `8000` для веб-сервера и `3308` для MySQL.
+Edit `.env` if you need to change ports or database credentials. By default, the project uses port `8000` for the web server and `3308` for MySQL.
 
-## 3. Запуск контейнеров
-Соберите и запустите сервисы:
+## 3. Start Containers
+Build and start the services:
 ```bash
 docker-compose up -d --build
 ```
-Эта команда поднимет PHP-FPM, Nginx и MySQL.
+This command will bring up PHP-FPM, Nginx, and MySQL.
 
-## 4. Установка зависимостей
+## 4. Install Dependencies
 
-### Бэкенд (внутри Docker)
+### Backend (Inside Docker)
 ```bash
 docker-compose run --rm app composer install
 docker-compose run --rm app php artisan key:generate
 docker-compose run --rm app php artisan migrate --seed
 ```
 
-### Фронтенд (на хост-машине)
+### Frontend (On Host Machine)
 ```bash
 npm install
 npm run build
 ```
 
-## 5. Доступ к приложению
-*   **Приложение:** [http://localhost:8000](http://localhost:8000)
-*   **Режим разработки фронтенда (HMR):** `npm run dev`
+## 5. Access the Application
+*   **App:** [http://localhost:8000](http://localhost:8000)
+*   **Frontend Dev Mode (HMR):** `npm run dev`
 
 ---
 
-## Решение проблем
+## Troubleshooting
 
-### Ошибка MTU в WSL2
-Если вы столкнулись с ошибками TLS/SSL при подключении к Google API, убедитесь, что в `docker-compose.yml` настроен MTU: 1400 для сети.
+### MTU Error in WSL2
+If you encounter TLS/SSL errors when connecting to Google APIs, ensure that MTU is set to 1400 in `docker-compose.yml` for the network.
 
-### Права доступа
-Если Laravel не может записывать логи или кэш, выполните:
+### Permissions
+If Laravel cannot write to logs or cache, run:
 ```bash
 sudo chmod -R 777 storage bootstrap/cache
 ```
-*(Только для локальной разработки!)*
+*(Only for local development!)*

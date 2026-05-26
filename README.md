@@ -1,58 +1,60 @@
-# ⚖️ Баланс.Дейли (Balance.Daily)
+# ⚖️ Balance.Daily
 
-![Laravel](https://img.shields.io/badge/backend-Laravel%2013-ff2d20.svg)
-![Vue](https://img.shields.io/badge/frontend-Vue%203-42b883.svg)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+[![Laravel](https://img.shields.io/badge/backend-Laravel%2013-ff2d20.svg)](https://laravel.com)
+[![Vue](https://img.shields.io/badge/frontend-Vue%203-42b883.svg)](https://vuejs.org)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**Баланс.Дейли** — это продвинутый менеджер личных задач и жизненного баланса, перенесенный на современный технологический стек. Система объединяет классический таск-трекинг с мощным математическим движком приоритизации и уникальной визуализацией в виде "пузырьковой диаграммы".
+[🇷🇺 Читать на русском](README.ru.md)
 
-## 🚀 Основные возможности
+**Balance.Daily** is an advanced personal task and life balance manager built on a modern technology stack. It combines classic task tracking with a powerful dynamic prioritization engine and unique "bubble chart" visualization.
 
-*   **Умная приоритизация:** Автоматический расчет веса задач на основе категорий, уровней важности, дедлайнов и просроченных дней.
-*   **Динамический баланс:** Система автоматически повышает приоритет сфер жизни, которым вы уделяете недостаточно внимания.
-*   **Интерактивная визуализация:** Пузырьковая диаграмма для наглядного отображения самых важных дел дня.
-*   **Повторяющиеся задачи:** Гибкая настройка циклов (интервалы или дни недели) с автоматическим скрытием выполненных задач до следующей итерации.
-*   **Google Auth:** Безопасная авторизация и облачная синхронизация ваших данных.
-*   **Полная изоляция:** Строгая приватность — каждый пользователь работает в своей защищенной "песочнице".
+## 🚀 Key Features
 
-## 🛠 Технологический стек
+*   **Smart Prioritization:** Automatically calculates task weight based on category, importance, deadlines, and overdue days.
+*   **Dynamic Balance:** The system automatically increases the priority of life spheres that haven't received enough attention recently.
+*   **Interactive Visualization:** A custom-built bubble chart to visually highlight your most important daily tasks.
+*   **Recurring Tasks:** Flexible cycle settings (intervals or specific weekdays) with automatic "hide-until-next" logic.
+*   **Google Auth:** Secure authentication and cloud synchronization for your personal data.
+*   **Full Data Isolation:** Strict privacy enforcement — every user operates within their own secured sandbox.
+
+## 🛠 Technology Stack
 
 *   **Backend:** PHP 8.4+, Laravel 13, Sanctum (API Auth), Socialite (OAuth).
 *   **Frontend:** Vue 3 (Composition API), Pinia (State Management), Tailwind CSS 4.
 *   **DevOps:** Docker, GitHub Actions (CI/CD), SSH Deployment.
 
-## 🏁 Быстрый старт
+## 🏁 Quick Start
 
-### Локальная разработка (Docker)
+### Local Development (Docker)
 
-1. Клонируйте репозиторий.
-2. Создайте файл `.env` из примера: `cp .env.example .env`.
-3. Поднимите окружение:
+1. Clone the repository.
+2. Create your environment file: `cp .env.example .env`.
+3. Start the services:
    ```bash
    docker-compose up -d
    ```
-4. Установите зависимости и запустите сборку:
+4. Install dependencies and build assets:
    ```bash
    npm install && npm run build
    ```
-5. Приложение доступно по адресу: [http://localhost:8000](http://localhost:8000)
+5. Access the app at: [http://localhost:8000](http://localhost:8000)
 
-## 📚 Документация
+## 📚 Documentation
 
-Подробные руководства по работе с проектом:
+Detailed technical guides:
 
-*   📖 [**Установка и настройка**](./docs/installation.md) — локальное развертывание.
-*   🚀 [**Развертывание на сервер**](./docs/deployment.md) — SSH, Shared hosting, CI/CD.
-*   🧬 [**Алгоритм приоритизации**](./docs/prioritization-algorithm.md) — как работает математика приложения.
-*   📡 [**Справочник API**](./docs/api-reference.md) — описание эндпоинтов для разработчиков.
+*   📖 [**Installation & Setup**](./docs/installation.md) — Local deployment guide.
+*   🚀 [**Deployment Guide**](./docs/deployment.md) — SSH, Shared hosting, CI/CD.
+*   🧬 [**Prioritization Algorithm**](./docs/prioritization-algorithm.md) — How the math behind the app works.
+*   📡 [**API Reference**](./docs/api-reference.md) — API documentation for developers.
 
-## 🤝 Участие в разработке
+## 🤝 Contributing
 
-Мы приветствуем вклад в развитие проекта! Пожалуйста, ознакомьтесь с файлом [CONTRIBUTING.md](./CONTRIBUTING.md) перед началом работы.
+We welcome contributions! Please check out the [CONTRIBUTING.md](./CONTRIBUTING.md) guide before you start.
 
-## 📄 Лицензия
+## 📄 License
 
-Этот проект распространяется под лицензией **MIT**. Подробности в файле [LICENSE](./LICENSE).
+This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE) file for details.
 
 ---
-*Создано с любовью к продуктивности. 🧘*
+*Created with love for productivity. 🧘*

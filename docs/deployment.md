@@ -1,58 +1,58 @@
-# Руководство по развертыванию (Production)
+# Production Deployment Guide
 
-Проект настроен для автоматического развертывания на Shared Hosting (или VPS) через протокол SSH.
+The project is configured for automated deployment to Shared Hosting (or VPS) via SSH.
 
-## 1. Подготовка сервера
+## 1. Server Preparation
 
-### Файловая структура
-Создайте каталог для приложения (например, `/domains/alekzander.info/public_html/daily`).
+### Directory Structure
+Create a directory for the application (e.g., `/domains/alekzander.info/public_html/daily`).
 
-### База данных
-Создайте базу данных MySQL и пользователя с полными правами к ней.
+### Database
+Create a MySQL database and a user with full privileges.
 
-### Файл .env
-Создайте файл `.env` в корне папки приложения на сервере. Обязательные параметры:
+### .env File
+Create a `.env` file in the application's root folder on the server. Required parameters:
 ```env
-APP_NAME="Баланс.Дейли"
+APP_NAME="Balance.Daily"
 APP_ENV=production
-APP_KEY=base64:... (сгенерируйте локально через artisan key:generate)
+APP_KEY=base64:... (generate locally via artisan key:generate)
 APP_URL=https://alekzander.info/daily
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
-DB_DATABASE=имя_бд
-DB_USERNAME=логин_бд
-DB_PASSWORD=пароль_бд
+DB_DATABASE=db_name
+DB_USERNAME=db_user
+DB_PASSWORD=db_password
 
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 GOOGLE_REDIRECT_URL="https://alekzander.info/auth/google/callback"
 ```
 
-## 2. Настройка GitHub Actions
+## 2. GitHub Actions Setup
 
-Перейдите в настройки вашего репозитория **Settings > Secrets and variables > Actions** и добавьте следующие секреты:
+Go to your repository settings **Settings > Secrets and variables > Actions** and add the following secrets:
 
-*   `SSH_HOST`: IP или домен сервера.
-*   `SSH_USER`: SSH логин.
-*   `SSH_PORT`: Порт (обычно 22).
-*   `SSH_PRIVATE_KEY`: Содержимое вашего приватного ключа.
-*   `REMOTE_PATH`: Полный путь к папке приложения на сервере.
-*   `APP_URL`: Полный URL (используется для сборки фронтенда, например `https://alekzander.info/daily`).
+*   `SSH_HOST`: IP or domain of the server.
+*   `SSH_USER`: SSH username.
+*   `SSH_PORT`: Port (usually 22).
+*   `SSH_PRIVATE_KEY`: Content of your private SSH key.
+*   `REMOTE_PATH`: Full path to the application folder on the server.
+*   `APP_URL`: Full URL (used for frontend building, e.g., `https://alekzander.info/daily`).
 
-## 3. Процесс деплоя
+## 3. Deployment Process
 
-Развертывание происходит автоматически при каждом `push` в ветку `master` или `main`.
+Deployment happens automatically on every `push` to the `master` or `main` branch.
 
-**GitHub выполнит:**
-1.  Запуск всех тестов (CI).
-2.  Сборку ассетов Vue 3.
-3.  Синхронизацию файлов через `rsync` (исключая `.env` и другие локальные файлы).
-4.  Выполнение миграций БД на сервере.
-5.  Очистку и прогрев кэша Laravel.
+**GitHub will perform:**
+1.  Run all tests (CI).
+2.  Build Vue 3 assets.
+3.  Synchronize files via `rsync` (excluding `.env` and other local files).
+4.  Run database migrations on the server.
+5.  Clear and warm up Laravel cache.
 
-## 4. Специфика подпапок (Apache)
+## 4. Subdirectory Specifics (Apache)
 
-Если вы устанавливаете проект в подпапку (например, `/daily`), в корне этой папки будет автоматически создан файл `.htaccess`, который перенаправляет все запросы в `public/index.php`. 
+If you install the project in a subdirectory (e.g., `/daily`), a `.htaccess` file will be automatically created in the root of that folder to redirect all requests to `public/index.php`.
 
-Убедитесь, что на сервере включен модуль `mod_rewrite`.
+Ensure that the `mod_rewrite` module is enabled on the server.

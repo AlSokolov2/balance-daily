@@ -1,56 +1,58 @@
-# Руководство по разработке (CONTRIBUTING)
+# Contributing Guide
 
-Благодарим вас за интерес к проекту "Баланс.Дейли"! Чтобы разработка была комфортной и эффективной, мы придерживаемся определенных стандартов.
+Thank you for your interest in contributing to **Balance.Daily**! To make the development process efficient and consistent, we follow these standards.
 
-## 🛠 Окружение
+[🇷🇺 Читать на русском](CONTRIBUTING.ru.md)
 
-Проект настроен на работу через Docker. Основные сервисы:
+## 🛠 Environment
+
+The project is configured to run via Docker. Main services:
 *   **app**: Laravel (PHP 8.4-FPM).
-*   **nginx**: Веб-сервер.
+*   **nginx**: Web server.
 *   **db**: MySQL 8.0.
 
-## 📜 Стандарты кода
+## 📜 Code Standards
 
-### Бэкенд (PHP)
-*   Придерживайтесь стандартов **PSR-12**.
-*   Используйте **PHPDoc** для документирования методов контроллеров и моделей.
-*   Именуйте новые файлы и классы в соответствии с правилами Laravel/WordPress (если применимо к проекту).
+### Backend (PHP)
+*   Adhere to **PSR-12** standards.
+*   Use **PHPDoc** for documenting controller methods and models.
+*   Follow Laravel naming conventions for new files and classes.
 
-### Фронтенд (Vue/JS)
-*   Используйте **Composition API** (`<script setup>`).
-*   Стилизуйте компоненты с помощью **Tailwind CSS**.
-*   Документируйте сложную логику (например, в Pinia Store) с помощью **JSDoc**.
+### Frontend (Vue/JS)
+*   Use **Vue 3 Composition API** (`<script setup>`).
+*   Style components using **Tailwind CSS**.
+*   Document complex logic (e.g., in Pinia Store) using **JSDoc**.
 
-## 💬 Коммиты
+## 💬 Commit Messages
 
-Мы используем спецификацию [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). Примеры типов коммитов:
-*   `feat:` — новая функциональность.
-*   `fix:` — исправление ошибки.
-*   `docs:` — изменения в документации.
-*   `test:` — добавление или исправление тестов.
-*   `refactor:` — правки кода без изменения функционала.
+We use the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification. Examples:
+*   `feat:` — new functionality.
+*   `fix:` — bug fix.
+*   `docs:` — documentation changes.
+*   `test:` — adding or correcting tests.
+*   `refactor:` — code changes that neither fix a bug nor add a feature.
 
-## 🧪 Тестирование
+## 🧪 Testing
 
-Ни одна новая функция не может быть принята без покрытия тестами.
+No new feature will be accepted without test coverage.
 
-### Запуск тестов бэкенда (PHPUnit):
+### Run Backend Tests (PHPUnit):
 ```bash
 docker-compose run --rm app php artisan test
 ```
 
-### Запуск тестов фронтенда (Vitest):
+### Run Frontend Tests (Vitest):
 ```bash
 npm test
 ```
 
-## 🚀 Процесс разработки
+## 🚀 Development Workflow
 
-1.  Создайте ветку для вашей задачи (`git checkout -b feature/my-new-feature`).
-2.  Напишите код и тесты.
-3.  Убедитесь, что все тесты проходят успешно.
-4.  Сделайте коммит с понятным сообщением.
-5.  Отправьте Pull Request.
+1.  Create a branch for your task (`git checkout -b feature/my-new-feature`).
+2.  Write code and tests.
+3.  Ensure all tests pass.
+4.  Commit your changes with a clear message.
+5.  Open a Pull Request.
 
 ---
-*Сделаем управление задачами еще лучше вместе!* 🚀
+*Let's make task management better together!* 🚀
