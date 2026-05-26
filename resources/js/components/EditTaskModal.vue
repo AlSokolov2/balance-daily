@@ -130,7 +130,7 @@ const handleSave = async () => {
             completed_at: editData.completed_at || null,
         };
         
-        await axios.put(`/api/tasks/${props.task.id}`, payload);
+        await axios.put(`tasks/${props.task.id}`, payload);
         await store.fetchAll();
         emit('saved');
         emit('close');
