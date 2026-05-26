@@ -3,10 +3,14 @@ name: Build and Deploy
 on:
   push:
     branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
 
 jobs:
   ci-testing:
     runs-on: ubuntu-latest
+    env:
+      LARAVEL_BYPASS_ENV_CHECK: 1
     steps:
       - uses: actions/checkout@v4
 
@@ -29,11 +33,16 @@ jobs:
       - name: Install NPM Dependencies
         run: npm ci
 
+      - name: Build Frontend for Tests
+        run: npm run build
+
       - name: Run PHPUnit Tests
         run: php artisan test
 
       - name: Run Vitest Tests
         run: npm test
+        env:
+          LARAVEL_BYPASS_ENV_CHECK: 1
 
   deploy:
     needs: ci-testing
@@ -62,7 +71,7 @@ jobs:
           # Извлекаем путь из APP_URL (например, из https://site.com/daily получим /daily/)
           VITE_BASE_URL=$(echo ${{ secrets.APP_URL }} | grep -oP 'https?://[^/]+\K/.*' || echo "/")
           if [[ "$VITE_BASE_URL" != */ ]]; then VITE_BASE_URL="$VITE_BASE_URL/"; fi
-          
+
           export VITE_BASE_URL=$VITE_BASE_URL
           npm run build
         env:
@@ -73,17 +82,18 @@ jobs:
           # Создаем универсальный .htaccess для любого подкаталога
           cat > .htaccess <<EOF
           <IfModule mod_rewrite.c>
-            RewriteEngine On
-            RewriteRule ^(.*)$ public/\$1 [L]
+              RewriteEngine on
+              RewriteCond %{REQUEST_URI} !^/public/
+              RewriteRule ^(.*)$ public/\$1 [L]
           </IfModule>
           EOF
 
       - name: Deploy to Server via SSH
-        uses: easedeploy/ssh-deploy@main
+        uses: easingthemes/ssh-deploy@main
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           ARGS: "-avz --delete"
-          SOURCE: "/"
+          SOURCE: "./"
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_USER: ${{ secrets.SSH_USER }}
           REMOTE_PORT: ${{ secrets.SSH_PORT }}
@@ -99,9 +109,14 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd ${{ secrets.REMOTE_PATH }}
-            # Мы не можем запустить миграции если нет доступа к консоли php, 
-            # но если SSH есть, то обычно и php доступен.
-            php artisan migrate --force
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
+            # Гарантируем наличие папок
+            mkdir -p storage/logs storage/framework/sessions storage/framework/views storage/framework/cache
+            chmod -R 775 storage bootstrap/cache || true
+
+            # Используем PHP_BINARY из секретов или по умолчанию 'php'
+            PHP_BIN=${{ secrets.PHP_BINARY || 'php' }}
+            $PHP_BIN artisan config:clear
+            $PHP_BIN artisan migrate --force
+            $PHP_BIN artisan config:cache
+            $PHP_BIN artisan route:cache
+            $PHP_BIN artisan view:cache

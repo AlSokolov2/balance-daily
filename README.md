@@ -1,58 +1,60 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ⚖️ Balance.Daily
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+[![Laravel](https://img.shields.io/badge/backend-Laravel%2013-ff2d20.svg)](https://laravel.com)
+[![Vue](https://img.shields.io/badge/frontend-Vue%203-42b883.svg)](https://vuejs.org)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## About Laravel
+[🇷🇺 Читать на русском](README.ru.md)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+**Balance.Daily** is an advanced personal task and life balance manager built on a modern technology stack. It combines classic task tracking with a powerful dynamic prioritization engine and unique "bubble chart" visualization.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🚀 Key Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+*   **Smart Prioritization:** Automatically calculates task weight based on category, importance, deadlines, and overdue days.
+*   **Dynamic Balance:** The system automatically increases the priority of life spheres that haven't received enough attention recently.
+*   **Interactive Visualization:** A custom-built bubble chart to visually highlight your most important daily tasks.
+*   **Recurring Tasks:** Flexible cycle settings (intervals or specific weekdays) with automatic "hide-until-next" logic.
+*   **Google Auth:** Secure authentication and cloud synchronization for your personal data.
+*   **Full Data Isolation:** Strict privacy enforcement — every user operates within their own secured sandbox.
 
-## Learning Laravel
+## 🛠 Technology Stack
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+*   **Backend:** PHP 8.4+, Laravel 13, Sanctum (API Auth), Socialite (OAuth).
+*   **Frontend:** Vue 3 (Composition API), Pinia (State Management), Tailwind CSS 4.
+*   **DevOps:** Docker, GitHub Actions (CI/CD), SSH Deployment.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🏁 Quick Start
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+### Local Development (Docker)
 
-## Agentic Development
+1. Clone the repository.
+2. Create your environment file: `cp .env.example .env`.
+3. Start the services:
+   ```bash
+   docker-compose up -d
+   ```
+4. Install dependencies and build assets:
+   ```bash
+   npm install && npm run build
+   ```
+5. Access the app at: [http://localhost:8000](http://localhost:8000)
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## 📚 Documentation
 
-```bash
-composer require laravel/boost --dev
+Detailed technical guides:
 
-php artisan boost:install
-```
+*   📖 [**Installation & Setup**](./docs/installation.md) — Local deployment guide.
+*   🚀 [**Deployment Guide**](./docs/deployment.md) — SSH, Shared hosting, CI/CD.
+*   🧬 [**Prioritization Algorithm**](./docs/prioritization-algorithm.md) — How the math behind the app works.
+*   📡 [**API Reference**](./docs/api-reference.md) — API documentation for developers.
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## 🤝 Contributing
 
-## Contributing
+We welcome contributions! Please check out the [CONTRIBUTING.md](./CONTRIBUTING.md) guide before you start.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 📄 License
 
-## Code of Conduct
+This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE) file for details.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+*Created with love for productivity. 🧘*

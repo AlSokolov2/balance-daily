@@ -16,10 +16,12 @@ export const useBalanceStore = defineStore('balance', {
 
     getters: {
         isAuthenticated: (state) => !!state.token,
+        googleAuthUrl: () => (window.apiBaseUrl || '').replace(/\/$/, '') + '/auth/google',
         allSubcats: (state) => Object.keys(state.subcatCoeffs),
 
         activeTasks: (state) => {
             const now = new Date();
+            if (!Array.isArray(state.tasks)) return [];
             return state.tasks.filter(t => {
                 if (t.completed) return false;
                 if (t.hidden_until && new Date(t.hidden_until) > now) return false;
@@ -28,12 +30,12 @@ export const useBalanceStore = defineStore('balance', {
         },
 
         bubbleTasks: (state) => {
-            const active = state.tasks.filter(t => {
+            const active = state.tasks && Array.isArray(state.tasks) ? state.tasks.filter(t => {
                 const now = new Date();
                 if (t.completed) return false;
                 if (t.hidden_until && new Date(t.hidden_until) > now) return false;
                 return true;
-            }).sort((a, b) => b.calculatedPriority - a.calculatedPriority);
+            }).sort((a, b) => b.calculatedPriority - a.calculatedPriority) : [];
 
             if (state.filterCat === 'all') return active;
             if (state.filterCat === 'archive' || state.filterCat === 'hidden') return [];
@@ -42,6 +44,7 @@ export const useBalanceStore = defineStore('balance', {
 
         filteredTasks: (state) => {
             const now = new Date();
+            if (!Array.isArray(state.tasks)) return [];
             let tasks = [...state.tasks];
             
             if (state.filterCat === 'hidden') {
@@ -65,33 +68,38 @@ export const useBalanceStore = defineStore('balance', {
     },
 
     actions: {
+        /**
+         * Initialize the store, check for auth tokens and user data.
+         */
         async init() {
-            // Check for token in URL (after Google redirect)
+            // ... (обработка токена из URL)
             const urlParams = new URLSearchParams(window.location.search);
             const tokenFromUrl = urlParams.get('token');
             if (tokenFromUrl) {
                 this.token = tokenFromUrl;
                 localStorage.setItem('auth_token', tokenFromUrl);
-                // Clean URL
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
 
             if (this.token) {
                 axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
                 try {
-                    const res = await axios.get('/api/user');
+                    const res = await axios.get('user');
                     this.user = res.data;
+                    await this.fetchAll(); // Загружаем данные только если авторизованы
                 } catch (e) {
                     this.logout();
                 }
             }
-            await this.fetchAll();
         },
 
+        /**
+         * Log out the current user and clear local state.
+         */
         async logout() {
             if (this.token) {
                 try {
-                    await axios.post('/api/logout');
+                    await axios.post('logout');
                 } catch (e) {}
             }
             this.token = null;
@@ -102,33 +110,41 @@ export const useBalanceStore = defineStore('balance', {
             await this.fetchAll();
         },
 
+        /**
+         * Fetch all user data (tasks, categories, settings) from API.
+         */
         async fetchAll() {
             this.loading = true;
             try {
                 const [tasksRes, catsRes, settingsRes] = await Promise.all([
-                    axios.get('/api/tasks'),
-                    axios.get('/api/categories'),
-                    axios.get('/api/settings')
+                    axios.get('tasks'),
+                    axios.get('categories'),
+                    axios.get('settings')
                 ]);
-                this.categories = catsRes.data;
-                this.tasks = tasksRes.data;
-                this.notepadText = settingsRes.data.notepad_text || '';
+                this.categories = Array.isArray(catsRes.data) ? catsRes.data : [];
+                this.tasks = Array.isArray(tasksRes.data) ? tasksRes.data : [];
+                this.notepadText = settingsRes.data?.notepad_text || '';
                 
-                // Get subcat coeffs from export/stats endpoint for simplicity
-                const subRes = await axios.get('/api/export');
-                this.subcatCoeffs = subRes.data.subcatCoeffs || {};
+                const subRes = await axios.get('export');
+                this.subcatCoeffs = subRes.data?.subcatCoeffs || {};
                 
                 this.recalculateAll();
             } catch (e) {
                 console.error('Fetch error:', e);
+                this.tasks = [];
+                this.categories = [];
             } finally {
                 this.loading = false;
             }
         },
 
+        /**
+         * Main engine: recalculate all task priorities and dynamic category weights.
+         */
         recalculateAll() {
             const now = new Date();
-            if (!this.categories || !this.categories.length) return;
+            if (!this.categories || !Array.isArray(this.categories) || !this.categories.length) return;
+            if (!this.tasks || !Array.isArray(this.tasks)) { this.tasks = []; return; }
 
             // 1. Calculate missed counts for repeat tasks
             this.tasks.forEach(t => {
@@ -154,7 +170,7 @@ export const useBalanceStore = defineStore('balance', {
                 }
             });
 
-            // 2. Calculate dynamic category weights
+            // 2. Calculate dynamic category weights (1.5x boost for empty categories)
             const ARCHIVE = '__archive__';
             this.categories.forEach(c => {
                 c.currentWeight = parseFloat(c.weight) || 0.1;
@@ -189,6 +205,9 @@ export const useBalanceStore = defineStore('balance', {
             });
         },
 
+        /**
+         * Calculate priority for a single task based on complex formula.
+         */
         calcPriority(t, catsMap) {
             const cat = catsMap[t.category_slug];
             if (!cat) return 0;
@@ -245,7 +264,7 @@ export const useBalanceStore = defineStore('balance', {
         },
 
         async addTask(taskData) {
-            const res = await axios.post('/api/tasks', taskData);
+            const res = await axios.post('tasks', taskData);
             this.tasks.push(res.data);
             this.recalculateAll();
         },
@@ -256,7 +275,7 @@ export const useBalanceStore = defineStore('balance', {
 
             if (t.repeat_type === 'none') {
                 const completedAt = new Date().toISOString();
-                await axios.put(`/api/tasks/${id}`, { 
+                await axios.put(`tasks/${id}`, { 
                     completed: true, 
                     completed_at: completedAt 
                 });
@@ -281,7 +300,7 @@ export const useBalanceStore = defineStore('balance', {
                 const hiddenUntil = nextDate.toISOString();
                 const lastCompletedDate = now.toISOString();
 
-                await axios.put(`/api/tasks/${id}`, {
+                await axios.put(`tasks/${id}`, {
                     notes: newNotes,
                     hidden_until: hiddenUntil,
                     last_completed_date: lastCompletedDate,
@@ -297,7 +316,7 @@ export const useBalanceStore = defineStore('balance', {
         },
 
         async deleteTask(id) {
-            await axios.delete(`/api/tasks/${id}`);
+            await axios.delete(`tasks/${id}`);
             this.tasks = this.tasks.filter(t => t.id !== id);
             this.recalculateAll();
         },
@@ -306,7 +325,7 @@ export const useBalanceStore = defineStore('balance', {
             const t = this.tasks.find(x => x.id === id);
             if (!t) return;
             
-            await axios.put(`/api/tasks/${id}`, {
+            await axios.put(`tasks/${id}`, {
                 completed: false,
                 completed_at: null,
                 hidden_until: null
@@ -322,7 +341,7 @@ export const useBalanceStore = defineStore('balance', {
             const t = this.tasks.find(x => x.id === id);
             if (!t) return;
             
-            await axios.put(`/api/tasks/${id}`, {
+            await axios.put(`tasks/${id}`, {
                 hidden_until: null
             });
 

@@ -1,33 +1,58 @@
-# Contributing to Balance.Daily Online
+# Contributing Guide
 
-Thank you for your interest in contributing to **Balance.Daily Online**! We appreciate any help that makes this productivity tool better.
+Thank you for your interest in contributing to **Balance.Daily**! To make the development process efficient and consistent, we follow these standards.
 
-## How Can I Contribute?
+[🇷🇺 Читать на русском](CONTRIBUTING.ru.md)
 
-### Reporting Bugs
-- Before creating a bug report, please check that it hasn't been reported already.
-- When creating a report, include steps to reproduce the bug and details about your browser and OS.
+## 🛠 Environment
 
-### Suggesting Enhancements
-- Check that the feature hasn't been requested already.
-- Explain the benefit of the feature and how it should work.
+The project is configured to run via Docker. Main services:
+*   **app**: Laravel (PHP 8.4-FPM).
+*   **nginx**: Web server.
+*   **db**: MySQL 8.0.
 
-### Pull Requests
-1.  Fork the repo and create your branch from `main`.
-2.  Install dependencies: `npm install` (in both `client/` and `server/` folders).
-3.  Ensure your code follows the project's style (run `npm run lint`).
-4.  Make sure all tests pass: `npm test`.
-5.  Include new tests if you're adding new logic.
-6.  Submit the PR!
+## 📜 Code Standards
 
-## Development Standards
+### Backend (PHP)
+*   Adhere to **PSR-12** standards.
+*   Use **PHPDoc** for documenting controller methods and models.
+*   Follow Laravel naming conventions for new files and classes.
 
--   **TypeScript:** All new code must be strictly typed. Avoid `any`.
--   **Architecture:** Follow the established pattern (Zustand for state, Express controllers for API).
--   **I18n:** Every text in the UI should be added to `client/src/i18n.ts`.
+### Frontend (Vue/JS)
+*   Use **Vue 3 Composition API** (`<script setup>`).
+*   Style components using **Tailwind CSS**.
+*   Document complex logic (e.g., in Pinia Store) using **JSDoc**.
 
-## Code of Conduct
-Please be respectful and helpful to others in the community.
+## 💬 Commit Messages
+
+We use the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification. Examples:
+*   `feat:` — new functionality.
+*   `fix:` — bug fix.
+*   `docs:` — documentation changes.
+*   `test:` — adding or correcting tests.
+*   `refactor:` — code changes that neither fix a bug nor add a feature.
+
+## 🧪 Testing
+
+No new feature will be accepted without test coverage.
+
+### Run Backend Tests (PHPUnit):
+```bash
+docker-compose run --rm app php artisan test
+```
+
+### Run Frontend Tests (Vitest):
+```bash
+npm test
+```
+
+## 🚀 Development Workflow
+
+1.  Create a branch for your task (`git checkout -b feature/my-new-feature`).
+2.  Write code and tests.
+3.  Ensure all tests pass.
+4.  Commit your changes with a clear message.
+5.  Open a Pull Request.
 
 ---
-*Happy coding!* 🚀
+*Let's make task management better together!* 🚀

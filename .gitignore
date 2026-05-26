@@ -28,4 +28,7 @@ Thumbs.db
 
 .local/
 .reference/
-docs
+
+.vite/
+
+commit_message.txt
