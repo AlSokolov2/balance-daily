@@ -39,6 +39,7 @@ Go to your repository settings **Settings > Secrets and variables > Actions** an
 *   `SSH_PRIVATE_KEY`: Content of your private SSH key.
 *   `REMOTE_PATH`: Full path to the application folder on the server.
 *   `APP_URL`: Full URL (used for frontend building, e.g., `https://alekzander.info/daily`).
+*   `PHP_BINARY`: (Optional) The path to the PHP 8.4 executable on your server (e.g., `/usr/bin/php8.4`). Required if the default `php` command points to an older version.
 
 ## 3. Deployment Process
 
