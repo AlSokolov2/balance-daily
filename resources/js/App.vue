@@ -1,8 +1,42 @@
 <template>
-    <div class="app-container max-w-[650px] mx-auto">
-        <h1 class="text-2xl font-bold mb-2 flex justify-between items-center px-1">
+    <!-- Состояние загрузки сессии -->
+    <div v-if="isInitializing" class="min-h-screen flex items-center justify-center bg-[#f5f5f7]">
+        <div class="text-[#007aff] font-bold animate-pulse text-lg text-center">
+            Загрузка Баланс.Дейли...
+        </div>
+    </div>
+
+    <!-- Экран входа (если не авторизован) -->
+    <div v-else-if="!store.isAuthenticated" class="min-h-screen flex items-center justify-center bg-[#f5f5f7] p-4">
+        <div class="card bg-white rounded-[24px] p-8 w-full max-w-sm shadow-[0_4px_24px_rgba(0,0,0,0.06)] border border-[#e5e5ea] text-center">
+            <div class="w-16 h-16 bg-[#007aff] rounded-2xl mx-auto mb-6 flex items-center justify-center text-white text-3xl shadow-lg">⚖️</div>
+            <h1 class="text-2xl font-bold text-[#1c1c1e] mb-2">Баланс.Дейли</h1>
+            <p class="text-[#8e8e93] text-sm mb-8 leading-relaxed">
+                Ваш персональный помощник для управления балансом жизни и задачами.
+            </p>
+            
+            <a href="/auth/google" class="w-full py-3 bg-white border border-[#c6c6c8] text-[#1c1c1e] rounded-12 font-semibold text-[15px] flex items-center justify-center gap-3 hover:bg-gray-50 transition-all active:scale-[0.98]">
+                <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.18 1-.78 1.85-1.63 2.53v2.1h2.64c1.55-1.42 2.43-3.52 2.43-6.64z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-2.64-2.1c-.73.49-1.66.78-2.64.78-2.85 0-5.27-1.92-6.13-4.51H5.17v2.13A11.997 11.997 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.87 14.51c-.22-.66-.35-1.36-.35-2.01s.13-1.35.35-2.01V7.87H3.04C2.37 9.13 2 10.52 2 12s.37 2.87 1.04 4.13l2.83-2.12z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.73 1 4.15 3.13 3.04 6.22l2.83 2.12c.86-2.59 3.28-4.51 6.13-4.51z"/></svg>
+                Войти через Google
+            </a>
+            
+            <p class="mt-8 text-[11px] text-[#8e8e93]">
+                Продолжая, вы соглашаетесь с условиями использования и политикой конфиденциальности.
+            </p>
+        </div>
+    </div>
+
+    <!-- Основное приложение (после входа) -->
+    <div v-else class="app-container max-w-[650px] mx-auto">
+        <h1 class="text-2xl font-bold mb-2 flex justify-between items-center px-1 pt-4">
             Баланс.Дейли 
-            <button @click="showSettingsModal = true" class="secondary text-sm px-3 py-1.5 rounded-lg">Настройки</button>
+            <div class="flex items-center gap-2">
+                <div v-if="store.user" class="flex items-center gap-2 mr-1">
+                    <img :src="store.user.avatar" class="w-8 h-8 rounded-full border border-gray-200 object-cover" referrerpolicy="no-referrer" :title="store.user.name">
+                    <button @click="store.logout" class="secondary text-sm px-3 py-1.5 rounded-lg">Выйти</button>
+                </div>
+                <button @click="showSettingsModal = true" class="secondary text-sm px-3 py-1.5 rounded-lg">Настройки</button>
+            </div>
         </h1>
 
         <!-- Форма добавления -->
@@ -111,7 +145,7 @@
 
         <!-- Плавающая панель -->
         <div class="action-bar sticky bottom-3 bg-white/90 backdrop-blur-[20px] p-[10px] rounded-[20px] flex gap-2 border border-[#e5e5ea] shadow-sm z-50">
-            <button @click="store.recalculateAll" class="secondary flex-1 py-2 rounded-10 text-[15px]">Обновить</button>
+            <button @click="store.fetchAll" class="secondary flex-1 py-2 rounded-10 text-[15px]">Обновить</button>
             <button @click="resetDay" class="secondary flex-1 py-2 rounded-10 text-[15px]">Новый день</button>
         </div>
         
@@ -133,6 +167,7 @@ const store = useBalanceStore();
 const weekdays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 const showSettingsModal = ref(false);
 const editingTask = ref(null);
+const isInitializing = ref(true);
 
 const newTask = ref({
     title: '',
@@ -195,14 +230,16 @@ const resetDay = async () => {
     }
 };
 
-onMounted(() => {
-    store.fetchAll();
+onMounted(async () => {
+    await store.init();
+    isInitializing.value = false;
 });
 </script>
 
 <style>
 /* Utilities specifically for reference match */
 .rounded-10 { border-radius: 10px; }
+.rounded-12 { border-radius: 12px; }
 .rounded-8 { border-radius: 8px; }
 
 button {

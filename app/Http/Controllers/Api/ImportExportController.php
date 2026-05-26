@@ -14,11 +14,12 @@ class ImportExportController extends Controller
 {
     public function export()
     {
+        $userId = auth()->id();
         $data = [
-            'tasks' => Task::all(),
-            'categories' => Category::all()->keyBy('slug'),
-            'subcatCoeffs' => SubcatCoeff::pluck('coefficient', 'name'),
-            'notepad' => Setting::where('key', 'notepad_text')->value('value') ?? '',
+            'tasks' => Task::where('user_id', $userId)->get(),
+            'categories' => Category::where('user_id', $userId)->get()->keyBy('slug'),
+            'subcatCoeffs' => SubcatCoeff::where('user_id', $userId)->pluck('coefficient', 'name'),
+            'notepad' => Setting::where('user_id', $userId)->where('key', 'notepad_text')->value('value') ?? '',
         ];
 
         return response()->json($data);
@@ -27,19 +28,21 @@ class ImportExportController extends Controller
     public function import(Request $request)
     {
         $data = $request->all();
+        $userId = auth()->id();
 
-        DB::transaction(function () use ($data) {
+        DB::transaction(function () use ($data, $userId) {
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
-            // Use delete() instead of truncate() for better transaction stability
-            Task::query()->delete();
-            Category::query()->delete();
-            SubcatCoeff::query()->delete();
+            // Clear existing for THIS user
+            Task::where('user_id', $userId)->delete();
+            Category::where('user_id', $userId)->delete();
+            SubcatCoeff::where('user_id', $userId)->delete();
 
             // Import Categories
             if (isset($data['categories'])) {
                 foreach ($data['categories'] as $slug => $cat) {
                     Category::create([
+                        'user_id' => $userId,
                         'slug' => $slug,
                         'name' => $cat['name'] ?? $slug,
                         'weight' => $cat['weight'] ?? 0.1,
@@ -53,6 +56,7 @@ class ImportExportController extends Controller
             if (isset($data['tasks'])) {
                 foreach ($data['tasks'] as $task) {
                     Task::create([
+                        'user_id' => $userId,
                         'title' => $task['title'] ?? 'Untitled',
                         'category_slug' => $task['category'] ?? ($task['category_slug'] ?? 'chor'),
                         'importance' => $task['importance'] ?? 2.0,
@@ -78,6 +82,7 @@ class ImportExportController extends Controller
             if (!empty($data['subcatCoeffs'])) {
                 foreach ($data['subcatCoeffs'] as $name => $coeff) {
                     SubcatCoeff::create([
+                        'user_id' => $userId,
                         'name' => $name,
                         'coefficient' => (float)$coeff,
                     ]);
@@ -86,7 +91,10 @@ class ImportExportController extends Controller
 
             // Import Notepad
             if (isset($data['notepad'])) {
-                Setting::updateOrCreate(['key' => 'notepad_text'], ['value' => $data['notepad']]);
+                Setting::updateOrCreate(
+                    ['key' => 'notepad_text', 'user_id' => $userId],
+                    ['value' => $data['notepad']]
+                );
             }
 
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');

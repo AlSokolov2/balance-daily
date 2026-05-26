@@ -8,31 +8,36 @@ use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return Category::all();
+        return $request->user()->categories;
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'slug' => 'required|string|unique:categories',
+            'slug' => 'required|string',
             'name' => 'required|string',
             'weight' => 'required|numeric',
             'color' => 'required|string',
             'hide_until' => 'nullable|string',
         ]);
 
-        return Category::create($validated);
+        return $request->user()->categories()->updateOrCreate(
+            ['slug' => $validated['slug']],
+            $validated
+        );
     }
 
-    public function show(Category $category)
+    public function show(Request $request, $id)
     {
-        return $category;
+        return $request->user()->categories()->findOrFail($id);
     }
 
-    public function update(Request $request, Category $category)
+    public function update(Request $request, $id)
     {
+        $category = $request->user()->categories()->findOrFail($id);
+        
         $validated = $request->validate([
             'name' => 'sometimes|required|string',
             'weight' => 'sometimes|required|numeric',
@@ -45,8 +50,9 @@ class CategoryController extends Controller
         return $category;
     }
 
-    public function destroy(Category $category)
+    public function destroy(Request $request, $id)
     {
+        $category = $request->user()->categories()->findOrFail($id);
         $category->delete();
 
         return response()->noContent();

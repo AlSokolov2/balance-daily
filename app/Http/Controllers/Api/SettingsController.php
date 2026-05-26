@@ -10,7 +10,7 @@ class SettingsController extends Controller
 {
     public function index()
     {
-        return Setting::pluck('value', 'key');
+        return Setting::where('user_id', auth()->id())->pluck('value', 'key');
     }
 
     public function update(Request $request)
@@ -20,9 +20,12 @@ class SettingsController extends Controller
         ]);
 
         foreach ($validated['settings'] as $key => $value) {
-            Setting::updateOrCreate(['key' => $key], ['value' => $value]);
+            Setting::updateOrCreate(
+                ['key' => $key, 'user_id' => auth()->id()],
+                ['value' => $value]
+            );
         }
 
-        return Setting::pluck('value', 'key');
+        return Setting::where('user_id', auth()->id())->pluck('value', 'key');
     }
 }

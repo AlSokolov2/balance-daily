@@ -8,16 +8,16 @@ use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return Task::orderBy('completed')->get();
+        return $request->user()->tasks()->orderBy('completed')->get();
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'title' => 'required|string',
-            'category_slug' => 'required|string|exists:categories,slug',
+            'category_slug' => 'required|string',
             'importance' => 'required|numeric',
             'subcategory' => 'nullable|string',
             'deadline' => 'nullable|date',
@@ -30,19 +30,21 @@ class TaskController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        return Task::create($validated);
+        return $request->user()->tasks()->create($validated);
     }
 
-    public function show(Task $task)
+    public function show(Request $request, $id)
     {
-        return $task;
+        return $request->user()->tasks()->findOrFail($id);
     }
 
-    public function update(Request $request, Task $task)
+    public function update(Request $request, $id)
     {
+        $task = $request->user()->tasks()->findOrFail($id);
+
         $validated = $request->validate([
             'title' => 'sometimes|required|string',
-            'category_slug' => 'sometimes|required|string|exists:categories,slug',
+            'category_slug' => 'sometimes|required|string',
             'importance' => 'sometimes|required|numeric',
             'subcategory' => 'nullable|string',
             'deadline' => 'nullable|date',
@@ -62,8 +64,9 @@ class TaskController extends Controller
         return $task;
     }
 
-    public function destroy(Task $task)
+    public function destroy(Request $request, $id)
     {
+        $task = $request->user()->tasks()->findOrFail($id);
         $task->delete();
 
         return response()->noContent();

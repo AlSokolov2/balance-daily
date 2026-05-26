@@ -10,9 +10,12 @@ export const useBalanceStore = defineStore('balance', {
         loading: false,
         bubbleZoom: 1,
         notepadText: '',
+        user: null,
+        token: localStorage.getItem('auth_token') || null,
     }),
 
     getters: {
+        isAuthenticated: (state) => !!state.token,
         allSubcats: (state) => Object.keys(state.subcatCoeffs),
 
         activeTasks: (state) => {
@@ -62,6 +65,43 @@ export const useBalanceStore = defineStore('balance', {
     },
 
     actions: {
+        async init() {
+            // Check for token in URL (after Google redirect)
+            const urlParams = new URLSearchParams(window.location.search);
+            const tokenFromUrl = urlParams.get('token');
+            if (tokenFromUrl) {
+                this.token = tokenFromUrl;
+                localStorage.setItem('auth_token', tokenFromUrl);
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
+            if (this.token) {
+                axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
+                try {
+                    const res = await axios.get('/api/user');
+                    this.user = res.data;
+                } catch (e) {
+                    this.logout();
+                }
+            }
+            await this.fetchAll();
+        },
+
+        async logout() {
+            if (this.token) {
+                try {
+                    await axios.post('/api/logout');
+                } catch (e) {}
+            }
+            this.token = null;
+            this.user = null;
+            localStorage.removeItem('auth_token');
+            delete axios.defaults.headers.common['Authorization'];
+            this.tasks = [];
+            await this.fetchAll();
+        },
+
         async fetchAll() {
             this.loading = true;
             try {
@@ -73,12 +113,14 @@ export const useBalanceStore = defineStore('balance', {
                 this.categories = catsRes.data;
                 this.tasks = tasksRes.data;
                 this.notepadText = settingsRes.data.notepad_text || '';
-                // Assume subcatCoeffs are also in settings or separate table
-                // Let's stick to the separate table we created
-                const subRes = await axios.get('/api/export'); // Export contains subcatCoeffs
-                this.subcatCoeffs = subRes.data.subcatCoeffs;
+                
+                // Get subcat coeffs from export/stats endpoint for simplicity
+                const subRes = await axios.get('/api/export');
+                this.subcatCoeffs = subRes.data.subcatCoeffs || {};
                 
                 this.recalculateAll();
+            } catch (e) {
+                console.error('Fetch error:', e);
             } finally {
                 this.loading = false;
             }
@@ -153,22 +195,18 @@ export const useBalanceStore = defineStore('balance', {
 
             let s = cat.currentWeight * parseFloat(t.importance);
             
-            // Subcategory coefficient
             if (t.subcategory && this.subcatCoeffs[t.subcategory]) {
                 s *= this.subcatCoeffs[t.subcategory];
             }
 
-            // Postponed logic
             if (this.isEffectivelyPostponed(t)) {
                 s *= 0.7;
             }
 
-            // Missed count boost
             if (t.missed_count > 0) {
                 s *= (1 + t.missed_count * 0.5);
             }
 
-            // Deadline logic
             if (t.deadline) {
                 const n = new Date();
                 const d = new Date(t.deadline);
@@ -226,14 +264,13 @@ export const useBalanceStore = defineStore('balance', {
                 t.completed_at = completedAt;
                 t.missed_count = 0;
             } else {
-                // Repeat task logic from ref
                 const now = new Date();
                 const dateStr = now.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
                 const newNotes = (t.notes ? t.notes + '\n' : '') + '✔ ' + dateStr;
                 
                 let nextDate = new Date();
                 if (t.repeat_type === 'interval') {
-                    nextDate.setDate(nextDate.getDate() + (t.repeat_interval || 1));
+                    nextDate.setDate(nextDate.getDate() + (parseInt(t.repeat_interval) || 1));
                 } else if (t.repeat_type === 'weekly' && t.repeat_days && t.repeat_days.length) {
                     nextDate.setDate(nextDate.getDate() + 1);
                     while (!t.repeat_days.includes(nextDate.getDay())) {
