@@ -31,6 +31,9 @@ jobs:
       - name: Install NPM Dependencies
         run: npm ci
 
+      - name: Build Frontend for Tests
+        run: npm run build
+
       - name: Run PHPUnit Tests
         run: php artisan test
 

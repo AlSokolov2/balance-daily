@@ -11,6 +11,13 @@ use Tests\TestCase;
 class AuthenticationTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutVite();
+    }
+
     public function test_google_redirect_works(): void
     {
         $response = $this->get('/auth/google');
