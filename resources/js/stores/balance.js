@@ -72,13 +72,12 @@ export const useBalanceStore = defineStore('balance', {
          * Initialize the store, check for auth tokens and user data.
          */
         async init() {
-            // Check for token in URL (after Google redirect)
+            // ... (обработка токена из URL)
             const urlParams = new URLSearchParams(window.location.search);
             const tokenFromUrl = urlParams.get('token');
             if (tokenFromUrl) {
                 this.token = tokenFromUrl;
                 localStorage.setItem('auth_token', tokenFromUrl);
-                // Clean URL
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
 
@@ -87,11 +86,11 @@ export const useBalanceStore = defineStore('balance', {
                 try {
                     const res = await axios.get('user');
                     this.user = res.data;
+                    await this.fetchAll(); // Загружаем данные только если авторизованы
                 } catch (e) {
                     this.logout();
                 }
             }
-            await this.fetchAll();
         },
 
         /**
