@@ -65,6 +65,9 @@ export const useBalanceStore = defineStore('balance', {
     },
 
     actions: {
+        /**
+         * Initialize the store, check for auth tokens and user data.
+         */
         async init() {
             // Check for token in URL (after Google redirect)
             const urlParams = new URLSearchParams(window.location.search);
@@ -88,6 +91,9 @@ export const useBalanceStore = defineStore('balance', {
             await this.fetchAll();
         },
 
+        /**
+         * Log out the current user and clear local state.
+         */
         async logout() {
             if (this.token) {
                 try {
@@ -102,6 +108,9 @@ export const useBalanceStore = defineStore('balance', {
             await this.fetchAll();
         },
 
+        /**
+         * Fetch all user data (tasks, categories, settings) from API.
+         */
         async fetchAll() {
             this.loading = true;
             try {
@@ -126,6 +135,9 @@ export const useBalanceStore = defineStore('balance', {
             }
         },
 
+        /**
+         * Main engine: recalculate all task priorities and dynamic category weights.
+         */
         recalculateAll() {
             const now = new Date();
             if (!this.categories || !this.categories.length) return;
@@ -154,7 +166,7 @@ export const useBalanceStore = defineStore('balance', {
                 }
             });
 
-            // 2. Calculate dynamic category weights
+            // 2. Calculate dynamic category weights (1.5x boost for empty categories)
             const ARCHIVE = '__archive__';
             this.categories.forEach(c => {
                 c.currentWeight = parseFloat(c.weight) || 0.1;
@@ -189,6 +201,9 @@ export const useBalanceStore = defineStore('balance', {
             });
         },
 
+        /**
+         * Calculate priority for a single task based on complex formula.
+         */
         calcPriority(t, catsMap) {
             const cat = catsMap[t.category_slug];
             if (!cat) return 0;

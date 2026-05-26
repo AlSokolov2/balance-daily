@@ -42,11 +42,14 @@ describe('Balance Store - Prioritization Engine', () => {
 
     it('correctly handles missed counts for interval repeat tasks', () => {
         const store = useBalanceStore();
-        const now = new Date();
-        const twoDaysAgo = new Date();
-        twoDaysAgo.setDate(now.getDate() - 2);
         
-        // Task was due 1 day ago (last completed 2 days ago + 1 day interval)
+        // Mocking current time to a fixed value
+        const now = new Date('2026-05-26T12:00:00Z');
+        vi.setSystemTime(now);
+        
+        // Last completed 2 days before 'now'
+        const lastCompleted = new Date('2026-05-24T12:00:00Z');
+        
         const task = { 
             id: 1, 
             title: 'Repeat', 
@@ -55,15 +58,17 @@ describe('Balance Store - Prioritization Engine', () => {
             completed: false,
             repeat_type: 'interval',
             repeat_interval: 1,
-            last_completed_date: twoDaysAgo.toISOString()
+            last_completed_date: lastCompleted.toISOString()
         };
         
         store.tasks = [task];
         store.recalculateAll();
         
-        // Due date = twoDaysAgo + 1 day = 1 day ago.
-        // Missed count should be 1.
+        // Due date = 2026-05-24 + 1 day = 2026-05-25.
+        // Today is 2026-05-26. Missed count = 1.
         expect(store.tasks[0].missed_count).toBe(1);
+        
+        vi.useRealTimers();
     });
 
     it('applies exponential boost for missed tasks', () => {

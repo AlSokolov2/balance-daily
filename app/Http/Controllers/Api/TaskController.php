@@ -8,11 +8,23 @@ use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
+    /**
+     * Get all tasks for the authenticated user.
+     *
+     * @param Request $request
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
     public function index(Request $request)
     {
         return $request->user()->tasks()->orderBy('completed')->get();
     }
 
+    /**
+     * Create a new task for the authenticated user.
+     *
+     * @param Request $request
+     * @return \App\Models\Task
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -33,11 +45,25 @@ class TaskController extends Controller
         return $request->user()->tasks()->create($validated);
     }
 
+    /**
+     * Get a specific task.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \App\Models\Task
+     */
     public function show(Request $request, $id)
     {
         return $request->user()->tasks()->findOrFail($id);
     }
 
+    /**
+     * Update an existing task.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \App\Models\Task
+     */
     public function update(Request $request, $id)
     {
         $task = $request->user()->tasks()->findOrFail($id);
@@ -64,6 +90,13 @@ class TaskController extends Controller
         return $task;
     }
 
+    /**
+     * Delete a task.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\Response
+     */
     public function destroy(Request $request, $id)
     {
         $task = $request->user()->tasks()->findOrFail($id);

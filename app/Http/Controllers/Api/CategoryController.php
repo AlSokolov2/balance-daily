@@ -8,11 +8,23 @@ use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
+    /**
+     * Get all categories for the authenticated user.
+     *
+     * @param Request $request
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
     public function index(Request $request)
     {
         return $request->user()->categories;
     }
 
+    /**
+     * Create or update a category for the authenticated user.
+     *
+     * @param Request $request
+     * @return \App\Models\Category
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -29,11 +41,25 @@ class CategoryController extends Controller
         );
     }
 
+    /**
+     * Get a specific category.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \App\Models\Category
+     */
     public function show(Request $request, $id)
     {
         return $request->user()->categories()->findOrFail($id);
     }
 
+    /**
+     * Update a category.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \App\Models\Category
+     */
     public function update(Request $request, $id)
     {
         $category = $request->user()->categories()->findOrFail($id);
@@ -50,6 +76,13 @@ class CategoryController extends Controller
         return $category;
     }
 
+    /**
+     * Delete a category.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\Response
+     */
     public function destroy(Request $request, $id)
     {
         $category = $request->user()->categories()->findOrFail($id);

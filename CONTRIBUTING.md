@@ -1,33 +1,56 @@
-# Contributing to Balance.Daily Online
+# Руководство по разработке (CONTRIBUTING)
 
-Thank you for your interest in contributing to **Balance.Daily Online**! We appreciate any help that makes this productivity tool better.
+Благодарим вас за интерес к проекту "Баланс.Дейли"! Чтобы разработка была комфортной и эффективной, мы придерживаемся определенных стандартов.
 
-## How Can I Contribute?
+## 🛠 Окружение
 
-### Reporting Bugs
-- Before creating a bug report, please check that it hasn't been reported already.
-- When creating a report, include steps to reproduce the bug and details about your browser and OS.
+Проект настроен на работу через Docker. Основные сервисы:
+*   **app**: Laravel (PHP 8.4-FPM).
+*   **nginx**: Веб-сервер.
+*   **db**: MySQL 8.0.
 
-### Suggesting Enhancements
-- Check that the feature hasn't been requested already.
-- Explain the benefit of the feature and how it should work.
+## 📜 Стандарты кода
 
-### Pull Requests
-1.  Fork the repo and create your branch from `main`.
-2.  Install dependencies: `npm install` (in both `client/` and `server/` folders).
-3.  Ensure your code follows the project's style (run `npm run lint`).
-4.  Make sure all tests pass: `npm test`.
-5.  Include new tests if you're adding new logic.
-6.  Submit the PR!
+### Бэкенд (PHP)
+*   Придерживайтесь стандартов **PSR-12**.
+*   Используйте **PHPDoc** для документирования методов контроллеров и моделей.
+*   Именуйте новые файлы и классы в соответствии с правилами Laravel/WordPress (если применимо к проекту).
 
-## Development Standards
+### Фронтенд (Vue/JS)
+*   Используйте **Composition API** (`<script setup>`).
+*   Стилизуйте компоненты с помощью **Tailwind CSS**.
+*   Документируйте сложную логику (например, в Pinia Store) с помощью **JSDoc**.
 
--   **TypeScript:** All new code must be strictly typed. Avoid `any`.
--   **Architecture:** Follow the established pattern (Zustand for state, Express controllers for API).
--   **I18n:** Every text in the UI should be added to `client/src/i18n.ts`.
+## 💬 Коммиты
 
-## Code of Conduct
-Please be respectful and helpful to others in the community.
+Мы используем спецификацию [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). Примеры типов коммитов:
+*   `feat:` — новая функциональность.
+*   `fix:` — исправление ошибки.
+*   `docs:` — изменения в документации.
+*   `test:` — добавление или исправление тестов.
+*   `refactor:` — правки кода без изменения функционала.
+
+## 🧪 Тестирование
+
+Ни одна новая функция не может быть принята без покрытия тестами.
+
+### Запуск тестов бэкенда (PHPUnit):
+```bash
+docker-compose run --rm app php artisan test
+```
+
+### Запуск тестов фронтенда (Vitest):
+```bash
+npm test
+```
+
+## 🚀 Процесс разработки
+
+1.  Создайте ветку для вашей задачи (`git checkout -b feature/my-new-feature`).
+2.  Напишите код и тесты.
+3.  Убедитесь, что все тесты проходят успешно.
+4.  Сделайте коммит с понятным сообщением.
+5.  Отправьте Pull Request.
 
 ---
-*Happy coding!* 🚀
+*Сделаем управление задачами еще лучше вместе!* 🚀
