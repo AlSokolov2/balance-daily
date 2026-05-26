@@ -16,6 +16,7 @@ export const useBalanceStore = defineStore('balance', {
 
     getters: {
         isAuthenticated: (state) => !!state.token,
+        googleAuthUrl: () => (window.apiBaseUrl || '').replace(/\/$/, '') + '/auth/google',
         allSubcats: (state) => Object.keys(state.subcatCoeffs),
 
         activeTasks: (state) => {
@@ -82,7 +83,7 @@ export const useBalanceStore = defineStore('balance', {
             if (this.token) {
                 axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
                 try {
-                    const res = await axios.get('/api/user');
+                    const res = await axios.get('user');
                     this.user = res.data;
                 } catch (e) {
                     this.logout();
@@ -97,7 +98,7 @@ export const useBalanceStore = defineStore('balance', {
         async logout() {
             if (this.token) {
                 try {
-                    await axios.post('/api/logout');
+                    await axios.post('logout');
                 } catch (e) {}
             }
             this.token = null;
@@ -115,16 +116,16 @@ export const useBalanceStore = defineStore('balance', {
             this.loading = true;
             try {
                 const [tasksRes, catsRes, settingsRes] = await Promise.all([
-                    axios.get('/api/tasks'),
-                    axios.get('/api/categories'),
-                    axios.get('/api/settings')
+                    axios.get('tasks'),
+                    axios.get('categories'),
+                    axios.get('settings')
                 ]);
                 this.categories = catsRes.data;
                 this.tasks = tasksRes.data;
                 this.notepadText = settingsRes.data.notepad_text || '';
                 
                 // Get subcat coeffs from export/stats endpoint for simplicity
-                const subRes = await axios.get('/api/export');
+                const subRes = await axios.get('export');
                 this.subcatCoeffs = subRes.data.subcatCoeffs || {};
                 
                 this.recalculateAll();
@@ -260,7 +261,7 @@ export const useBalanceStore = defineStore('balance', {
         },
 
         async addTask(taskData) {
-            const res = await axios.post('/api/tasks', taskData);
+            const res = await axios.post('tasks', taskData);
             this.tasks.push(res.data);
             this.recalculateAll();
         },
@@ -271,7 +272,7 @@ export const useBalanceStore = defineStore('balance', {
 
             if (t.repeat_type === 'none') {
                 const completedAt = new Date().toISOString();
-                await axios.put(`/api/tasks/${id}`, { 
+                await axios.put(`tasks/${id}`, { 
                     completed: true, 
                     completed_at: completedAt 
                 });
@@ -296,7 +297,7 @@ export const useBalanceStore = defineStore('balance', {
                 const hiddenUntil = nextDate.toISOString();
                 const lastCompletedDate = now.toISOString();
 
-                await axios.put(`/api/tasks/${id}`, {
+                await axios.put(`tasks/${id}`, {
                     notes: newNotes,
                     hidden_until: hiddenUntil,
                     last_completed_date: lastCompletedDate,
@@ -312,7 +313,7 @@ export const useBalanceStore = defineStore('balance', {
         },
 
         async deleteTask(id) {
-            await axios.delete(`/api/tasks/${id}`);
+            await axios.delete(`tasks/${id}`);
             this.tasks = this.tasks.filter(t => t.id !== id);
             this.recalculateAll();
         },
@@ -321,7 +322,7 @@ export const useBalanceStore = defineStore('balance', {
             const t = this.tasks.find(x => x.id === id);
             if (!t) return;
             
-            await axios.put(`/api/tasks/${id}`, {
+            await axios.put(`tasks/${id}`, {
                 completed: false,
                 completed_at: null,
                 hidden_until: null
@@ -337,7 +338,7 @@ export const useBalanceStore = defineStore('balance', {
             const t = this.tasks.find(x => x.id === id);
             if (!t) return;
             
-            await axios.put(`/api/tasks/${id}`, {
+            await axios.put(`tasks/${id}`, {
                 hidden_until: null
             });
 

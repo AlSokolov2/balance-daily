@@ -133,15 +133,12 @@ const deleteCategory = (slug) => {
 
 const saveCats = async () => {
     try {
-        // Here we'd ideally have a batch endpoint for categories, 
-        // but for MVP we can use settings or update individually.
-        // Let's implement a quick sync logic in store.
-        await axios.post('/api/import', {
+        await axios.post('import', {
             categories: {
                 ...editableCats,
                 '__archive__': store.categories.find(c => c.slug === '__archive__')
             },
-            tasks: store.tasks, // Keep existing
+            tasks: store.tasks, 
             subcatCoeffs: store.subcatCoeffs,
             notepad: store.notepadText
         });
@@ -157,17 +154,17 @@ const deleteSubcat = (name) => {
 };
 
 const saveSubcats = async () => {
-    await saveCats(); // Uses the same batch sync logic
+    await saveCats(); 
 };
 
 const saveNotepad = async () => {
-    await axios.post('/api/settings', { settings: { notepad_text: localNotepad.value } });
+    await axios.post('settings', { settings: { notepad_text: localNotepad.value } });
     store.notepadText = localNotepad.value;
     alert('Блокнот сохранен');
 };
 
 const exportData = async () => {
-    const res = await axios.get('/api/export');
+    const res = await axios.get('export');
     const b = new Blob([JSON.stringify(res.data)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(b);
@@ -182,7 +179,7 @@ const handleImport = (e) => {
     r.onload = async (ev) => {
         try {
             const d = JSON.parse(ev.target.result);
-            await axios.post('/api/import', d);
+            await axios.post('import', d);
             window.location.reload();
         } catch (ex) {
             console.error('Import error:', ex);
