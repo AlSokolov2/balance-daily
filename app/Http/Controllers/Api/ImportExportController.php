@@ -9,6 +9,7 @@ use App\Models\SubcatCoeff;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ImportExportController extends Controller
 {
@@ -31,7 +32,7 @@ class ImportExportController extends Controller
         $userId = auth()->id();
 
         DB::transaction(function () use ($data, $userId) {
-            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            Schema::disableForeignKeyConstraints();
 
             // Clear existing for THIS user
             Task::where('user_id', $userId)->delete();
@@ -97,7 +98,7 @@ class ImportExportController extends Controller
                 );
             }
 
-            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            Schema::enableForeignKeyConstraints();
         });
 
         return response()->json(['message' => 'Import successful']);
