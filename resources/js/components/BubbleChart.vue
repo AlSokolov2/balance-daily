@@ -10,7 +10,10 @@
                  :style="getBubbleStyle(t)"
                  @mouseenter="!isTouchDevice && showTooltip($event, t)" 
                  @mouseleave="!isTouchDevice && hideTooltip()"
-                 @click.stop="isTouchDevice ? toggleTooltip($event, t) : null">
+                 @click.stop="!isTouchDevice ? handleDesktopClick(t) : toggleTooltip($event, t)"
+                 @touchstart="handleTouchStart($event, t)"
+                 @touchend="handleTouchEnd($event, t)"
+                 @contextmenu.prevent>
                 <span class="block leading-[1.1] break-words pointer-events-none">
                     {{ t.title }}
                 </span>
@@ -33,6 +36,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { useBalanceStore } from '../stores/balance';
 
+const emit = defineEmits(['edit']);
 const store = useBalanceStore();
 const wrapper = ref(null);
 const container = ref(null);
@@ -117,13 +121,35 @@ const toggleTooltip = (event, task) => {
     }
 };
 
+let touchTimer = null;
+const handleTouchStart = (event, task) => {
+    if (!isTouchDevice.value) return;
+    touchTimer = setTimeout(() => {
+        hideTooltip();
+        emit('edit', task);
+        touchTimer = null;
+    }, 500); // 500ms for long press
+};
+
+const handleTouchEnd = (event, task) => {
+    if (!isTouchDevice.value) return;
+    if (touchTimer) {
+        clearTimeout(touchTimer);
+        touchTimer = null;
+    }
+};
+
+const handleDesktopClick = (task) => {
+    emit('edit', task);
+};
+
 const calcBubbles = () => {
     const T = store.bubbleTasks;
     if (!T.length) { bubblePositions.value = []; return; }
     if (!container.value) return;
 
-    const W = container.value.clientWidth;
-    const H = container.value.clientHeight;
+    const W = container.value.clientWidth || 800; // Fallback for tests
+    const H = container.value.clientHeight || 600; // Fallback for tests
     if (!W || !H) return;
 
     const padding = 5;
@@ -298,6 +324,8 @@ const calcBubbles = () => {
     }
     bubblePositions.value = bestPlaced || [];
 };
+
+defineExpose({ calcBubbles, bubblePositions });
 
 watch(() => store.bubbleTasks, calcBubbles, { deep: true });
 watch(() => store.bubbleZoom, calcBubbles);

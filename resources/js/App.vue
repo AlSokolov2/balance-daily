@@ -107,7 +107,7 @@
                     <span class="text-[12px] text-gray-500 w-8">{{ store.bubbleZoom.toFixed(1) }}x</span>
                 </div>
             </h3>
-            <BubbleChart />
+            <BubbleChart @edit="handleEdit" />
         </div>
 
         <!-- Фильтры -->
