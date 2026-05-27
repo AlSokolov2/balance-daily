@@ -1,18 +1,18 @@
 <template>
-    <div class="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4 pb-0 sm:pb-4" @click.self="$emit('close')">
-        <div class="bg-white rounded-t-3xl sm:rounded-2xl p-5 w-full max-w-sm shadow-2xl relative max-h-[92vh] sm:max-h-[90vh] overflow-y-auto pb-8 sm:pb-5">
+    <div class="fixed inset-0 z-[300] flex items-center justify-center bg-black/50 p-4" @click.self="$emit('close')">
+        <div class="bg-white rounded-2xl p-4 sm:p-5 w-full max-w-sm shadow-2xl relative max-h-[90vh] overflow-y-auto overflow-x-hidden">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold">Настройка категории</h2>
                 <span @click="$emit('close')" class="cursor-pointer text-2xl text-gray-400 hover:text-gray-600">&times;</span>
             </div>
 
             <div class="space-y-4">
-                <div>
+                <div class="min-w-0">
                     <label class="text-[10px] text-gray-400 uppercase font-bold px-1">Название</label>
                     <input v-model="editData.name" type="text" class="w-full p-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
 
-                <div>
+                <div class="min-w-0">
                     <label class="text-[10px] text-gray-400 uppercase font-bold px-1 flex justify-between">
                         <span>Вес (влияет на размер пузырька)</span>
                         <span class="text-blue-600">{{ editData.weight }}%</span>
@@ -22,15 +22,15 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
+                <div class="flex flex-col sm:grid sm:grid-cols-2 gap-3">
+                    <div class="min-w-0">
                         <label class="text-[10px] text-gray-400 uppercase font-bold px-1">Цвет</label>
                         <div class="flex items-center gap-2 mt-1">
                             <input v-model="editData.color" type="color" class="w-10 h-10 p-0.5 border rounded-xl cursor-pointer">
                             <span class="text-xs text-gray-500 font-mono">{{ editData.color }}</span>
                         </div>
                     </div>
-                    <div>
+                    <div class="min-w-0">
                         <label class="text-[10px] text-gray-400 uppercase font-bold px-1">Скрыто до (время)</label>
                         <input v-model="editData.hide_until" type="time" class="w-full mt-1 p-2 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>

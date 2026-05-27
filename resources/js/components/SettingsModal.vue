@@ -1,12 +1,12 @@
 <template>
     <div class="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4" @click.self="$emit('close')">
-        <div class="bg-white rounded-2xl p-4 w-full max-w-[560px] max-h-[85vh] overflow-y-auto shadow-2xl relative">
+        <div class="bg-white rounded-2xl p-4 sm:p-5 w-full max-w-[560px] max-h-[90vh] overflow-y-auto overflow-x-hidden shadow-2xl relative">
             <div class="flex justify-between items-center mb-3 font-semibold text-lg">
                 Настройки
                 <span @click="$emit('close')" class="cursor-pointer text-2xl">&times;</span>
             </div>
 
-            <div class="flex gap-1 mb-4 bg-gray-100 p-1 rounded-xl">
+            <div class="flex flex-wrap gap-1 mb-4 bg-gray-100 p-1 rounded-xl">
                 <div v-for="t in ['cat', 'sub', 'notepad', 'data']" :key="t"
                      @click="tab = t"
                      :class="['flex-1 text-center py-1.5 rounded-lg cursor-pointer text-xs transition-all', tab === t ? 'bg-white font-semibold shadow-sm' : 'text-gray-500 hover:bg-white/50']">

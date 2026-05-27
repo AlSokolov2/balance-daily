@@ -1,9 +1,9 @@
 <template>
     <div class="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4" @click.self="$emit('close')">
-        <div class="bg-white rounded-2xl p-5 w-full max-w-md shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-2xl p-4 sm:p-5 w-full max-w-md shadow-2xl relative max-h-[90vh] overflow-y-auto overflow-x-hidden">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold">Редактировать</h2>
-                <div class="flex items-center gap-2 mr-auto ml-5">
+                <div class="flex items-center gap-2 mr-auto ml-2 sm:ml-5">
                     <span class="text-sm font-semibold">Выполнено</span>
                     <input type="checkbox" v-model="editData.completed" class="w-5 h-5 rounded-lg accent-blue-600">
                 </div>
@@ -21,14 +21,14 @@
                     <textarea v-model="editData.notes" @input="autoResize" ref="notesTextarea" class="w-full p-2.5 border rounded-xl text-sm h-20 resize-none focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Заметка к задаче"></textarea>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
+                <div class="flex flex-col sm:grid sm:grid-cols-2 gap-2">
+                    <div class="min-w-0">
                         <label class="text-[10px] text-gray-400 uppercase font-bold px-1">Категория</label>
                         <select v-model="editData.category_slug" class="w-full p-2.5 border rounded-xl text-sm bg-white">
                             <option v-for="cat in store.categories.filter(c => c.slug !== '__archive__')" :key="cat.slug" :value="cat.slug">{{ cat.name }}</option>
                         </select>
                     </div>
-                    <div>
+                    <div class="min-w-0">
                         <label class="text-[10px] text-gray-400 uppercase font-bold px-1">Важность</label>
                         <select v-model="editData.importance" class="w-full p-2.5 border rounded-xl text-sm bg-white">
                             <option value="4">Очень высокая</option>
@@ -40,24 +40,24 @@
                     </div>
                 </div>
 
-                <div>
+                <div class="min-w-0">
                     <label class="text-[10px] text-gray-400 uppercase font-bold px-1">Подкатегория</label>
                     <input v-model="editData.subcategory" list="subcat-list-edit" class="w-full p-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                     <datalist id="subcat-list-edit"><option v-for="s in store.allSubcats" :key="s" :value="s"></option></datalist>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
+                <div class="flex flex-col sm:grid sm:grid-cols-2 gap-2">
+                    <div class="min-w-0">
                         <label class="text-[10px] text-gray-400 uppercase font-bold px-1">Дедлайн</label>
                         <input v-model="editData.deadline" type="datetime-local" class="w-full p-2 border rounded-xl text-xs">
                     </div>
-                    <div>
+                    <div class="min-w-0">
                         <label class="text-[10px] text-gray-400 uppercase font-bold px-1">Отложить до</label>
                         <input v-model="editData.postpone_until" type="datetime-local" class="w-full p-2 border rounded-xl text-xs">
                     </div>
                 </div>
 
-                <div class="flex items-center gap-3 py-2 border-t border-b border-gray-50">
+                <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 py-2 border-t border-b border-gray-50">
                     <select v-model="editData.repeat_type" class="flex-1 p-2 border rounded-xl text-xs bg-white">
                         <option value="none">Без повтора</option>
                         <option value="interval">Каждые N дней</option>
