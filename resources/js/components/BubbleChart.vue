@@ -10,10 +10,10 @@
                  :style="getBubbleStyle(t)"
                  @mouseenter="!isTouchDevice && showTooltip($event, t)" 
                  @mouseleave="!isTouchDevice && hideTooltip()"
-                 @click.stop="handleDesktopClick(t)"
-                 @touchstart="handleTouchStart($event, t)"
-                 @touchend="handleTouchEnd($event, t)"
-                 @touchcancel="handleTouchEnd($event, t)"
+                 @click.stop="handleBubbleClick(t)"
+                 @pointerdown="handlePointerDown($event, t)"
+                 @pointerup="handlePointerUp($event, t)"
+                 @pointercancel="handlePointerUp($event, t)"
                  @contextmenu.prevent>
                 <span class="block leading-[1.1] break-words pointer-events-none">
                     {{ t.title }}
@@ -116,31 +116,45 @@ const hideTooltip = () => {
 
 let touchTimer = null;
 let touchMoved = false;
+let isLongPress = false;
 
-const handleTouchStart = (event, task) => {
+const handlePointerDown = (event, task) => {
     if (!isTouchDevice.value) return;
     touchMoved = false;
+    isLongPress = false;
     touchTimer = setTimeout(() => {
         if (!touchMoved) {
+            isLongPress = true;
             showTooltip(event, task);
         }
         touchTimer = null;
     }, 400); // 400ms for long press
 };
 
-const handleTouchEnd = (event, task) => {
+const handlePointerUp = (event, task) => {
     if (!isTouchDevice.value) return;
     if (touchTimer) {
         clearTimeout(touchTimer);
         touchTimer = null;
+    } else if (isLongPress) {
+        hideTooltip();
     }
 };
 
-// Listen for touchmove to cancel long press if user is scrolling
-window.addEventListener('touchmove', () => { touchMoved = true; }, { passive: true });
+// Listen for pointermove to cancel long press if user is scrolling
+window.addEventListener('pointermove', () => { touchMoved = true; }, { passive: true });
 
-const handleDesktopClick = (task) => {
-    emit('edit', task);
+const handleBubbleClick = (task) => {
+    if (isTouchDevice.value) {
+        // Если это был длинный тап, клик игнорируем (тултип уже открыт)
+        if (!isLongPress) {
+            emit('edit', task);
+        }
+        isLongPress = false; // reset
+    } else {
+        // Десктоп: обычный клик всегда редактирование
+        emit('edit', task);
+    }
 };
 
 const calcBubbles = () => {
@@ -325,7 +339,7 @@ const calcBubbles = () => {
     bubblePositions.value = bestPlaced || [];
 };
 
-defineExpose({ calcBubbles, bubblePositions, handleTouchStart, handleTouchEnd, handleDesktopClick, tooltip, isTouchDevice, container });
+defineExpose({ calcBubbles, bubblePositions, handlePointerDown, handlePointerUp, handleBubbleClick, tooltip, isTouchDevice, container });
 
 watch(() => store.bubbleTasks, calcBubbles, { deep: true });
 watch(() => store.bubbleZoom, calcBubbles);
@@ -347,6 +361,7 @@ onUnmounted(() => {
 }
 .bubble {
     user-select: none;
+    -webkit-touch-callout: none;
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .bubble span {

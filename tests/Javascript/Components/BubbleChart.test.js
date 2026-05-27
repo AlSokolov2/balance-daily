@@ -24,31 +24,55 @@ describe('BubbleChart Component', () => {
         expect(wrapper.text()).toContain('Нет задач');
     });
 
-    it('emits "edit" when handleDesktopClick is called', async () => {
+    it('emits "edit" when handleBubbleClick is called on desktop', async () => {
         const task = { id: 1, title: 'Task 1' };
         const wrapper = mount(BubbleChart);
         
-        await wrapper.vm.handleDesktopClick(task);
+        wrapper.vm.isTouchDevice = false;
+        await wrapper.vm.handleBubbleClick(task);
 
         expect(wrapper.emitted('edit')).toBeTruthy();
         expect(wrapper.emitted('edit')[0][0]).toMatchObject({ id: 1 });
     });
 
-    it('executes long press timer in mobile mode', async () => {
+    it('emits "edit" on short tap in mobile mode', async () => {
+        const task = { id: 1, title: 'Task 1' };
+        const wrapper = mount(BubbleChart);
+        
+        wrapper.vm.isTouchDevice = true;
+        // Simulate short tap (no long press timer triggered)
+        await wrapper.vm.handleBubbleClick(task);
+
+        expect(wrapper.emitted('edit')).toBeTruthy();
+        expect(wrapper.emitted('edit')[0][0]).toMatchObject({ id: 1 });
+    });
+
+    it('shows tooltip on long press in mobile mode, hides on touch end, and ignores subsequent click', async () => {
         const task = { id: 1, title: 'Task 1', notes: 'Secret' };
         const wrapper = mount(BubbleChart);
         
         wrapper.vm.isTouchDevice = true;
 
-        await wrapper.vm.handleTouchStart({ stopPropagation: vi.fn() }, task);
+        await wrapper.vm.handlePointerDown({ stopPropagation: vi.fn() }, task);
         
         // Wait for long press timer (400ms)
         vi.advanceTimersByTime(401);
+        await wrapper.vm.$nextTick();
+
+        // Simulate tooltip being shown (since jsdom container mocks are flaky for showTooltip)
+        wrapper.vm.tooltip.visible = true;
+
+        // Touch ends
+        await wrapper.vm.handlePointerUp({ stopPropagation: vi.fn() }, task);
         
-        // The fact that we advanced timers without error and can verify touchEnd doesn't crash
-        // indicates the timer logic is sound. We can't easily mock the local showTooltip function in script setup.
-        await wrapper.vm.handleTouchEnd({ stopPropagation: vi.fn() }, task);
-        expect(true).toBe(true);
+        // Tooltip should be hidden now
+        expect(wrapper.vm.tooltip.visible).toBe(false);
+        
+        // Timer should have set isLongPress to true internally.
+        // The subsequent click event should NOT emit 'edit'
+        await wrapper.vm.handleBubbleClick(task);
+        
+        expect(wrapper.emitted('edit')).toBeFalsy();
     });
 
     it('cancels long press if touch ends early', async () => {
@@ -56,9 +80,9 @@ describe('BubbleChart Component', () => {
         const wrapper = mount(BubbleChart);
         wrapper.vm.isTouchDevice = true;
 
-        await wrapper.vm.handleTouchStart({}, task);
+        await wrapper.vm.handlePointerDown({}, task);
         vi.advanceTimersByTime(200); // Only 200ms passed
-        await wrapper.vm.handleTouchEnd({}, task);
+        await wrapper.vm.handlePointerUp({}, task);
         
         vi.advanceTimersByTime(300); // Total > 400ms now
         
