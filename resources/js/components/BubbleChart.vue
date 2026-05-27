@@ -10,9 +10,10 @@
                  :style="getBubbleStyle(t)"
                  @mouseenter="!isTouchDevice && showTooltip($event, t)" 
                  @mouseleave="!isTouchDevice && hideTooltip()"
-                 @click.stop="!isTouchDevice ? handleDesktopClick(t) : toggleTooltip($event, t)"
+                 @click.stop="handleDesktopClick(t)"
                  @touchstart="handleTouchStart($event, t)"
                  @touchend="handleTouchEnd($event, t)"
+                 @touchcancel="handleTouchEnd($event, t)"
                  @contextmenu.prevent>
                 <span class="block leading-[1.1] break-words pointer-events-none">
                     {{ t.title }}
@@ -113,22 +114,18 @@ const hideTooltip = () => {
     tooltip.value.taskId = null;
 };
 
-const toggleTooltip = (event, task) => {
-    if (tooltip.value.visible && tooltip.value.taskId === task.id) {
-        hideTooltip();
-    } else {
-        showTooltip(event, task);
-    }
-};
-
 let touchTimer = null;
+let touchMoved = false;
+
 const handleTouchStart = (event, task) => {
     if (!isTouchDevice.value) return;
+    touchMoved = false;
     touchTimer = setTimeout(() => {
-        hideTooltip();
-        emit('edit', task);
+        if (!touchMoved) {
+            showTooltip(event, task);
+        }
         touchTimer = null;
-    }, 500); // 500ms for long press
+    }, 400); // 400ms for long press
 };
 
 const handleTouchEnd = (event, task) => {
@@ -138,6 +135,9 @@ const handleTouchEnd = (event, task) => {
         touchTimer = null;
     }
 };
+
+// Listen for touchmove to cancel long press if user is scrolling
+window.addEventListener('touchmove', () => { touchMoved = true; }, { passive: true });
 
 const handleDesktopClick = (task) => {
     emit('edit', task);
@@ -325,7 +325,7 @@ const calcBubbles = () => {
     bubblePositions.value = bestPlaced || [];
 };
 
-defineExpose({ calcBubbles, bubblePositions });
+defineExpose({ calcBubbles, bubblePositions, handleTouchStart, handleTouchEnd, handleDesktopClick, tooltip, isTouchDevice, container });
 
 watch(() => store.bubbleTasks, calcBubbles, { deep: true });
 watch(() => store.bubbleZoom, calcBubbles);
