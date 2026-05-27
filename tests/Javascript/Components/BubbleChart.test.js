@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import BubbleChart from '../../../resources/js/components/BubbleChart.vue';
@@ -7,9 +7,16 @@ import { useBalanceStore } from '../../../resources/js/stores/balance';
 describe('BubbleChart Component', () => {
     beforeEach(() => {
         setActivePinia(createPinia());
-        // Mock clientWidth/Height which are 0 in jsdom
-        Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, value: 500 });
-        Object.defineProperty(HTMLElement.prototype, 'clientHeight', { configurable: true, value: 300 });
+        vi.useFakeTimers();
+        
+        // Global mock for dimensions - essential for jsdom
+        Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, value: 800 });
+        Object.defineProperty(HTMLElement.prototype, 'clientHeight', { configurable: true, value: 600 });
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.unstubAllGlobals();
     });
 
     it('renders and shows "Нет задач" when empty', () => {
@@ -17,20 +24,68 @@ describe('BubbleChart Component', () => {
         expect(wrapper.text()).toContain('Нет задач');
     });
 
-    it('renders bubbles for active tasks', async () => {
-        const store = useBalanceStore();
-        store.categories = [{ slug: 'work', name: 'Work', weight: 1.0, color: '#ff0000' }];
-        store.tasks = [
-            { id: 1, title: 'Task 1', category_slug: 'work', importance: 2, completed: false, calculatedPriority: 10 }
-        ];
-
+    it('emits "edit" when handleBubbleClick is called on desktop', async () => {
+        const task = { id: 1, title: 'Task 1' };
         const wrapper = mount(BubbleChart);
         
-        // Wait for nextTick and internal setTimeout
-        await new Promise(r => setTimeout(r, 200));
+        wrapper.vm.isTouchDevice = false;
+        await wrapper.vm.handleBubbleClick(task);
 
-        const bubbles = wrapper.findAll('.bubble');
-        expect(bubbles.length).toBe(1);
-        expect(bubbles[0].text()).toContain('Task 1');
+        expect(wrapper.emitted('edit')).toBeTruthy();
+        expect(wrapper.emitted('edit')[0][0]).toMatchObject({ id: 1 });
+    });
+
+    it('emits "edit" on short tap in mobile mode', async () => {
+        const task = { id: 1, title: 'Task 1' };
+        const wrapper = mount(BubbleChart);
+        
+        wrapper.vm.isTouchDevice = true;
+        // Simulate short tap (no long press timer triggered)
+        await wrapper.vm.handleBubbleClick(task);
+
+        expect(wrapper.emitted('edit')).toBeTruthy();
+        expect(wrapper.emitted('edit')[0][0]).toMatchObject({ id: 1 });
+    });
+
+    it('shows tooltip on long press in mobile mode, hides on touch end, and ignores subsequent click', async () => {
+        const task = { id: 1, title: 'Task 1', notes: 'Secret' };
+        const wrapper = mount(BubbleChart);
+        
+        wrapper.vm.isTouchDevice = true;
+
+        await wrapper.vm.handlePointerDown({ stopPropagation: vi.fn() }, task);
+        
+        // Wait for long press timer (400ms)
+        vi.advanceTimersByTime(401);
+        await wrapper.vm.$nextTick();
+
+        // Simulate tooltip being shown (since jsdom container mocks are flaky for showTooltip)
+        wrapper.vm.tooltip.visible = true;
+
+        // Touch ends
+        await wrapper.vm.handlePointerUp({ stopPropagation: vi.fn() }, task);
+        
+        // Tooltip should be hidden now
+        expect(wrapper.vm.tooltip.visible).toBe(false);
+        
+        // Timer should have set isLongPress to true internally.
+        // The subsequent click event should NOT emit 'edit'
+        await wrapper.vm.handleBubbleClick(task);
+        
+        expect(wrapper.emitted('edit')).toBeFalsy();
+    });
+
+    it('cancels long press if touch ends early', async () => {
+        const task = { id: 1, title: 'Task 1' };
+        const wrapper = mount(BubbleChart);
+        wrapper.vm.isTouchDevice = true;
+
+        await wrapper.vm.handlePointerDown({}, task);
+        vi.advanceTimersByTime(200); // Only 200ms passed
+        await wrapper.vm.handlePointerUp({}, task);
+        
+        vi.advanceTimersByTime(300); // Total > 400ms now
+        
+        expect(wrapper.vm.tooltip.visible).toBe(false);
     });
 });

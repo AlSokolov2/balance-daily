@@ -60,6 +60,24 @@ class AuthenticationTest extends TestCase
         ]);
     }
 
+    public function test_dev_login_works_in_allowed_environments(): void
+    {
+        $response = $this->get('/auth/dev-login');
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'dev@example.com'
+        ]);
+
+        $response->assertRedirect();
+        $this->assertStringContainsString('token=', $response->getTargetUrl());
+
+        $user = User::where('email', 'dev@example.com')->first();
+        $this->assertDatabaseHas('categories', [
+            'user_id' => $user->id,
+            'slug' => 'chor'
+        ]);
+    }
+
     public function test_user_can_get_their_profile_when_authenticated(): void
     {
         $user = User::factory()->create();
