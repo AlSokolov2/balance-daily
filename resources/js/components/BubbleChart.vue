@@ -2,14 +2,16 @@
     <div ref="wrapper" class="bubble-wrapper relative w-full h-[300px] border border-[#e5e5ea] rounded-xl overflow-hidden bg-[#fafafa] mb-4 transition-all duration-300"
          :class="{ 'zoomed overflow-visible max-h-none z-40': store.bubbleZoom !== 1 }">
         <div ref="container" class="bubble-container relative w-full h-[300px] transition-transform duration-300 bg-[#fafafa]"
-             :style="bubbleContainerStyle">
+             :style="bubbleContainerStyle"
+             @click="hideTooltip">
             <div v-for="t in store.bubbleTasks" 
                  :key="t.id" 
                  class="bubble absolute rounded-full flex items-center justify-center text-center font-medium p-1 cursor-default transition-all duration-500"
                  :style="getBubbleStyle(t)"
                  @mouseenter="showTooltip($event, t)" 
-                 @mouseleave="hideTooltip">
-                <span class="block leading-[1.1] break-words">
+                 @mouseleave="hideTooltip"
+                 @click.stop="toggleTooltip($event, t)">
+                <span class="block leading-[1.1] break-words pointer-events-none">
                     {{ t.title }}
                 </span>
             </div>
@@ -35,7 +37,7 @@ const store = useBalanceStore();
 const wrapper = ref(null);
 const container = ref(null);
 const bubblePositions = ref([]);
-const tooltip = ref({ visible: false, text: '', x: 0, y: 0 });
+const tooltip = ref({ visible: false, text: '', x: 0, y: 0, taskId: null });
 
 const bubbleContainerStyle = computed(() => {
     if (store.bubbleZoom !== 1) {
@@ -98,11 +100,20 @@ const showTooltip = (event, task) => {
     if (x + tooltipWidth > cw - 5) x = cw - tooltipWidth - 5;
     if (y < 5) y = 5;
 
-    tooltip.value = { visible: true, text: task.notes, x, y };
+    tooltip.value = { visible: true, text: task.notes, x, y, taskId: task.id };
 };
 
 const hideTooltip = () => {
     tooltip.value.visible = false;
+    tooltip.value.taskId = null;
+};
+
+const toggleTooltip = (event, task) => {
+    if (tooltip.value.visible && tooltip.value.taskId === task.id) {
+        hideTooltip();
+    } else {
+        showTooltip(event, task);
+    }
 };
 
 const calcBubbles = () => {
@@ -184,32 +195,43 @@ const calcBubbles = () => {
     };
 
     let bestPlaced = null, scale = 1.2;
+    const isMobile = W < 600;
+
     while (scale > 0.3) {
         let centralPlaced = [], leftPlaced = [], rightPlaced = [], ok = true;
-        if (central.length > 0) {
-            centralPlaced = packGroup(central, (W - W * 0.4) / 2, padding, (W + W * 0.4) / 2, H - padding, scale);
+
+        if (isMobile) {
+            // На мобилках кидаем всё в одну кучу на всю ширину
+            const allTasks = [...central, ...side];
+            centralPlaced = packGroup(allTasks, padding, padding, W - padding, H - padding, scale);
             if (!centralPlaced) ok = false;
+        } else {
+            if (central.length > 0) {
+                centralPlaced = packGroup(central, (W - W * 0.4) / 2, padding, (W + W * 0.4) / 2, H - padding, scale);
+                if (!centralPlaced) ok = false;
+            }
+            if (!ok) { scale -= 0.02; continue; }
+
+            const cLeft = (W - W * 0.4) / 2, cRight = (W + W * 0.4) / 2;
+            if (side.length > 0) {
+                const leftTasks = [], rightTasks = [];
+                side.forEach((s, i) => i % 2 === 0 ? leftTasks.push(s) : rightTasks.push(s));
+                if (leftTasks.length > 0) {
+                    leftPlaced = packGroup(leftTasks, padding, padding, cLeft - padding, H - padding, scale);
+                    if (!leftPlaced) ok = false;
+                }
+                if (ok && rightTasks.length > 0) {
+                    rightPlaced = packGroup(rightTasks, cRight + padding, padding, W - padding, H - padding, scale);
+                    if (!rightPlaced) ok = false;
+                }
+            }
         }
+        
         if (!ok) { scale -= 0.02; continue; }
 
-        const cLeft = (W - W * 0.4) / 2, cRight = (W + W * 0.4) / 2;
-        if (side.length > 0) {
-            const leftTasks = [], rightTasks = [];
-            side.forEach((s, i) => i % 2 === 0 ? leftTasks.push(s) : rightTasks.push(s));
-            if (leftTasks.length > 0) {
-                leftPlaced = packGroup(leftTasks, padding, padding, cLeft - padding, H - padding, scale);
-                if (!leftPlaced) ok = false;
-            }
-            if (ok && rightTasks.length > 0) {
-                rightPlaced = packGroup(rightTasks, cRight + padding, padding, W - padding, H - padding, scale);
-                if (!rightPlaced) ok = false;
-            }
-        }
-        if (!ok) { scale -= 0.02; continue; }
-
-        // Shift logic from ref
+        // Shift logic only for desktop (3 columns)
         let allPlaced = (centralPlaced || []).concat(leftPlaced || [], rightPlaced || []);
-        if (allPlaced.length > 0) {
+        if (!isMobile && allPlaced.length > 0) {
             let cLA, cRA;
             if (centralPlaced && centralPlaced.length > 0) {
                 let minCX = Infinity, maxCX = -Infinity;
