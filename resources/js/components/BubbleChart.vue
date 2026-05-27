@@ -10,7 +10,7 @@
                  :style="getBubbleStyle(t)"
                  @mouseenter="!isTouchDevice && showTooltip($event, t)" 
                  @mouseleave="!isTouchDevice && hideTooltip()"
-                 @click.stop="toggleTooltip($event, t)">
+                 @click.stop="isTouchDevice ? toggleTooltip($event, t) : null">
                 <span class="block leading-[1.1] break-words pointer-events-none">
                     {{ t.title }}
                 </span>
