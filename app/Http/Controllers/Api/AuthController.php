@@ -31,26 +31,13 @@ class AuthController extends Controller
                 'google_refresh_token' => $googleUser->refreshToken,
             ]);
 
-            // Seed default categories if new user
-            if ($user->wasRecentlyCreated || $user->categories()->count() === 0) {
-                $defaults = [
-                    ['slug' => 'chor', 'name' => 'CHOR', 'weight' => 0.13, 'color' => '#ff3b30'],
-                    ['slug' => 'prog', 'name' => 'PROG', 'weight' => 0.46, 'color' => '#34c759'],
-                    ['slug' => 'chin', 'name' => 'CHIN', 'weight' => 0.38, 'color' => '#007aff'],
-                    ['slug' => 'hobb', 'name' => 'HOBB', 'weight' => 0.03, 'color' => '#ffcc00'],
-                    ['slug' => '__archive__', 'name' => 'Архив', 'weight' => 0.01, 'color' => '#8e8e93'],
-                ];
-                foreach ($defaults as $cat) {
-                    $user->categories()->updateOrCreate(['slug' => $cat['slug']], $cat);
-                }
-            }
+            $this->seedDefaultCategories($user);
 
             Auth::login($user);
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
             // Redirect back to frontend
-            // url('/') will respect APP_URL from .env (e.g. https://site.com/daily)
             $frontendUrl = url('/');
             
             return redirect($frontendUrl . '?token=' . $token);
@@ -58,6 +45,42 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             \Log::error('Google Auth Error: ' . $e->getMessage());
             return redirect('/?error=auth_failed');
+        }
+    }
+
+    public function devLogin()
+    {
+        if (!app()->environment(['local', 'testing'])) {
+            abort(404);
+        }
+
+        $user = User::firstOrCreate(
+            ['email' => 'dev@example.com'],
+            [
+                'name' => 'Developer',
+                'google_id' => 'dev_id_123',
+            ]
+        );
+
+        $this->seedDefaultCategories($user);
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+        return redirect(url('/') . '?token=' . $token);
+    }
+
+    private function seedDefaultCategories(User $user)
+    {
+        if ($user->categories()->count() === 0) {
+            $defaults = [
+                ['slug' => 'chor', 'name' => 'CHOR', 'weight' => 0.13, 'color' => '#ff3b30'],
+                ['slug' => 'prog', 'name' => 'PROG', 'weight' => 0.46, 'color' => '#34c759'],
+                ['slug' => 'chin', 'name' => 'CHIN', 'weight' => 0.38, 'color' => '#007aff'],
+                ['slug' => 'hobb', 'name' => 'HOBB', 'weight' => 0.03, 'color' => '#ffcc00'],
+                ['slug' => '__archive__', 'name' => 'Архив', 'weight' => 0.01, 'color' => '#8e8e93'],
+            ];
+            foreach ($defaults as $cat) {
+                $user->categories()->updateOrCreate(['slug' => $cat['slug']], $cat);
+            }
         }
     }
 

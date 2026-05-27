@@ -1,15 +1,21 @@
 <template>
-    <div ref="wrapper" class="bubble-wrapper relative w-full h-[300px] border border-[#e5e5ea] rounded-xl overflow-hidden bg-[#fafafa] mb-4 transition-all duration-300"
-         :class="{ 'zoomed overflow-visible max-h-none z-40': store.bubbleZoom !== 1 }">
-        <div ref="container" class="bubble-container relative w-full h-[300px] transition-transform duration-300 bg-[#fafafa]"
-             :style="bubbleContainerStyle">
+    <div ref="wrapper" class="bubble-wrapper relative w-full h-full transition-all duration-300"
+         :class="{ 'zoomed overflow-visible z-40': store.bubbleZoom !== 1 }">
+        <div ref="container" class="bubble-container relative w-full h-full transition-transform duration-300"
+             :style="bubbleContainerStyle"
+             @click="hideTooltip">
             <div v-for="t in store.bubbleTasks" 
                  :key="t.id" 
                  class="bubble absolute rounded-full flex items-center justify-center text-center font-medium p-1 cursor-default transition-all duration-500"
                  :style="getBubbleStyle(t)"
-                 @mouseenter="showTooltip($event, t)" 
-                 @mouseleave="hideTooltip">
-                <span class="block leading-[1.1] break-words">
+                 @mouseenter="!isTouchDevice && showTooltip($event, t)" 
+                 @mouseleave="!isTouchDevice && hideTooltip()"
+                 @click.stop="handleBubbleClick(t)"
+                 @pointerdown="handlePointerDown($event, t)"
+                 @pointerup="handlePointerUp($event, t)"
+                 @pointercancel="handlePointerUp($event, t)"
+                 @contextmenu.prevent>
+                <span class="block leading-[1.1] break-words pointer-events-none">
                     {{ t.title }}
                 </span>
             </div>
@@ -31,11 +37,13 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { useBalanceStore } from '../stores/balance';
 
+const emit = defineEmits(['edit']);
 const store = useBalanceStore();
 const wrapper = ref(null);
 const container = ref(null);
 const bubblePositions = ref([]);
-const tooltip = ref({ visible: false, text: '', x: 0, y: 0 });
+const tooltip = ref({ visible: false, text: '', x: 0, y: 0, taskId: null });
+const isTouchDevice = ref(false);
 
 const bubbleContainerStyle = computed(() => {
     if (store.bubbleZoom !== 1) {
@@ -98,11 +106,55 @@ const showTooltip = (event, task) => {
     if (x + tooltipWidth > cw - 5) x = cw - tooltipWidth - 5;
     if (y < 5) y = 5;
 
-    tooltip.value = { visible: true, text: task.notes, x, y };
+    tooltip.value = { visible: true, text: task.notes, x, y, taskId: task.id };
 };
 
 const hideTooltip = () => {
     tooltip.value.visible = false;
+    tooltip.value.taskId = null;
+};
+
+let touchTimer = null;
+let touchMoved = false;
+let isLongPress = false;
+
+const handlePointerDown = (event, task) => {
+    if (!isTouchDevice.value) return;
+    touchMoved = false;
+    isLongPress = false;
+    touchTimer = setTimeout(() => {
+        if (!touchMoved) {
+            isLongPress = true;
+            showTooltip(event, task);
+        }
+        touchTimer = null;
+    }, 400); // 400ms for long press
+};
+
+const handlePointerUp = (event, task) => {
+    if (!isTouchDevice.value) return;
+    if (touchTimer) {
+        clearTimeout(touchTimer);
+        touchTimer = null;
+    } else if (isLongPress) {
+        hideTooltip();
+    }
+};
+
+// Listen for pointermove to cancel long press if user is scrolling
+window.addEventListener('pointermove', () => { touchMoved = true; }, { passive: true });
+
+const handleBubbleClick = (task) => {
+    if (isTouchDevice.value) {
+        // Если это был длинный тап, клик игнорируем (тултип уже открыт)
+        if (!isLongPress) {
+            emit('edit', task);
+        }
+        isLongPress = false; // reset
+    } else {
+        // Десктоп: обычный клик всегда редактирование
+        emit('edit', task);
+    }
 };
 
 const calcBubbles = () => {
@@ -110,8 +162,8 @@ const calcBubbles = () => {
     if (!T.length) { bubblePositions.value = []; return; }
     if (!container.value) return;
 
-    const W = container.value.clientWidth;
-    const H = container.value.clientHeight;
+    const W = container.value.clientWidth || 800; // Fallback for tests
+    const H = container.value.clientHeight || 600; // Fallback for tests
     if (!W || !H) return;
 
     const padding = 5;
@@ -184,32 +236,43 @@ const calcBubbles = () => {
     };
 
     let bestPlaced = null, scale = 1.2;
+    const isMobile = W < 600;
+
     while (scale > 0.3) {
         let centralPlaced = [], leftPlaced = [], rightPlaced = [], ok = true;
-        if (central.length > 0) {
-            centralPlaced = packGroup(central, (W - W * 0.4) / 2, padding, (W + W * 0.4) / 2, H - padding, scale);
+
+        if (isMobile) {
+            // На мобилках кидаем всё в одну кучу на всю ширину
+            const allTasks = [...central, ...side];
+            centralPlaced = packGroup(allTasks, padding, padding, W - padding, H - padding, scale);
             if (!centralPlaced) ok = false;
+        } else {
+            if (central.length > 0) {
+                centralPlaced = packGroup(central, (W - W * 0.4) / 2, padding, (W + W * 0.4) / 2, H - padding, scale);
+                if (!centralPlaced) ok = false;
+            }
+            if (!ok) { scale -= 0.02; continue; }
+
+            const cLeft = (W - W * 0.4) / 2, cRight = (W + W * 0.4) / 2;
+            if (side.length > 0) {
+                const leftTasks = [], rightTasks = [];
+                side.forEach((s, i) => i % 2 === 0 ? leftTasks.push(s) : rightTasks.push(s));
+                if (leftTasks.length > 0) {
+                    leftPlaced = packGroup(leftTasks, padding, padding, cLeft - padding, H - padding, scale);
+                    if (!leftPlaced) ok = false;
+                }
+                if (ok && rightTasks.length > 0) {
+                    rightPlaced = packGroup(rightTasks, cRight + padding, padding, W - padding, H - padding, scale);
+                    if (!rightPlaced) ok = false;
+                }
+            }
         }
+        
         if (!ok) { scale -= 0.02; continue; }
 
-        const cLeft = (W - W * 0.4) / 2, cRight = (W + W * 0.4) / 2;
-        if (side.length > 0) {
-            const leftTasks = [], rightTasks = [];
-            side.forEach((s, i) => i % 2 === 0 ? leftTasks.push(s) : rightTasks.push(s));
-            if (leftTasks.length > 0) {
-                leftPlaced = packGroup(leftTasks, padding, padding, cLeft - padding, H - padding, scale);
-                if (!leftPlaced) ok = false;
-            }
-            if (ok && rightTasks.length > 0) {
-                rightPlaced = packGroup(rightTasks, cRight + padding, padding, W - padding, H - padding, scale);
-                if (!rightPlaced) ok = false;
-            }
-        }
-        if (!ok) { scale -= 0.02; continue; }
-
-        // Shift logic from ref
+        // Shift logic only for desktop (3 columns)
         let allPlaced = (centralPlaced || []).concat(leftPlaced || [], rightPlaced || []);
-        if (allPlaced.length > 0) {
+        if (!isMobile && allPlaced.length > 0) {
             let cLA, cRA;
             if (centralPlaced && centralPlaced.length > 0) {
                 let minCX = Infinity, maxCX = -Infinity;
@@ -276,11 +339,14 @@ const calcBubbles = () => {
     bubblePositions.value = bestPlaced || [];
 };
 
+defineExpose({ calcBubbles, bubblePositions, handlePointerDown, handlePointerUp, handleBubbleClick, tooltip, isTouchDevice, container });
+
 watch(() => store.bubbleTasks, calcBubbles, { deep: true });
 watch(() => store.bubbleZoom, calcBubbles);
 window.addEventListener('resize', calcBubbles);
 
 onMounted(() => {
+    isTouchDevice.value = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     setTimeout(calcBubbles, 100);
 });
 
@@ -291,10 +357,11 @@ onUnmounted(() => {
 
 <style scoped>
 .bubble-wrapper {
-    touch-action: none;
+    touch-action: pan-y;
 }
 .bubble {
     user-select: none;
+    -webkit-touch-callout: none;
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .bubble span {
