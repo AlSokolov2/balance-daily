@@ -15,17 +15,21 @@
             </div>
 
             <!-- Категории -->
-            <div v-if="tab === 'cat'" class="space-y-2">
-                <div v-for="(c, slug) in editableCats" :key="slug" class="flex items-center gap-2 py-1 border-b border-gray-50 last:border-0">
-                    <input v-model="c.name" type="text" class="w-20 p-1.5 border rounded-lg text-xs">
-                    <input v-model.number="c.weight" type="range" min="1" max="99" @input="syncWeights(slug, c.weight)" class="flex-1 accent-blue-600">
-                    <span class="text-[10px] text-gray-500 w-8 text-right">{{ c.weight }}%</span>
-                    <div class="flex flex-col">
-                        <label class="text-[8px] text-gray-400">До:</label>
-                        <input v-model="c.hide_until" type="time" class="text-[10px] p-0.5 border rounded">
+            <div v-if="tab === 'cat'" class="space-y-2 pb-2">
+                <div v-for="(c, slug) in editableCats" :key="slug" 
+                     @click="openEditCategory(slug)"
+                     class="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-gray-200">
+                    <div class="flex items-center gap-3">
+                        <div class="w-4 h-4 rounded-full shadow-inner" :style="{ backgroundColor: c.color }"></div>
+                        <span class="font-medium text-sm text-gray-800">{{ c.name }}</span>
                     </div>
-                    <input v-model="c.color" type="color" class="w-8 h-8 p-0.5 border rounded-lg cursor-pointer">
-                    <button @click="deleteCategory(slug)" class="p-1 text-gray-400 hover:text-red-500">🗑</button>
+                    <div class="flex items-center gap-3">
+                        <span v-if="c.hide_until" class="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-medium">
+                            До {{ c.hide_until }}
+                        </span>
+                        <span class="text-xs font-bold text-gray-400 w-10 text-right">{{ c.weight }}%</span>
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
                 </div>
                 <div class="flex gap-2 pt-2">
                     <button @click="addCategory" class="flex-1 py-2 bg-gray-100 text-gray-700 rounded-xl font-semibold text-xs">+ Добавить</button>
@@ -61,12 +65,24 @@
                 <input type="file" ref="fileInput" @change="handleImport" accept=".json" class="hidden">
             </div>
         </div>
+
+        <EditCategoryModal 
+            v-if="editingCategory" 
+            :category="editingCategory.data" 
+            :slug="editingCategory.slug"
+            :isNew="editingCategory.isNew"
+            @close="editingCategory = null"
+            @save="handleSaveCategory"
+            @delete="handleDeleteCategory"
+            @weight-changed="syncWeights"
+        />
     </div>
 </template>
 
 <script setup>
 import { ref, onMounted, reactive } from 'vue';
 import { useBalanceStore } from '../stores/balance';
+import EditCategoryModal from './EditCategoryModal.vue';
 import axios from 'axios';
 
 const emit = defineEmits(['close']);
@@ -76,6 +92,7 @@ const tabNames = { cat: 'Категории', sub: 'Подкатегории', n
 
 const editableCats = reactive({});
 const localNotepad = ref('');
+const editingCategory = ref(null);
 
 const initData = () => {
     store.categories.filter(c => c.slug !== '__archive__').forEach(c => {
@@ -118,10 +135,42 @@ const syncWeights = (slug, w) => {
     }
 };
 
+const openEditCategory = (slug) => {
+    editingCategory.value = {
+        slug,
+        data: { ...editableCats[slug] },
+        isNew: false
+    };
+};
+
+const handleSaveCategory = (slug, data) => {
+    editableCats[slug] = data;
+    syncWeights(slug, data.weight); // Ensure weights are balanced after save
+    editingCategory.value = null;
+};
+
+const handleDeleteCategory = (slug) => {
+    if (Object.keys(editableCats).length <= 1) {
+        alert('Нельзя удалить последнюю категорию');
+        return;
+    }
+    delete editableCats[slug];
+    const firstRemaining = Object.keys(editableCats)[0];
+    syncWeights(firstRemaining, editableCats[firstRemaining].weight);
+    editingCategory.value = null;
+};
+
 const addCategory = () => {
     const newKey = 'cat_' + Date.now();
-    editableCats[newKey] = { name: 'Новая', weight: 10, color: '#8e8e93', hide_until: '' };
+    const newData = { name: 'Новая', weight: 10, color: '#8e8e93', hide_until: '' };
+    editableCats[newKey] = newData;
     syncWeights(newKey, 10);
+    
+    editingCategory.value = {
+        slug: newKey,
+        data: { ...newData },
+        isNew: true
+    };
 };
 
 const deleteCategory = (slug) => {

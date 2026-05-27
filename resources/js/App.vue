@@ -28,16 +28,29 @@
 
     <!-- Основное приложение (после входа) -->
     <div v-else class="app-container max-w-[650px] mx-auto">
-        <h1 class="text-2xl font-bold mb-2 flex justify-between items-center px-1 pt-4">
+        <h1 class="text-2xl font-bold mb-2 flex justify-between items-center px-1 pt-4 relative">
             Баланс.Дейли 
-            <div class="flex items-center gap-2">
-                <div v-if="store.user" class="flex items-center gap-2 mr-1">
+            <div class="flex items-center gap-2 relative">
+                <div v-if="store.user" class="flex items-center gap-2 cursor-pointer" @click="isMenuOpen = !isMenuOpen">
                     <img :src="store.user.avatar" class="w-8 h-8 rounded-full border border-gray-200 object-cover" referrerpolicy="no-referrer" :title="store.user.name">
-                    <button @click="store.logout" class="secondary text-sm px-3 py-1.5 rounded-lg">Выйти</button>
+                    <span class="text-sm font-medium hidden sm:block">{{ store.user.name }}</span>
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
-                <button @click="showSettingsModal = true" class="secondary text-sm px-3 py-1.5 rounded-lg">Настройки</button>
+                
+                <!-- Выпадающее меню -->
+                <div v-if="isMenuOpen" class="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50">
+                    <button @click="openSettings" class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                        <span>⚙️</span> Настройки
+                    </button>
+                    <button @click="handleLogout" class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-100">
+                        <span>🚪</span> Выйти
+                    </button>
+                </div>
             </div>
         </h1>
+
+        <!-- Overlay для закрытия меню по клику снаружи -->
+        <div v-if="isMenuOpen" @click="isMenuOpen = false" class="fixed inset-0 z-40"></div>
 
         <!-- Форма добавления -->
         <div class="card bg-white rounded-[16px] p-4 mb-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[#e5e5ea]">
@@ -166,11 +179,22 @@ import SettingsModal from './components/SettingsModal.vue';
 const store = useBalanceStore();
 const weekdays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 const showSettingsModal = ref(false);
+const isMenuOpen = ref(false);
 const editingTask = ref(null);
 const isInitializing = ref(true);
 
 const loginWithGoogle = () => {
     window.location.href = store.googleAuthUrl;
+};
+
+const handleLogout = () => {
+    isMenuOpen.value = false;
+    store.logout();
+};
+
+const openSettings = () => {
+    isMenuOpen.value = false;
+    showSettingsModal.value = true;
 };
 
 const newTask = ref({
