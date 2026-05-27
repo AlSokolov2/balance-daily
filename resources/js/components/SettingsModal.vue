@@ -42,7 +42,7 @@
                 <div v-for="(coeff, name) in store.subcatCoeffs" :key="name" class="flex items-center gap-2 py-2 border-b border-gray-50">
                     <span class="flex-1 text-sm">{{ name }}</span>
                     <input v-model.number="store.subcatCoeffs[name]" type="range" min="0.5" max="4" step="0.1" class="w-24 accent-blue-600">
-                    <span class="text-xs text-gray-500 w-8">{{ coeff.toFixed(1) }}</span>
+                    <span class="text-xs text-gray-500 w-8">{{ Number(coeff).toFixed(1) }}</span>
                     <button @click="deleteSubcat(name)" class="p-1 text-gray-400 hover:text-red-500">🗑</button>
                 </div>
                 <button @click="saveSubcats" class="w-full py-2 bg-blue-600 text-white rounded-xl font-semibold text-xs mt-4">Сохранить</button>
