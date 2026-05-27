@@ -13,6 +13,7 @@
 *   **Smart Prioritization:** Automatically calculates task weight based on category, importance, deadlines, and overdue days.
 *   **Dynamic Balance:** The system automatically increases the priority of life spheres that haven't received enough attention recently.
 *   **Interactive Visualization:** A custom-built bubble chart to visually highlight your most important daily tasks.
+*   **Mobile-First Design:** Gesture controls (long press for tooltips, tap to edit) and a responsive UI with full-screen visualization.
 *   **Recurring Tasks:** Flexible cycle settings (intervals or specific weekdays) with automatic "hide-until-next" logic.
 *   **Google Auth:** Secure authentication and cloud synchronization for your personal data.
 *   **Full Data Isolation:** Strict privacy enforcement — every user operates within their own secured sandbox.
