@@ -1,0 +1,87 @@
+<template>
+    <div class="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4 pb-0 sm:pb-4" @click.self="$emit('close')">
+        <div class="bg-white rounded-t-3xl sm:rounded-2xl p-5 w-full max-w-sm shadow-2xl relative max-h-[92vh] sm:max-h-[90vh] overflow-y-auto pb-8 sm:pb-5">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold">Настройка категории</h2>
+                <span @click="$emit('close')" class="cursor-pointer text-2xl text-gray-400 hover:text-gray-600">&times;</span>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] text-gray-400 uppercase font-bold px-1">Название</label>
+                    <input v-model="editData.name" type="text" class="w-full p-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="text-[10px] text-gray-400 uppercase font-bold px-1 flex justify-between">
+                        <span>Вес (влияет на размер пузырька)</span>
+                        <span class="text-blue-600">{{ editData.weight }}%</span>
+                    </label>
+                    <div class="flex items-center gap-3 mt-1">
+                        <input v-model.number="editData.weight" type="range" min="1" max="99" class="flex-1 accent-blue-600">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] text-gray-400 uppercase font-bold px-1">Цвет</label>
+                        <div class="flex items-center gap-2 mt-1">
+                            <input v-model="editData.color" type="color" class="w-10 h-10 p-0.5 border rounded-xl cursor-pointer">
+                            <span class="text-xs text-gray-500 font-mono">{{ editData.color }}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-400 uppercase font-bold px-1">Скрыто до (время)</label>
+                        <input v-model="editData.hide_until" type="time" class="w-full mt-1 p-2 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="pt-4 flex gap-2 border-t border-gray-100">
+                    <button v-if="!isNew" @click="$emit('delete', slug)" class="w-12 py-3 bg-red-50 text-red-600 rounded-xl flex items-center justify-center hover:bg-red-100 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                    <button @click="handleSave" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 active:scale-[0.98] transition-all">
+                        Готово
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script setup>
+import { reactive, watch } from 'vue';
+
+const props = defineProps({
+    category: {
+        type: Object,
+        required: true
+    },
+    slug: {
+        type: String,
+        required: true
+    },
+    isNew: {
+        type: Boolean,
+        default: false
+    }
+});
+
+const emit = defineEmits(['close', 'save', 'delete']);
+
+const editData = reactive({ ...props.category });
+
+// Notify parent immediately when weight changes so it can balance others
+watch(() => editData.weight, (newWeight) => {
+    emit('weight-changed', props.slug, newWeight);
+});
+
+// Allow parent to update local state if syncWeights changes it
+watch(() => props.category.weight, (newWeight) => {
+    editData.weight = newWeight;
+});
+
+const handleSave = () => {
+    emit('save', props.slug, { ...editData });
+};
+</script>
