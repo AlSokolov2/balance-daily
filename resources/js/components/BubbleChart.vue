@@ -8,8 +8,8 @@
                  :key="t.id" 
                  class="bubble absolute rounded-full flex items-center justify-center text-center font-medium p-1 cursor-default transition-all duration-500"
                  :style="getBubbleStyle(t)"
-                 @mouseenter="showTooltip($event, t)" 
-                 @mouseleave="hideTooltip"
+                 @mouseenter="!isTouchDevice && showTooltip($event, t)" 
+                 @mouseleave="!isTouchDevice && hideTooltip()"
                  @click.stop="toggleTooltip($event, t)">
                 <span class="block leading-[1.1] break-words pointer-events-none">
                     {{ t.title }}
@@ -38,6 +38,7 @@ const wrapper = ref(null);
 const container = ref(null);
 const bubblePositions = ref([]);
 const tooltip = ref({ visible: false, text: '', x: 0, y: 0, taskId: null });
+const isTouchDevice = ref(false);
 
 const bubbleContainerStyle = computed(() => {
     if (store.bubbleZoom !== 1) {
@@ -303,6 +304,7 @@ watch(() => store.bubbleZoom, calcBubbles);
 window.addEventListener('resize', calcBubbles);
 
 onMounted(() => {
+    isTouchDevice.value = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     setTimeout(calcBubbles, 100);
 });
 
