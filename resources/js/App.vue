@@ -27,7 +27,7 @@
     </div>
 
     <!-- Основное приложение (после входа) -->
-    <div v-else class="app-container w-full max-w-[1600px] mx-auto flex flex-col h-[calc(100dvh-92px)] sm:h-[calc(100dvh-24px)] px-2 sm:px-4 overflow-x-hidden">
+    <div v-else class="app-container w-full max-w-[1600px] mx-auto flex flex-col h-[100dvh] p-2 sm:p-4 overflow-hidden">
         <h1 class="text-xl sm:text-2xl font-bold shrink-0 mb-2 flex justify-between items-center px-1 pt-2 relative flex-wrap gap-y-2">
             Баланс.Дейли 
             <div class="flex items-center gap-2 relative">
