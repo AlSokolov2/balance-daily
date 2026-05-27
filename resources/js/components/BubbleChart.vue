@@ -1,7 +1,7 @@
 <template>
-    <div ref="wrapper" class="bubble-wrapper relative w-full h-[300px] border border-[#e5e5ea] rounded-xl overflow-hidden bg-[#fafafa] mb-4 transition-all duration-300"
-         :class="{ 'zoomed overflow-visible max-h-none z-40': store.bubbleZoom !== 1 }">
-        <div ref="container" class="bubble-container relative w-full h-[300px] transition-transform duration-300 bg-[#fafafa]"
+    <div ref="wrapper" class="bubble-wrapper relative w-full h-full transition-all duration-300"
+         :class="{ 'zoomed overflow-visible z-40': store.bubbleZoom !== 1 }">
+        <div ref="container" class="bubble-container relative w-full h-full transition-transform duration-300"
              :style="bubbleContainerStyle"
              @click="hideTooltip">
             <div v-for="t in store.bubbleTasks" 

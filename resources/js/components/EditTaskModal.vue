@@ -2,8 +2,8 @@
     <div class="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4" @click.self="$emit('close')">
         <div class="bg-white rounded-2xl p-4 sm:p-5 w-full max-w-md shadow-2xl relative max-h-[90vh] overflow-y-auto overflow-x-hidden">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold">Редактировать</h2>
-                <div class="flex items-center gap-2 mr-auto ml-2 sm:ml-5">
+                <h2 class="text-lg font-bold">{{ isNew ? 'Новая задача' : 'Редактировать' }}</h2>
+                <div v-if="!isNew" class="flex items-center gap-2 mr-auto ml-2 sm:ml-5">
                     <span class="text-sm font-semibold">Выполнено</span>
                     <input type="checkbox" v-model="editData.completed" class="w-5 h-5 rounded-lg accent-blue-600">
                 </div>
@@ -97,7 +97,11 @@ import { useBalanceStore } from '../stores/balance';
 import axios from 'axios';
 
 const props = defineProps({
-    task: Object
+    task: Object,
+    isNew: {
+        type: Boolean,
+        default: false
+    }
 });
 const emit = defineEmits(['close', 'saved']);
 const store = useBalanceStore();
@@ -109,7 +113,7 @@ const editData = reactive({
     // Format dates for input[type="datetime-local"]
     deadline: props.task.deadline ? props.task.deadline.substring(0, 16) : '',
     postpone_until: props.task.postpone_until ? props.task.postpone_until.substring(0, 16) : '',
-    completed_at: props.task.completed_at ? props.task.completed_at.substring(0, 16) : '',
+    completed_at: props.task?.completed_at ? props.task.completed_at.substring(0, 16) : '',
     repeat_days: props.task.repeat_days || []
 });
 
@@ -130,7 +134,12 @@ const handleSave = async () => {
             completed_at: editData.completed_at || null,
         };
         
-        await axios.put(`tasks/${props.task.id}`, payload);
+        if (props.isNew) {
+            await axios.post('tasks', payload);
+        } else {
+            await axios.put(`tasks/${props.task.id}`, payload);
+        }
+        
         await store.fetchAll();
         emit('saved');
         emit('close');

@@ -27,11 +27,14 @@
     </div>
 
     <!-- Основное приложение (после входа) -->
-    <div v-else class="app-container max-w-[650px] mx-auto">
-        <h1 class="text-2xl font-bold mb-2 flex justify-between items-center px-1 pt-4 relative">
+    <div v-else class="app-container w-full max-w-[1600px] mx-auto flex flex-col h-[calc(100dvh-92px)] sm:h-[calc(100dvh-24px)] px-2 sm:px-4 overflow-x-hidden">
+        <h1 class="text-xl sm:text-2xl font-bold shrink-0 mb-2 flex justify-between items-center px-1 pt-2 relative flex-wrap gap-y-2">
             Баланс.Дейли 
             <div class="flex items-center gap-2 relative">
-                <div v-if="store.user" class="flex items-center gap-2 cursor-pointer" @click="isMenuOpen = !isMenuOpen">
+                <button @click="showTaskList = !showTaskList" class="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1.5 rounded-xl hover:bg-blue-100 transition-colors">
+                    {{ showTaskList ? 'Скрыть список' : 'Список задач' }}
+                </button>
+                <div v-if="store.user" class="flex items-center gap-2 cursor-pointer ml-2" @click="isMenuOpen = !isMenuOpen">
                     <img :src="store.user.avatar" class="w-8 h-8 rounded-full border border-gray-200 object-cover" referrerpolicy="no-referrer" :title="store.user.name">
                     <span class="text-sm font-medium hidden sm:block">{{ store.user.name }}</span>
                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -53,99 +56,41 @@
         <div v-if="isMenuOpen" @click="isMenuOpen = false" class="fixed inset-0 z-40"></div>
 
         <!-- Форма добавления -->
-        <div class="card bg-white rounded-[16px] p-4 mb-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[#e5e5ea]">
-            <input v-model="newTask.title" placeholder="Что сделать?" @keyup.enter="addTask" class="w-full p-[10px_12px] rounded-10 border border-[#c6c6c8] mb-1.5 text-[15px] outline-none">
-            
-            <div class="row flex gap-1.5 items-center flex-wrap mb-1.5">
-                <select v-model="newTask.category_slug" class="flex-1 p-[10px_12px] rounded-10 border border-[#c6c6c8] text-[15px] bg-white outline-none min-w-[120px]">
-                    <option v-for="cat in store.categories.filter(c => c.slug !== '__archive__')" :key="cat.slug" :value="cat.slug">{{ cat.name }}</option>
-                </select>
-                <select v-model="newTask.importance" class="flex-1 p-[10px_12px] rounded-10 border border-[#c6c6c8] text-[15px] bg-white outline-none min-w-[120px]">
-                    <option value="4">Очень высокая</option>
-                    <option value="3">Высокая</option>
-                    <option value="2">Средняя</option>
-                    <option value="1">Низкая</option>
-                    <option value="0.5">Очень низкая</option>
-                </select>
-            </div>
-
-            <div class="row flex gap-1.5 items-center flex-wrap mb-1.5 text-xs text-gray-400">
-                <input v-model="newTask.subcategory" list="subcat-list" placeholder="Подкатегория" class="flex-[2] p-2 rounded-10 border border-[#c6c6c8] outline-none">
-                <datalist id="subcat-list"><option v-for="s in store.allSubcats" :key="s" :value="s"></option></datalist>
-                <label>Дедлайн:</label>
-                <input type="datetime-local" v-model="newTask.deadline" class="flex-[2] p-2 rounded-10 border border-[#c6c6c8] outline-none">
-            </div>
-
-            <div class="row flex gap-1.5 items-center flex-wrap mb-1.5 text-xs text-gray-400">
-                <label>Отложить до:</label>
-                <input type="datetime-local" v-model="newTask.postpone_until" class="flex-[2] p-2 rounded-10 border border-[#c6c6c8] outline-none">
-                <select v-model="newTask.repeat_type" class="flex-1 p-2 rounded-10 border border-[#c6c6c8] bg-white outline-none">
-                    <option value="none">Без повтора</option>
-                    <option value="interval">Каждые N дней</option>
-                    <option value="weekly">По дням недели</option>
-                </select>
-            </div>
-
-            <div v-if="newTask.repeat_type === 'interval'" class="row flex gap-1.5 items-center mb-1.5 text-xs">
-                <label>Дней:</label>
-                <input type="number" v-model.number="newTask.repeat_interval" min="1" class="w-20 p-2 rounded-10 border border-[#c6c6c8] outline-none">
-            </div>
-
-            <div v-if="newTask.repeat_type === 'weekly'" class="row flex gap-1.5 items-center mb-1.5 text-xs flex-wrap">
-                <div class="flex gap-2">
-                    <label v-for="(day, idx) in weekdays" :key="idx" class="flex items-center gap-1">
-                        <input type="checkbox" :value="idx" v-model="newTask.repeat_days"> {{ day }}
-                    </label>
-                </div>
-            </div>
-
-            <div class="row flex gap-3 items-center mb-1.5 text-xs text-gray-400">
-                <label class="flex items-center gap-1">HA <input type="checkbox" v-model="newTask.ha"></label>
-                <label class="flex items-center gap-1">Актуально <input type="checkbox" v-model="newTask.force_active"></label>
-                <label>Заметка:</label>
-            </div>
-            
-            <textarea v-model="newTask.notes" placeholder="Мини-заметка..." class="w-full p-[10px_12px] rounded-10 border border-[#c6c6c8] mb-1.5 text-[15px] h-10 resize-none outline-none"></textarea>
-
-            <button @click="addTask" class="w-full p-[10px_12px] bg-[#007aff] text-white rounded-10 font-semibold text-[15px] cursor-pointer hover:opacity-90 active:scale-[0.98] transition-all">Добавить</button>
-        </div>
-
-        <!-- Визуализация -->
-        <div class="card bg-white rounded-[16px] p-4 mb-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[#e5e5ea]">
-            <h3 class="text-base font-semibold mb-2 flex justify-between items-center">
-                Приоритеты ({{ store.bubbleTasks.length }})
-                <div class="flex items-center gap-2">
-                    <button @click="store.fetchAll" class="secondary text-xs px-2 py-1 rounded">Обновить</button>
-                    <input type="range" v-model.number="store.bubbleZoom" min="0.5" max="2" step="0.1" class="w-20">
-                    <span class="text-[12px] text-gray-500 w-8">{{ store.bubbleZoom.toFixed(1) }}x</span>
-                </div>
-            </h3>
-            <BubbleChart @edit="handleEdit" />
+        <div class="flex items-center gap-2 mb-3 px-1 shrink-0 z-10 relative">
+            <input v-model="newTask.title" placeholder="Что нужно сделать?" @keyup.enter="addTask" class="flex-1 p-[12px_16px] rounded-2xl border border-[#e5e5ea] shadow-sm text-[15px] outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-white">
+            <button @click="openAdvancedAdd" class="p-[12px] bg-blue-100 text-blue-600 rounded-2xl font-bold shadow-sm hover:bg-blue-200 transition-colors w-[46px] h-[46px] flex items-center justify-center shrink-0" title="Расширенное добавление">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            </button>
         </div>
 
         <!-- Фильтры -->
-        <div class="filter-tabs flex gap-[3px] mb-3 bg-[#f2f2f7] p-[3px] rounded-10 flex-wrap">
+        <div class="flex gap-2 mb-3 px-1 overflow-x-auto pb-1 scrollbar-hide shrink-0 snap-x">
             <div @click="store.filterCat = 'all'" 
-                 :class="['filter-tab flex-1 text-center py-[6px] rounded-8 cursor-pointer text-[12px] transition-all', store.filterCat === 'all' ? 'active bg-white font-semibold' : '']">
-                Все
+                 :class="['whitespace-nowrap px-4 py-2 rounded-xl cursor-pointer text-sm font-medium transition-all snap-start shadow-sm', store.filterCat === 'all' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50']">
+                Все ({{ store.bubbleTasks.length }})
             </div>
             <div v-for="cat in store.categories.filter(c => c.slug !== '__archive__')" :key="cat.slug"
                  @click="store.filterCat = cat.slug"
-                 :class="['filter-tab flex-1 text-center py-[6px] rounded-8 cursor-pointer text-[12px] transition-all', store.filterCat === cat.slug ? 'active bg-white font-semibold' : '']">
+                 :class="['whitespace-nowrap px-4 py-2 rounded-xl cursor-pointer text-sm font-medium transition-all snap-start shadow-sm', store.filterCat === cat.slug ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50']">
                 {{ cat.name }}
             </div>
-            <div @click="store.filterCat = 'archive'"
-                 :class="['filter-tab flex-1 text-center py-[6px] rounded-8 cursor-pointer text-[12px] transition-all', store.filterCat === 'archive' ? 'active bg-white font-semibold' : '']">
-                Архив
-            </div>
             <div @click="store.filterCat = 'hidden'"
-                 :class="['filter-tab flex-1 text-center py-[6px] rounded-8 cursor-pointer text-[12px] transition-all', store.filterCat === 'hidden' ? 'active bg-white font-semibold' : '']">
+                 :class="['whitespace-nowrap px-4 py-2 rounded-xl cursor-pointer text-sm font-medium transition-all snap-start shadow-sm', store.filterCat === 'hidden' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50']">
                 Скрытые
+            </div>
+            <div @click="store.filterCat = 'archive'"
+                 :class="['whitespace-nowrap px-4 py-2 rounded-xl cursor-pointer text-sm font-medium transition-all snap-start shadow-sm', store.filterCat === 'archive' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50']">
+                Архив
             </div>
         </div>
 
+        <!-- Визуализация -->
+        <div class="flex-1 bg-white rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden flex flex-col mb-3 min-h-0 min-w-0">
+            <BubbleChart @edit="handleEdit" class="flex-1 w-full h-full" />
+        </div>
+
         <!-- Список задач -->
-        <div class="card bg-white rounded-[16px] p-4 mb-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[#e5e5ea] min-h-[100px]">
+        <div v-if="showTaskList" class="card bg-white rounded-[16px] p-4 mb-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[#e5e5ea] min-h-[100px] overflow-y-auto shrink-0 max-h-[30vh]">
             <div v-if="!store.filteredTasks.length" class="text-center py-8 text-[#8e8e93] text-sm">
                 Нет задач
             </div>
@@ -157,13 +102,25 @@
         </div>
 
         <!-- Плавающая панель -->
-        <div class="action-bar sticky bottom-3 bg-white/90 backdrop-blur-[20px] p-[10px] rounded-[20px] flex gap-2 border border-[#e5e5ea] shadow-sm z-50">
-            <button @click="store.fetchAll" class="secondary flex-1 py-2 rounded-10 text-[15px]">Обновить</button>
-            <button @click="resetDay" class="secondary flex-1 py-2 rounded-10 text-[15px]">Новый день</button>
+        <div class="action-bar sticky bottom-3 bg-white/90 backdrop-blur-[20px] p-1.5 sm:p-[8px_10px] rounded-[24px] flex items-center gap-1.5 sm:gap-3 border border-[#e5e5ea] shadow-sm z-50 shrink-0">
+            <div class="flex items-center gap-1 bg-gray-100/50 p-1 rounded-2xl shrink-0">
+                <button @click="store.bubbleZoom = Math.max(0.5, store.bubbleZoom - 0.1)" class="w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-white text-gray-600 shadow-sm flex items-center justify-center hover:bg-gray-50 font-bold text-base sm:text-lg active:scale-95 transition-transform">-</button>
+                <button @click="store.bubbleZoom = 1" class="w-8 sm:w-[42px] text-[10px] sm:text-[11px] font-bold text-gray-500 text-center hover:text-gray-700 active:scale-95 transition-transform" title="Сбросить масштаб">
+                    {{ store.bubbleZoom.toFixed(1) }}x
+                </button>
+                <button @click="store.bubbleZoom = Math.min(2, store.bubbleZoom + 0.1)" class="w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-white text-gray-600 shadow-sm flex items-center justify-center hover:bg-gray-50 font-bold text-base sm:text-lg active:scale-95 transition-transform">+</button>
+            </div>
+            <div class="flex gap-1.5 sm:gap-2 flex-1 min-w-0">
+                <button @click="store.fetchAll" class="secondary flex-1 py-2 sm:py-3 rounded-2xl text-xs sm:text-[14px] font-semibold flex items-center justify-center gap-1.5 active:scale-95 transition-transform min-w-0" title="Обновить">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    <span class="hidden md:inline truncate">Обновить</span>
+                </button>
+                <button @click="resetDay" class="secondary flex-[2] sm:flex-1 py-2 sm:py-3 rounded-2xl text-xs sm:text-[14px] font-semibold active:scale-95 transition-transform truncate min-w-0">Новый день</button>
+            </div>
         </div>
         
         <!-- Модальные окна -->
-        <EditTaskModal v-if="editingTask" :task="editingTask" @close="editingTask = null" />
+        <EditTaskModal v-if="editingTask" :task="editingTask" :isNew="editingTask.isNew" @close="editingTask = null" />
         <SettingsModal v-if="showSettingsModal" @close="showSettingsModal = false" />
     </div>
 </template>
@@ -180,6 +137,7 @@ const store = useBalanceStore();
 const weekdays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 const showSettingsModal = ref(false);
 const isMenuOpen = ref(false);
+const showTaskList = ref(false);
 const editingTask = ref(null);
 const isInitializing = ref(true);
 
@@ -211,6 +169,12 @@ const newTask = ref({
     force_active: false,
     notes: '',
 });
+
+const openAdvancedAdd = () => {
+    editingTask.value = { ...newTask.value, isNew: true };
+    // Clear input after opening
+    newTask.value.title = '';
+};
 
 const addTask = async () => {
     if (!newTask.value.title) return;
