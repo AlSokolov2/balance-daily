@@ -12,17 +12,10 @@ class AuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->withoutVite();
-    }
-
     public function test_google_redirect_works(): void
     {
         $response = $this->get('/auth/google');
-        
-        // Assert redirect to google
+        $response->assertRedirect();
         $this->assertStringContainsString('accounts.google.com', $response->getTargetUrl());
     }
 
@@ -50,10 +43,9 @@ class AuthenticationTest extends TestCase
 
         $user = User::where('email', 'test@example.com')->first();
         
-        // Assert token is present in redirect URL
+        $response->assertRedirect();
         $this->assertStringContainsString('token=', $response->getTargetUrl());
         
-        // Assert default categories were seeded
         $this->assertDatabaseHas('categories', [
             'user_id' => $user->id,
             'slug' => 'chor'
@@ -65,30 +57,26 @@ class AuthenticationTest extends TestCase
         $response = $this->get('/auth/dev-login');
 
         $this->assertDatabaseHas('users', [
-            'email' => 'dev@example.com'
+            'email' => 'alsokolov2@gmail.com'
         ]);
 
         $response->assertRedirect();
         $this->assertStringContainsString('token=', $response->getTargetUrl());
 
-        $user = User::where('email', 'dev@example.com')->first();
+        $user = User::where('email', 'alsokolov2@gmail.com')->first();
         $this->assertDatabaseHas('categories', [
             'user_id' => $user->id,
             'slug' => 'chor'
         ]);
     }
 
-    public function test_user_can_get_their_profile_when_authenticated(): void
+    public function test_user_can_get_profile_when_authenticated(): void
     {
         $user = User::factory()->create();
-        $token = $user->createToken('test')->plainTextToken;
-
-        $response = $this->getJson('/api/user', [
-            'Authorization' => 'Bearer ' . $token
-        ]);
+        $response = $this->actingAs($user)->getJson('/api/user');
 
         $response->assertStatus(200)
-                 ->assertJsonPath('email', $user->email);
+                 ->assertJson(['email' => $user->email]);
     }
 
     public function test_unauthenticated_user_cannot_access_protected_routes(): void

@@ -31,10 +31,9 @@
     <!-- Основное приложение (после входа) -->
     <div v-else class="app-container w-full max-w-[1600px] mx-auto flex flex-col h-[100dvh] p-2 sm:p-4 overflow-hidden relative bg-[var(--bg-app)]">
         <header v-if="!isHandheld" class="flex justify-between items-center px-1 py-2 shrink-0 z-50">
-            <h1 v-if="!isHandheld || !isLandscape" class="text-xl sm:text-2xl font-bold text-[var(--color-text)] tracking-tight">
+            <h1 class="text-xl sm:text-2xl font-bold text-[var(--color-text)] tracking-tight">
                 Баланс.Дейли
             </h1>
-            <div v-else class="w-8 h-8"></div>
             
             <div class="flex items-center gap-2 relative">
                 <button @click="showTaskList = !showTaskList" class="text-xs sm:text-sm font-bold text-[var(--color-text)] bg-[var(--bg-secondary)] px-4 py-2 rounded-xl hover:opacity-80 border border-[var(--color-border)] transition-colors">
@@ -42,7 +41,7 @@
                 </button>
                 <div v-if="store.user" class="flex items-center gap-2 cursor-pointer ml-1 sm:ml-2" @click="isMenuOpen = !isMenuOpen">
                     <img :src="store.user.avatar" class="w-9 h-9 rounded-xl border border-[var(--color-border)] object-cover shadow-sm" referrerpolicy="no-referrer" :title="store.user.name">
-                    <svg class="w-4 h-4 text-[var(--color-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
                 
                 <!-- Выпадающее меню (Desktop) -->
@@ -74,20 +73,20 @@
         <div v-if="!isHandheld" class="px-1 mb-3 shrink-0">
             <div class="flex gap-1 bg-[var(--bg-secondary)] p-1 rounded-2xl overflow-x-auto pb-1 scrollbar-hide snap-x border border-[var(--color-border)]">
                 <div @click="store.filterCat = 'all'" 
-                     :class="['whitespace-nowrap px-6 py-2 rounded-xl cursor-pointer text-xs font-bold uppercase tracking-wider transition-all snap-start', store.filterCat === 'all' ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm border border-[var(--color-border)]' : 'text-[var(--color-secondary)] hover:text-[var(--color-text)]']">
+                     :class="['whitespace-nowrap px-6 py-2 rounded-xl cursor-pointer text-xs font-bold uppercase tracking-wider transition-all snap-start shadow-sm', store.filterCat === 'all' ? 'bg-[var(--bg-card)] text-[var(--color-text)] border border-[var(--color-border)]' : 'text-[var(--color-secondary)] hover:text-[var(--color-text)]']">
                     Все ({{ store.bubbleTasks.length }})
                 </div>
                 <div v-for="cat in store.categories.filter(c => c.slug !== '__archive__')" :key="cat.slug"
                      @click="store.filterCat = cat.slug"
-                     :class="['whitespace-nowrap px-6 py-2 rounded-xl cursor-pointer text-xs font-bold uppercase tracking-wider transition-all snap-start', store.filterCat === cat.slug ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm border border-[var(--color-border)]' : 'text-[var(--color-secondary)] hover:text-[var(--color-text)]']">
+                     :class="['whitespace-nowrap px-6 py-2 rounded-xl cursor-pointer text-xs font-bold uppercase tracking-wider transition-all snap-start shadow-sm', store.filterCat === cat.slug ? 'bg-[var(--bg-card)] text-[var(--color-text)] border border-[var(--color-border)]' : 'text-[var(--color-secondary)] hover:text-[var(--color-text)]']">
                     {{ cat.name }}
                 </div>
                 <div @click="store.filterCat = 'hidden'"
-                     :class="['whitespace-nowrap px-6 py-2 rounded-xl cursor-pointer text-xs font-bold uppercase tracking-wider transition-all snap-start', store.filterCat === 'hidden' ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm border border-[var(--color-border)]' : 'text-[var(--color-secondary)] hover:text-[var(--color-text)]']">
+                     :class="['whitespace-nowrap px-6 py-2 rounded-xl cursor-pointer text-xs font-bold uppercase tracking-wider transition-all snap-start shadow-sm', store.filterCat === 'hidden' ? 'bg-[var(--bg-card)] text-[var(--color-text)] border border-[var(--color-border)]' : 'text-[var(--color-secondary)] hover:text-[var(--color-text)]']">
                     Скрытые
                 </div>
                 <div @click="store.filterCat = 'archive'"
-                     :class="['whitespace-nowrap px-6 py-2 rounded-xl cursor-pointer text-xs font-bold uppercase tracking-wider transition-all snap-start', store.filterCat === 'archive' ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm border border-[var(--color-border)]' : 'text-[var(--color-secondary)] hover:text-[var(--color-text)]']">
+                     :class="['whitespace-nowrap px-6 py-2 rounded-xl cursor-pointer text-xs font-bold uppercase tracking-wider transition-all snap-start shadow-sm', store.filterCat === 'archive' ? 'bg-[var(--bg-card)] text-[var(--color-text)] border border-[var(--color-border)]' : 'text-[var(--color-secondary)] hover:text-[var(--color-text)]']">
                     Архив
                 </div>
             </div>
@@ -135,6 +134,15 @@
                               :task="task"
                               @edit="handleEdit"
                               @delete="deleteTask" />
+                </div>
+                
+                <!-- Desktop Zoom Controls Overlay -->
+                <div v-if="!isHandheld" class="absolute bottom-4 right-4 flex items-center gap-1 bg-[var(--bg-card)]/80 backdrop-blur-md p-1.5 rounded-2xl border border-[var(--color-border)] shadow-sm z-10">
+                    <button @click="store.bubbleZoom = Math.max(0.5, store.bubbleZoom - 0.1)" class="w-8 h-8 rounded-xl bg-[var(--bg-card)] text-[var(--color-text)] flex items-center justify-center hover:bg-[var(--bg-secondary)] font-bold text-lg active:scale-95 transition-all border border-[var(--color-border)]">-</button>
+                    <button @click="store.bubbleZoom = 1" class="px-2 text-[10px] font-bold text-[var(--color-secondary)] hover:text-[var(--color-text)] transition-colors min-w-[36px] text-center">
+                        {{ store.bubbleZoom.toFixed(1) }}x
+                    </button>
+                    <button @click="store.bubbleZoom = Math.min(2, store.bubbleZoom + 0.1)" class="w-8 h-8 rounded-xl bg-[var(--bg-card)] text-[var(--color-text)] flex items-center justify-center hover:bg-[var(--bg-secondary)] font-bold text-lg active:scale-95 transition-all border border-[var(--color-border)]">+</button>
                 </div>
             </div>
         </div>
@@ -186,14 +194,6 @@
                                 <svg class="w-4 h-4 text-[var(--color-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                 Настройки
                             </button>
-                            <button @click="store.fetchAll" class="w-full text-left px-4 py-3 text-sm text-[var(--color-text)] hover:bg-[var(--bg-secondary)] flex items-center gap-3 rounded-xl transition-colors">
-                                <svg class="w-4 h-4 text-[var(--color-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                Обновить данные
-                            </button>
-                            <button @click="resetDay" class="w-full text-left px-4 py-3 text-sm text-[var(--color-text)] hover:bg-[var(--bg-secondary)] flex items-center gap-3 rounded-xl transition-colors">
-                                <svg class="w-4 h-4 text-[var(--color-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                                Новый день
-                            </button>
                             <button @click="handleLogout" class="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-[var(--bg-secondary)] flex items-center gap-3 rounded-xl transition-colors mt-1 border-t border-[var(--color-border)] pt-3">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                                 Выйти
@@ -204,24 +204,6 @@
             </div>
         </div>
 
-        <!-- Плавающая панель (Desktop only) -->
-        <div v-if="!isHandheld" class="action-bar sticky bottom-3 bg-[var(--bg-card)]/90 backdrop-blur-[20px] p-2 rounded-[24px] flex items-center gap-3 border border-[var(--color-border)] shadow-sm z-50 shrink-0">
-            <div class="flex items-center gap-1 bg-[var(--bg-secondary)] p-1 rounded-2xl shrink-0 border border-[var(--color-border)]">
-                <button @click="store.bubbleZoom = Math.max(0.5, store.bubbleZoom - 0.1)" class="w-9 h-9 rounded-xl bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm flex items-center justify-center hover:opacity-80 font-bold text-lg active:scale-95 transition-transform border border-[var(--color-border)]">-</button>
-                <button @click="store.bubbleZoom = 1" class="w-[42px] text-[11px] font-bold text-[var(--color-secondary)] text-center hover:text-[var(--color-text)] active:scale-95 transition-transform" title="Сбросить масштаб">
-                    {{ store.bubbleZoom.toFixed(1) }}x
-                </button>
-                <button @click="store.bubbleZoom = Math.min(2, store.bubbleZoom + 0.1)" class="w-9 h-9 rounded-xl bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm flex items-center justify-center hover:opacity-80 font-bold text-lg active:scale-95 transition-transform border border-[var(--color-border)]">+</button>
-            </div>
-            <div class="flex gap-2 flex-1 min-w-0">
-                <button @click="store.fetchAll" class="secondary flex-1 py-3 rounded-2xl text-[14px] font-semibold flex items-center justify-center gap-1.5 active:scale-95 transition-transform min-w-0 bg-[var(--bg-secondary)] text-[var(--color-text)] border border-[var(--color-border)]" title="Обновить">
-                    <svg class="w-4 h-4 shrink-0 text-[var(--color-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    <span>Обновить</span>
-                </button>
-                <button @click="resetDay" class="secondary flex-1 py-3 rounded-2xl text-[14px] font-semibold active:scale-95 transition-transform truncate min-w-0 bg-[var(--bg-secondary)] text-[var(--color-text)] border border-[var(--color-border)]">Новый день</button>
-            </div>
-        </div>
-        
         <!-- Модальные окна -->
         <EditTaskModal v-if="editingTask" :task="editingTask" :isNew="editingTask.isNew" @close="editingTask = null" />
         <SettingsModal v-if="showSettingsModal" @close="showSettingsModal = false" />

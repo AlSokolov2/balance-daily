@@ -11,6 +11,8 @@ export const useBalanceStore = defineStore('balance', {
         bubbleZoom: 1,
         notepadText: '',
         theme: 'system',
+        lastPulse: new Date().toDateString(),
+        pulseTimer: null,
         user: null,
         token: localStorage.getItem('auth_token') || null,
     }),
@@ -88,6 +90,7 @@ export const useBalanceStore = defineStore('balance', {
                     const res = await axios.get('user');
                     this.user = res.data;
                     await this.fetchAll(); // Загружаем данные только если авторизованы
+                    this.startPulse();
                 } catch (e) {
                     this.logout();
                 }
@@ -98,6 +101,7 @@ export const useBalanceStore = defineStore('balance', {
          * Log out the current user and clear local state.
          */
         async logout() {
+            this.stopPulse();
             if (this.token) {
                 try {
                     await axios.post('logout');
@@ -145,6 +149,26 @@ export const useBalanceStore = defineStore('balance', {
             this.theme = newTheme;
             this.applyTheme();
             await axios.post('settings', { settings: { theme: newTheme } });
+        },
+
+        startPulse() {
+            this.stopPulse();
+            this.pulseTimer = setInterval(() => {
+                const today = new Date().toDateString();
+                if (today !== this.lastPulse) {
+                    this.lastPulse = today;
+                    this.fetchAll();
+                } else {
+                    this.recalculateAll();
+                }
+            }, 60000); // Pulse every minute
+        },
+
+        stopPulse() {
+            if (this.pulseTimer) {
+                clearInterval(this.pulseTimer);
+                this.pulseTimer = null;
+            }
         },
 
         applyTheme() {

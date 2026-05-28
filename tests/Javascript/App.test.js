@@ -53,7 +53,8 @@ describe('App Component - Handheld & Orientation', () => {
         await wrapper.vm.$nextTick();
         
         expect(wrapper.vm.isHandheld).toBe(false);
-        expect(wrapper.find('.action-bar').exists()).toBe(true);
+        // Action bar (desktop) should now be gone as it is automated
+        expect(wrapper.find('.action-bar').exists()).toBe(false);
     });
 
     it('detects handheld correctly via touch support', async () => {
