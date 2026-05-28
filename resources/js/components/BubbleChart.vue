@@ -245,8 +245,12 @@ onMounted(() => {
     isTouchDevice.value = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     
     if (typeof Worker !== 'undefined') {
-        // Vite will now handle this URL correctly due to base: '/build/'
-        worker = new Worker(workerUrl, {
+        // Strip leading slashes/prefixes from Vite's workerUrl
+        // and join it with our dynamic assetBaseUrl from Laravel
+        const cleanWorkerPath = workerUrl.replace(/^(\.\/|\/)/, '').replace(/^build\//, '');
+        const finalUrl = (window.assetBaseUrl || '/build/') + cleanWorkerPath;
+
+        worker = new Worker(finalUrl, {
             type: 'module'
         });
         
