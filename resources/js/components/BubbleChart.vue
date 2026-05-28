@@ -1,6 +1,9 @@
 <template>
     <div ref="wrapper" class="bubble-wrapper relative w-full h-full transition-all duration-300"
-         :class="{ 'zoomed overflow-visible z-40': store.bubbleZoom !== 1 }">
+         :class="{ 'zoomed overflow-visible z-40': store.bubbleZoom !== 1 }"
+         @touchstart="handleTouchStart"
+         @touchmove="handleTouchMove"
+         @touchend="handleTouchEnd">
         <div ref="container" class="bubble-container relative w-full h-full transition-transform duration-300"
              :style="bubbleContainerStyle"
              @click="hideTooltip">
@@ -30,26 +33,35 @@
                 {{ tooltip.text }}
             </div>
         </div>
+        
+        <!-- Индикатор расчета (Web Worker) -->
+        <div v-if="isCalculating" class="absolute top-4 right-4 z-50">
+            <div class="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useBalanceStore } from '../stores/balance';
+import workerUrl from '../workers/packer.worker.js?worker&url';
 
 const emit = defineEmits(['edit']);
 const store = useBalanceStore();
-const wrapper = ref(null);
 const container = ref(null);
+const wrapper = ref(null);
 const bubblePositions = ref([]);
-const tooltip = ref({ visible: false, text: '', x: 0, y: 0, taskId: null });
+const isCalculating = ref(false);
 const isTouchDevice = ref(false);
+const tooltip = ref({ visible: false, text: '', x: 0, y: 0, taskId: null });
+
+let worker = null;
 
 const bubbleContainerStyle = computed(() => {
     if (store.bubbleZoom !== 1) {
         return {
             transform: `scale(${store.bubbleZoom})`,
-            transformOrigin: 'center center',
+            transformOrigin: 'center center'
         };
     }
     return {};
@@ -76,7 +88,7 @@ const getBubbleStyle = (task) => {
         border: `${borderWidth} solid ${color}`,
         opacity: postponed ? 0.4 : 1,
         fontSize: fontSize + 'px',
-        color: '#1c1c1e'
+        color: 'var(--color-text)'
     };
 };
 
@@ -118,6 +130,38 @@ let touchTimer = null;
 let touchMoved = false;
 let isLongPress = false;
 
+// Pinch zoom state
+const initialPinchDist = ref(0);
+const initialZoom = ref(1);
+
+const getDistance = (t1, t2) => {
+    return Math.sqrt(Math.pow(t2.clientX - t1.clientX, 2) + Math.pow(t2.clientY - t1.clientY, 2));
+};
+
+const handleTouchStart = (e) => {
+    if (e.touches.length === 2) {
+        initialPinchDist.value = getDistance(e.touches[0], e.touches[1]);
+        initialZoom.value = store.bubbleZoom;
+    }
+};
+
+const handleTouchMove = (e) => {
+    if (e.touches.length === 2 && initialPinchDist.value > 0) {
+        if (e.cancelable) e.preventDefault();
+        const dist = getDistance(e.touches[0], e.touches[1]);
+        const ratio = dist / initialPinchDist.value;
+        let newZoom = initialZoom.value * ratio;
+        newZoom = Math.max(0.5, Math.min(2, newZoom));
+        store.bubbleZoom = parseFloat(newZoom.toFixed(2));
+    }
+};
+
+const handleTouchEnd = (e) => {
+    if (e.touches.length < 2) {
+        initialPinchDist.value = 0;
+    }
+};
+
 const handlePointerDown = (event, task) => {
     if (!isTouchDevice.value) return;
     touchMoved = false;
@@ -128,7 +172,7 @@ const handlePointerDown = (event, task) => {
             showTooltip(event, task);
         }
         touchTimer = null;
-    }, 400); // 400ms for long press
+    }, 400);
 };
 
 const handlePointerUp = (event, task) => {
@@ -141,18 +185,15 @@ const handlePointerUp = (event, task) => {
     }
 };
 
-// Listen for pointermove to cancel long press if user is scrolling
 window.addEventListener('pointermove', () => { touchMoved = true; }, { passive: true });
 
 const handleBubbleClick = (task) => {
     if (isTouchDevice.value) {
-        // Если это был длинный тап, клик игнорируем (тултип уже открыт)
         if (!isLongPress) {
             emit('edit', task);
         }
-        isLongPress = false; // reset
+        isLongPress = false;
     } else {
-        // Десктоп: обычный клик всегда редактирование
         emit('edit', task);
     }
 };
@@ -160,10 +201,10 @@ const handleBubbleClick = (task) => {
 const calcBubbles = () => {
     const T = store.bubbleTasks;
     if (!T.length) { bubblePositions.value = []; return; }
-    if (!container.value) return;
+    if (!container.value || !worker) return;
 
-    const W = container.value.clientWidth || 800; // Fallback for tests
-    const H = container.value.clientHeight || 600; // Fallback for tests
+    const W = container.value.clientWidth || 800; 
+    const H = container.value.clientHeight || 600;
     if (!W || !H) return;
 
     const padding = 5;
@@ -175,189 +216,58 @@ const calcBubbles = () => {
     const central = [], side = [];
     T.forEach((t, i) => {
         const isSide = t.ha || (store.isEffectivelyPostponed(t) && !t.force_active);
-        if (isSide) side.push({ task: t, r: baseSizes[i] / 2, pri: t.calculatedPriority });
-        else central.push({ task: t, r: baseSizes[i] / 2, pri: t.calculatedPriority });
+        const data = { id: t.id, r: baseSizes[i] / 2, pri: t.calculatedPriority };
+        if (isSide) side.push(data);
+        else central.push(data);
     });
 
-    const isOverlap = (x, y, r, placed) => {
-        for (let j = 0; j < placed.length; j++) {
-            const p = placed[j];
-            const dx = x - p.x, dy = y - p.y;
-            if (Math.sqrt(dx * dx + dy * dy) < r + p.r + 2) return true;
-        }
-        return false;
-    };
-
-    const packGroup = (tasks, left, top, right, bottom, scale) => {
-        const width = right - left, height = bottom - top;
-        const centerX = left + width / 2, centerY = top + height / 2;
-        const sizedTasks = tasks.map(item => ({ task: item.task, r: item.r * scale, pri: item.pri }))
-                                .sort((a, b) => b.r - a.r);
-        const placed = [];
-        for (let i = 0; i < sizedTasks.length; i++) {
-            const it = sizedTasks[i];
-            let r = it.r, found = false, bestX, bestY;
-            const maxDistX = width / 2 - r - padding, maxDistY = height / 2 - r - padding;
-            const maxDist = Math.min(maxDistX, maxDistY);
-            
-            for (let dist = 0; dist <= maxDist; dist += 2) {
-                const steps = Math.max(8, Math.floor(2 * Math.PI * dist / (r * 0.6)));
-                for (let step = 0; step < steps; step++) {
-                    const ang = (step / steps) * 2 * Math.PI;
-                    const x = centerX + Math.cos(ang) * dist, y = centerY + Math.sin(ang) * dist;
-                    if (x - r < left + padding || x + r > right - padding || y - r < top + padding || y + r > bottom - padding) continue;
-                    if (!isOverlap(x, y, r, placed)) { bestX = x; bestY = y; found = true; break; }
-                }
-                if (found) break;
-            }
-            if (!found) {
-                let shrunk = false;
-                for (let shrink = 0; shrink <= r * 0.2; shrink += 2) {
-                    let newR = r - shrink;
-                    if (newR < 10) break;
-                    const maxDist2 = Math.min(width/2 - newR - padding, height/2 - newR - padding);
-                    for (let dist2 = 0; dist2 <= maxDist2; dist2 += 2) {
-                        const steps2 = Math.max(8, Math.floor(2 * Math.PI * dist2 / (newR * 0.6)));
-                        for (let step2 = 0; step2 < steps2; step2++) {
-                            const ang2 = (step2 / steps2) * 2 * Math.PI;
-                            const x2 = centerX + Math.cos(ang2) * dist2, y2 = centerY + Math.sin(ang2) * dist2;
-                            if (x2 - newR < left + padding || x2 + newR > right - padding || y2 - newR < top + padding || y2 + newR > bottom - padding) continue;
-                            if (!isOverlap(x2, y2, newR, placed)) { bestX = x2; bestY = y2; r = newR; found = shrunk = true; break; }
-                        }
-                        if (shrunk) break;
-                    }
-                    if (shrunk) break;
-                }
-                if (!shrunk) return null;
-            }
-            placed.push({ x: bestX, y: bestY, r: r, id: it.task.id, size: r * 2 });
-        }
-        return placed;
-    };
-
-    let bestPlaced = null, scale = 1.2;
-    const isMobile = W < 600;
-
-    while (scale > 0.3) {
-        let centralPlaced = [], leftPlaced = [], rightPlaced = [], ok = true;
-
-        if (isMobile) {
-            // На мобилках кидаем всё в одну кучу на всю ширину
-            const allTasks = [...central, ...side];
-            centralPlaced = packGroup(allTasks, padding, padding, W - padding, H - padding, scale);
-            if (!centralPlaced) ok = false;
-        } else {
-            if (central.length > 0) {
-                centralPlaced = packGroup(central, (W - W * 0.4) / 2, padding, (W + W * 0.4) / 2, H - padding, scale);
-                if (!centralPlaced) ok = false;
-            }
-            if (!ok) { scale -= 0.02; continue; }
-
-            const cLeft = (W - W * 0.4) / 2, cRight = (W + W * 0.4) / 2;
-            if (side.length > 0) {
-                const leftTasks = [], rightTasks = [];
-                side.forEach((s, i) => i % 2 === 0 ? leftTasks.push(s) : rightTasks.push(s));
-                if (leftTasks.length > 0) {
-                    leftPlaced = packGroup(leftTasks, padding, padding, cLeft - padding, H - padding, scale);
-                    if (!leftPlaced) ok = false;
-                }
-                if (ok && rightTasks.length > 0) {
-                    rightPlaced = packGroup(rightTasks, cRight + padding, padding, W - padding, H - padding, scale);
-                    if (!rightPlaced) ok = false;
-                }
-            }
-        }
-        
-        if (!ok) { scale -= 0.02; continue; }
-
-        // Shift logic only for desktop (3 columns)
-        let allPlaced = (centralPlaced || []).concat(leftPlaced || [], rightPlaced || []);
-        if (!isMobile && allPlaced.length > 0) {
-            let cLA, cRA;
-            if (centralPlaced && centralPlaced.length > 0) {
-                let minCX = Infinity, maxCX = -Infinity;
-                centralPlaced.forEach(p => {
-                    if (p.x - p.r < minCX) minCX = p.x - p.r;
-                    if (p.x + p.r > maxCX) maxCX = p.x + p.r;
-                });
-                cLA = minCX; cRA = maxCX;
-            } else {
-                cLA = W / 2; cRA = W / 2;
-            }
-            const smallestD = Math.min(...allPlaced.map(p => p.r * 2), 10);
-            if (leftPlaced && leftPlaced.length > 0) {
-                const maxRL = Math.max(...leftPlaced.map(p => p.x + p.r));
-                let dx = cLA - smallestD - maxRL;
-                if (dx > 0) {
-                    const minLeftA = Math.min(...leftPlaced.map(p => p.x + dx - p.r));
-                    if (minLeftA < padding) dx -= (padding - minLeftA);
-                    if (dx > 0) leftPlaced.forEach(p => { p.x += dx; });
-                }
-            }
-            if (rightPlaced && rightPlaced.length > 0) {
-                const minLR = Math.min(...rightPlaced.map(p => p.x - p.r));
-                let dx = cRA + smallestD - minLR;
-                if (dx < 0) {
-                    let shift = -dx;
-                    const maxRA = Math.max(...rightPlaced.map(p => p.x - shift + p.r));
-                    if (maxRA > W - padding) shift -= (maxRA - (W - padding));
-                    if (shift > 0) rightPlaced.forEach(p => { p.x -= shift; });
-                }
-            }
-        }
-
-        allPlaced = (centralPlaced || []).concat(leftPlaced || [], rightPlaced || []);
-        // Auto-zoom from ref
-        if (allPlaced.length > 0) {
-            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-            allPlaced.forEach(p => {
-                if (p.x - p.r < minX) minX = p.x - p.r;
-                if (p.x + p.r > maxX) maxX = p.x + p.r;
-                if (p.y - p.r < minY) minY = p.y - p.r;
-                if (p.y + p.r > maxY) maxY = p.y + p.r;
-            });
-            const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
-            const usedW = maxX - minX, usedH = maxY - minY;
-            if (usedW > 0 && usedH > 0) {
-                const availW = W - padding * 2, availH = H - padding * 2;
-                const zoom = Math.min(availW / usedW, availH / usedH);
-                if (zoom > 1.0) {
-                    allPlaced = allPlaced.map(p => {
-                        let nx = W / 2 + (p.x - cx) * zoom;
-                        let ny = H / 2 + (p.y - cy) * zoom;
-                        let nr = p.r * zoom;
-                        nx = Math.max(padding + nr, Math.min(W - padding - nr, nx));
-                        ny = Math.max(padding + nr, Math.min(H - padding - nr, ny));
-                        return { x: nx, y: ny, r: nr, id: p.id, size: nr * 2 };
-                    });
-                }
-            }
-        }
-        bestPlaced = allPlaced;
-        break;
+    isCalculating.value = true;
+    if (worker) {
+        worker.postMessage({
+            central,
+            side,
+            W,
+            H,
+            isMobile: W < 600,
+            padding
+        });
+    } else {
+        isCalculating.value = false;
     }
-    bubblePositions.value = bestPlaced || [];
 };
 
-defineExpose({ calcBubbles, bubblePositions, handlePointerDown, handlePointerUp, handleBubbleClick, tooltip, isTouchDevice, container });
+defineExpose({ calcBubbles, bubblePositions, handlePointerDown, handlePointerUp, handleBubbleClick, handleTouchStart, handleTouchMove, handleTouchEnd, tooltip, isTouchDevice, container, isCalculating });
 
 watch(() => store.bubbleTasks, calcBubbles, { deep: true });
 watch(() => store.bubbleZoom, calcBubbles);
 window.addEventListener('resize', calcBubbles);
-
 onMounted(() => {
     isTouchDevice.value = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    
+    if (typeof Worker !== 'undefined') {
+        // Vite will now handle this URL correctly due to base: '/build/'
+        worker = new Worker(workerUrl, {
+            type: 'module'
+        });
+        
+        worker.onmessage = (e) => {
+            bubblePositions.value = e.data.bubblePositions;
+            isCalculating.value = false;
+        };
+    }
+
     setTimeout(calcBubbles, 100);
 });
 
 onUnmounted(() => {
     window.removeEventListener('resize', calcBubbles);
+    if (worker) worker.terminate();
 });
 </script>
 
 <style scoped>
 .bubble-wrapper {
-    touch-action: pan-y;
+    touch-action: auto;
 }
 .bubble {
     user-select: none;

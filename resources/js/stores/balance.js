@@ -10,6 +10,9 @@ export const useBalanceStore = defineStore('balance', {
         loading: false,
         bubbleZoom: 1,
         notepadText: '',
+        theme: 'system',
+        lastPulse: new Date().toDateString(),
+        pulseTimer: null,
         user: null,
         token: localStorage.getItem('auth_token') || null,
     }),
@@ -87,6 +90,7 @@ export const useBalanceStore = defineStore('balance', {
                     const res = await axios.get('user');
                     this.user = res.data;
                     await this.fetchAll(); // Загружаем данные только если авторизованы
+                    this.startPulse();
                 } catch (e) {
                     this.logout();
                 }
@@ -97,6 +101,7 @@ export const useBalanceStore = defineStore('balance', {
          * Log out the current user and clear local state.
          */
         async logout() {
+            this.stopPulse();
             if (this.token) {
                 try {
                     await axios.post('logout');
@@ -124,17 +129,56 @@ export const useBalanceStore = defineStore('balance', {
                 this.categories = Array.isArray(catsRes.data) ? catsRes.data : [];
                 this.tasks = Array.isArray(tasksRes.data) ? tasksRes.data : [];
                 this.notepadText = settingsRes.data?.notepad_text || '';
+                this.theme = settingsRes.data?.theme || 'system';
                 
                 const subRes = await axios.get('export');
                 this.subcatCoeffs = subRes.data?.subcatCoeffs || {};
                 
                 this.recalculateAll();
+                this.applyTheme();
             } catch (e) {
                 console.error('Fetch error:', e);
                 this.tasks = [];
                 this.categories = [];
             } finally {
                 this.loading = false;
+            }
+        },
+
+        async setTheme(newTheme) {
+            this.theme = newTheme;
+            this.applyTheme();
+            await axios.post('settings', { settings: { theme: newTheme } });
+        },
+
+        startPulse() {
+            this.stopPulse();
+            this.pulseTimer = setInterval(() => {
+                const today = new Date().toDateString();
+                if (today !== this.lastPulse) {
+                    this.lastPulse = today;
+                    this.fetchAll();
+                } else {
+                    this.recalculateAll();
+                }
+            }, 60000); // Pulse every minute
+        },
+
+        stopPulse() {
+            if (this.pulseTimer) {
+                clearInterval(this.pulseTimer);
+                this.pulseTimer = null;
+            }
+        },
+
+        applyTheme() {
+            const isDark = this.theme === 'dark' || 
+                (this.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
             }
         },
 

@@ -55,10 +55,11 @@ class AuthController extends Controller
         }
 
         $user = User::firstOrCreate(
-            ['email' => 'dev@example.com'],
+            ['email' => 'alsokolov2@gmail.com'],
             [
-                'name' => 'Developer',
-                'google_id' => 'dev_id_123',
+                'name' => 'AlSokolov',
+                'google_id' => 'dev_id_alsokolov',
+                'avatar' => 'https://www.gravatar.com/avatar/' . md5('alsokolov2@gmail.com') . '?s=200&d=identicon',
             ]
         );
 

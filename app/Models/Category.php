@@ -16,6 +16,10 @@ class Category extends Model
         'hide_until',
     ];
 
+    protected $casts = [
+        'name' => 'encrypted',
+    ];
+
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class, 'category_slug', 'slug');

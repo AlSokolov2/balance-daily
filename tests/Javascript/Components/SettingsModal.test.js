@@ -16,16 +16,37 @@ describe('SettingsModal Component', () => {
             { slug: 'prog', name: 'PROG', weight: 0.87, color: '#34c759' },
             { slug: '__archive__', name: 'Архив', weight: 0.01, color: '#8e8e93' }
         ];
+
+        // Mock matchMedia
+        Object.defineProperty(window, 'matchMedia', {
+            writable: true,
+            value: vi.fn().mockImplementation(query => ({
+                matches: false,
+                media: query,
+                onchange: null,
+                addListener: vi.fn(),
+                removeListener: vi.fn(),
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                dispatchEvent: vi.fn(),
+            })),
+        });
     });
 
     it('switches tabs correctly', async () => {
         const wrapper = mount(SettingsModal);
         
-        // Default tab is 'cat'
+        // Default tab is 'gen' (Общие)
+        expect(wrapper.text()).toContain('Оформление системы');
+
+        // Click 'Категории' tab
+        const tabs = wrapper.findAll('.cursor-pointer');
+        const catTab = tabs.find(t => t.text() === 'Категории');
+        await catTab.trigger('click');
+        
         expect(wrapper.text()).toContain('Добавить');
 
         // Click 'Подкатегории' tab
-        const tabs = wrapper.findAll('.cursor-pointer');
         const subcatTab = tabs.find(t => t.text() === 'Подкатегории');
         await subcatTab.trigger('click');
 

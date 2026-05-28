@@ -72,8 +72,11 @@ class TaskIsolationTest extends TestCase
         ]);
 
         $response->assertStatus(201);
+        
+        $task = Task::where('user_id', $userA->id)->where('category_slug', 'work')->first();
+        $this->assertEquals('My Task', $task->title);
         $this->assertDatabaseHas('tasks', [
-            'title' => 'My Task',
+            'id' => $task->id,
             'user_id' => $userA->id,
             'category_slug' => 'work'
         ]);
