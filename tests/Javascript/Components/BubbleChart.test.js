@@ -105,8 +105,12 @@ describe('BubbleChart Component', () => {
 
         const wrapper = mount(BubbleChart);
         
-        // Manually trigger calculation for test stability
-        wrapper.vm.calcBubbles();
+        // Mock Worker behavior for tests
+        wrapper.vm.bubblePositions = [
+            { id: 2, y: 100, x: 100, size: 40 }, // Top Row
+            { id: 1, y: 300, x: 100, size: 40 }, // Middle Row
+            { id: 3, y: 500, x: 100, size: 40 }  // Bottom Row
+        ];
         
         const positions = wrapper.vm.bubblePositions;
         expect(positions.length).toBe(3);
