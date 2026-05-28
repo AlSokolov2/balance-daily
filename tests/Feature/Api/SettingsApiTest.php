@@ -36,9 +36,9 @@ class SettingsApiTest extends TestCase
         $response->assertStatus(200)
                  ->assertJson(['notepad_text' => 'Updated Text', 'theme' => 'dark']);
         
+        $this->assertEquals('Updated Text', Setting::where('key', 'notepad_text')->where('user_id', $user->id)->first()->value);
         $this->assertDatabaseHas('settings', [
             'key' => 'notepad_text',
-            'value' => 'Updated Text',
             'user_id' => $user->id
         ]);
     }
