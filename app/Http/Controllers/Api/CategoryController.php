@@ -45,11 +45,11 @@ class CategoryController extends Controller
      * Get a specific category.
      *
      * @param Request $request
-     * @param int $id
      * @return \App\Models\Category
      */
-    public function show(Request $request, $id)
+    public function show(Request $request)
     {
+        $id = $request->route('id') ?? $request->route('category');
         return $request->user()->categories()->findOrFail($id);
     }
 
@@ -57,11 +57,11 @@ class CategoryController extends Controller
      * Update a category.
      *
      * @param Request $request
-     * @param int $id
      * @return \App\Models\Category
      */
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
+        $id = $request->route('id') ?? $request->route('category');
         $category = $request->user()->categories()->findOrFail($id);
         
         $validated = $request->validate([
@@ -80,11 +80,11 @@ class CategoryController extends Controller
      * Delete a category.
      *
      * @param Request $request
-     * @param int $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request)
     {
+        $id = $request->route('id') ?? $request->route('category');
         $category = $request->user()->categories()->findOrFail($id);
         $category->delete();
 
