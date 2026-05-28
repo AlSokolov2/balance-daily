@@ -242,10 +242,29 @@ const calcBubbles = () => {
         let centralPlaced = [], leftPlaced = [], rightPlaced = [], ok = true;
 
         if (isMobile) {
-            // На мобилках кидаем всё в одну кучу на всю ширину
-            const allTasks = [...central, ...side];
-            centralPlaced = packGroup(allTasks, padding, padding, W - padding, H - padding, scale);
-            if (!centralPlaced) ok = false;
+            // На мобилках разделяем на три горизонтальных ряда (равные доли)
+            const hPart = (H - padding * 2) / 3;
+            const side1 = [], side2 = [];
+            side.forEach((s, i) => i % 2 === 0 ? side1.push(s) : side2.push(s));
+            
+            let topPlaced = [], midPlaced = [], botPlaced = [];
+            
+            if (side1.length > 0) {
+                topPlaced = packGroup(side1, padding, padding, W - padding, padding + hPart, scale);
+                if (!topPlaced) ok = false;
+            }
+            if (ok && central.length > 0) {
+                midPlaced = packGroup(central, padding, padding + hPart, W - padding, padding + hPart * 2, scale);
+                if (!midPlaced) ok = false;
+            }
+            if (ok && side2.length > 0) {
+                botPlaced = packGroup(side2, padding, padding + hPart * 2, W - padding, H - padding, scale);
+                if (!botPlaced) ok = false;
+            }
+            
+            if (ok) {
+                centralPlaced = (topPlaced || []).concat(midPlaced || [], botPlaced || []);
+            }
         } else {
             if (central.length > 0) {
                 centralPlaced = packGroup(central, (W - W * 0.4) / 2, padding, (W + W * 0.4) / 2, H - padding, scale);
