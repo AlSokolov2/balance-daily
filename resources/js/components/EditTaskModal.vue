@@ -137,7 +137,9 @@ const handleSave = async () => {
         if (props.isNew) {
             await axios.post('tasks', payload);
         } else {
-            await axios.put(`tasks/${props.task.id}`, payload);
+            // Method Spoofing: Use POST to bypass Apache PUT blocking
+            payload._method = 'PUT';
+            await axios.post(`tasks/${props.task.id}`, payload);
         }
         
         await store.fetchAll();
