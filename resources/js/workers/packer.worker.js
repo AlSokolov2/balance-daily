@@ -88,19 +88,27 @@ self.onmessage = function(e) {
 
     // 1. Independent Packing
     const scale = 1.0;
+    const isPortrait = H > W;
     const centralTasks = central;
     const side1Tasks = [], side2Tasks = [];
     side.forEach((s, i) => i % 2 === 0 ? side1Tasks.push(s) : side2Tasks.push(s));
 
     let centralPlaced = packGroup(centralTasks, W / 2, H / 2, scale);
-    let topOrLeftPlaced = packGroup(side1Tasks, isMobile ? W / 2 : W / 4, isMobile ? H / 4 : H / 2, scale);
-    let botOrRightPlaced = packGroup(side2Tasks, isMobile ? W / 2 : 3 * W / 4, isMobile ? 3 * H / 4 : H / 2, scale);
+    
+    // Initial guess positions based on orientation
+    const side1X = isPortrait ? W / 2 : W / 4;
+    const side1Y = isPortrait ? H / 4 : H / 2;
+    const side2X = isPortrait ? W / 2 : 3 * W / 4;
+    const side2Y = isPortrait ? 3 * H / 4 : H / 2;
+
+    let topOrLeftPlaced = packGroup(side1Tasks, side1X, side1Y, scale);
+    let botOrRightPlaced = packGroup(side2Tasks, side2X, side2Y, scale);
 
     // 2. Inter-group Attraction
     const cB = getBounds(centralPlaced);
 
-    if (isMobile) {
-        // Vertical Attraction
+    if (isPortrait) {
+        // Vertical Attraction (Portrait)
         if (topOrLeftPlaced.length) {
             const tB = getBounds(topOrLeftPlaced);
             const shiftY = cB.top - minGap - tB.bottom;
@@ -112,7 +120,7 @@ self.onmessage = function(e) {
             botOrRightPlaced.forEach(p => p.y += shiftY);
         }
     } else {
-        // Horizontal Attraction
+        // Horizontal Attraction (Landscape)
         if (topOrLeftPlaced.length) {
             const lB = getBounds(topOrLeftPlaced);
             const shiftX = cB.left - minGap - lB.right;
