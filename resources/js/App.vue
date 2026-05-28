@@ -27,82 +27,153 @@
     </div>
 
     <!-- Основное приложение (после входа) -->
-    <div v-else class="app-container w-full max-w-[1600px] mx-auto flex flex-col h-[100dvh] p-2 sm:p-4 overflow-hidden">
-        <h1 class="text-xl sm:text-2xl font-bold shrink-0 mb-2 flex justify-between items-center px-1 pt-2 relative flex-wrap gap-y-2">
-            Баланс.Дейли 
+    <div v-else class="app-container w-full max-w-[1600px] mx-auto flex flex-col h-[100dvh] p-2 sm:p-4 overflow-hidden relative">
+        <header class="flex justify-between items-center px-1 py-2 shrink-0 z-50">
+            <h1 class="text-xl sm:text-2xl font-bold text-[#1c1c1e]">
+                Баланс.Дейли
+            </h1>
+            
             <div class="flex items-center gap-2 relative">
-                <button @click="showTaskList = !showTaskList" class="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1.5 rounded-xl hover:bg-blue-100 transition-colors">
+                <!-- Кнопка списка задач удалена для мобилок (теперь свайп) -->
+                <button @click="showTaskList = !showTaskList" class="hidden sm:block text-xs sm:text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1.5 rounded-xl hover:bg-blue-100 transition-colors">
                     {{ showTaskList ? 'Скрыть список' : 'Список задач' }}
                 </button>
-                <div v-if="store.user" class="flex items-center gap-2 cursor-pointer ml-2" @click="isMenuOpen = !isMenuOpen">
+                <div v-if="store.user" class="flex items-center gap-2 cursor-pointer ml-1 sm:ml-2" @click="isMenuOpen = !isMenuOpen">
                     <img :src="store.user.avatar" class="w-8 h-8 rounded-full border border-gray-200 object-cover" referrerpolicy="no-referrer" :title="store.user.name">
                     <span class="text-sm font-medium hidden sm:block">{{ store.user.name }}</span>
                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
                 
                 <!-- Выпадающее меню -->
-                <div v-if="isMenuOpen" class="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50">
+                <div v-if="isMenuOpen" class="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50">
                     <button @click="openSettings" class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
                         <span>⚙️</span> Настройки
+                    </button>
+                    <!-- Мобильные кнопки, вынесенные из подвала -->
+                    <button @click="store.fetchAll" class="sm:hidden w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-50">
+                        <span>🔄</span> Обновить данные
+                    </button>
+                    <button @click="resetDay" class="sm:hidden w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                        <span>☀️</span> Новый день (сброс)
                     </button>
                     <button @click="handleLogout" class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-100">
                         <span>🚪</span> Выйти
                     </button>
                 </div>
             </div>
-        </h1>
+        </header>
 
         <!-- Overlay для закрытия меню по клику снаружи -->
         <div v-if="isMenuOpen" @click="isMenuOpen = false" class="fixed inset-0 z-40"></div>
 
-        <!-- Форма добавления -->
-        <div class="flex items-center gap-2 mb-3 px-1 shrink-0 z-10 relative">
+        <!-- Форма добавления (Desktop only) -->
+        <div class="hidden sm:flex items-center gap-2 mb-3 px-1 shrink-0 z-10 relative">
             <input v-model="newTask.title" placeholder="Что нужно сделать?" @keyup.enter="addTask" class="flex-1 p-[12px_16px] rounded-2xl border border-[#e5e5ea] shadow-sm text-[15px] outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-white">
             <button @click="openAdvancedAdd" class="p-[12px] bg-blue-100 text-blue-600 rounded-2xl font-bold shadow-sm hover:bg-blue-200 transition-colors w-[46px] h-[46px] flex items-center justify-center shrink-0" title="Расширенное добавление">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
             </button>
         </div>
 
-        <!-- Фильтры -->
-        <div class="flex gap-2 mb-3 px-1 overflow-x-auto pb-1 scrollbar-hide shrink-0 snap-x">
-            <div @click="store.filterCat = 'all'" 
-                 :class="['whitespace-nowrap px-4 py-2 rounded-xl cursor-pointer text-sm font-medium transition-all snap-start shadow-sm', store.filterCat === 'all' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50']">
-                Все ({{ store.bubbleTasks.length }})
-            </div>
-            <div v-for="cat in store.categories.filter(c => c.slug !== '__archive__')" :key="cat.slug"
-                 @click="store.filterCat = cat.slug"
-                 :class="['whitespace-nowrap px-4 py-2 rounded-xl cursor-pointer text-sm font-medium transition-all snap-start shadow-sm', store.filterCat === cat.slug ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50']">
-                {{ cat.name }}
-            </div>
-            <div @click="store.filterCat = 'hidden'"
-                 :class="['whitespace-nowrap px-4 py-2 rounded-xl cursor-pointer text-sm font-medium transition-all snap-start shadow-sm', store.filterCat === 'hidden' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50']">
-                Скрытые
-            </div>
-            <div @click="store.filterCat = 'archive'"
-                 :class="['whitespace-nowrap px-4 py-2 rounded-xl cursor-pointer text-sm font-medium transition-all snap-start shadow-sm', store.filterCat === 'archive' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50']">
-                Архив
+        <!-- Фильтры (Desktop only) -->
+        <div class="hidden sm:block px-1 mb-3 shrink-0">
+            <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x">
+                <div @click="store.filterCat = 'all'" 
+                     :class="['whitespace-nowrap px-4 py-2 rounded-xl cursor-pointer text-sm font-medium transition-all snap-start shadow-sm', store.filterCat === 'all' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50']">
+                    Все ({{ store.bubbleTasks.length }})
+                </div>
+                <div v-for="cat in store.categories.filter(c => c.slug !== '__archive__')" :key="cat.slug"
+                     @click="store.filterCat = cat.slug"
+                     :class="['whitespace-nowrap px-4 py-2 rounded-xl cursor-pointer text-sm font-medium transition-all snap-start shadow-sm', store.filterCat === cat.slug ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50']">
+                    {{ cat.name }}
+                </div>
+                <div @click="store.filterCat = 'hidden'"
+                     :class="['whitespace-nowrap px-4 py-2 rounded-xl cursor-pointer text-sm font-medium transition-all snap-start shadow-sm', store.filterCat === 'hidden' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50']">
+                    Скрытые
+                </div>
+                <div @click="store.filterCat = 'archive'"
+                     :class="['whitespace-nowrap px-4 py-2 rounded-xl cursor-pointer text-sm font-medium transition-all snap-start shadow-sm', store.filterCat === 'archive' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50']">
+                    Архив
+                </div>
             </div>
         </div>
 
-        <!-- Визуализация -->
-        <div class="flex-1 bg-white rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden flex flex-col mb-3 min-h-0 min-w-0">
-            <BubbleChart @edit="handleEdit" class="flex-1 w-full h-full" />
-        </div>
-
-        <!-- Список задач -->
-        <div v-if="showTaskList" class="card bg-white rounded-[16px] p-4 mb-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[#e5e5ea] min-h-[100px] overflow-y-auto shrink-0 max-h-[30vh]">
-            <div v-if="!store.filteredTasks.length" class="text-center py-8 text-[#8e8e93] text-sm">
-                Нет задач
+        <!-- Контент свайпа (Mobile: Chart <-> List, Desktop: Just content) -->
+        <div class="flex-1 min-h-0 flex flex-col sm:block overflow-hidden">
+            <!-- Mobile Swipe View -->
+            <div class="sm:hidden flex-1 flex overflow-x-auto snap-x snap-mandatory scrollbar-hide scroll-smooth" @scroll="handleMobileScroll">
+                <!-- Screen 1: Bubble Chart -->
+                <div class="min-w-full h-full snap-start p-1 flex flex-col">
+                    <div class="flex-1 bg-white rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden flex flex-col min-h-0 min-w-0">
+                        <BubbleChart @edit="handleEdit" class="flex-1 w-full h-full" />
+                    </div>
+                </div>
+                <!-- Screen 2: Task List -->
+                <div class="min-w-full h-full snap-start p-1 flex flex-col">
+                    <div class="flex-1 bg-white rounded-3xl shadow-sm border border-gray-100 overflow-y-auto p-3">
+                        <div v-if="!store.filteredTasks.length" class="text-center py-12 text-[#8e8e93] text-sm">
+                            Нет задач в этой категории
+                        </div>
+                        <TaskItem v-for="task in store.filteredTasks" 
+                                  :key="task.id" 
+                                  :task="task"
+                                  @edit="handleEdit"
+                                  @delete="deleteTask" />
+                    </div>
+                </div>
             </div>
-            <TaskItem v-for="task in store.filteredTasks" 
-                      :key="task.id" 
-                      :task="task"
-                      @edit="handleEdit"
-                      @delete="deleteTask" />
+
+            <!-- Desktop View -->
+            <div class="hidden sm:flex flex-col h-full gap-3">
+                <!-- Визуализация -->
+                <div class="flex-1 bg-white rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden flex flex-col min-h-0 min-w-0">
+                    <BubbleChart @edit="handleEdit" class="flex-1 w-full h-full" />
+                </div>
+
+                <!-- Список задач (Desktop toggleable) -->
+                <div v-if="showTaskList" class="card bg-white rounded-[16px] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[#e5e5ea] min-h-[100px] overflow-y-auto shrink-0 max-h-[30vh]">
+                    <div v-if="!store.filteredTasks.length" class="text-center py-8 text-[#8e8e93] text-sm">
+                        Нет задач
+                    </div>
+                    <TaskItem v-for="task in store.filteredTasks" 
+                              :key="task.id" 
+                              :task="task"
+                              @edit="handleEdit"
+                              @delete="deleteTask" />
+                </div>
+            </div>
         </div>
 
-        <!-- Плавающая панель -->
-        <div class="action-bar sticky bottom-3 bg-white/90 backdrop-blur-[20px] p-1.5 sm:p-[8px_10px] rounded-[24px] flex items-center gap-1.5 sm:gap-3 border border-[#e5e5ea] shadow-sm z-50 shrink-0">
+        <!-- Нижняя панель управления (Mobile) -->
+        <div class="sm:hidden flex items-center gap-3 py-3 px-1 shrink-0 z-[60]">
+            <!-- Пагинация (точки) -->
+            <div class="flex gap-1.5 px-2">
+                <div :class="['w-2 h-2 rounded-full transition-all', currentMobileScreen === 0 ? 'bg-blue-600 w-4' : 'bg-gray-300']"></div>
+                <div :class="['w-2 h-2 rounded-full transition-all', currentMobileScreen === 1 ? 'bg-blue-600 w-4' : 'bg-gray-300']"></div>
+            </div>
+
+            <!-- Фильтр -->
+            <div class="flex-1 relative">
+                <select v-model="store.filterCat" class="w-full bg-white/80 backdrop-blur-md border border-[#e5e5ea] p-3.5 rounded-2xl text-sm font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 appearance-none shadow-sm">
+                    <option value="all">Все ({{ store.bubbleTasks.length }})</option>
+                    <option v-for="cat in store.categories.filter(c => c.slug !== '__archive__')" :key="cat.slug" :value="cat.slug">
+                        {{ cat.name }}
+                    </option>
+                    <option value="hidden">Скрытые</option>
+                    <option value="archive">Архив</option>
+                </select>
+                <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+            </div>
+
+            <!-- Кнопка добавить -->
+            <button @click="openAdvancedAdd" class="w-14 h-14 bg-blue-600 text-white rounded-2xl shadow-lg flex items-center justify-center active:scale-90 transition-transform shrink-0">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            </button>
+        </div>
+
+        <!-- Плавающая панель (Desktop only) -->
+        <div class="action-bar hidden sm:flex sticky bottom-3 bg-white/90 backdrop-blur-[20px] p-1.5 sm:p-[8px_10px] rounded-[24px] items-center gap-1.5 sm:gap-3 border border-[#e5e5ea] shadow-sm z-50 shrink-0">
             <div class="flex items-center gap-1 bg-gray-100/50 p-1 rounded-2xl shrink-0">
                 <button @click="store.bubbleZoom = Math.max(0.5, store.bubbleZoom - 0.1)" class="w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-white text-gray-600 shadow-sm flex items-center justify-center hover:bg-gray-50 font-bold text-base sm:text-lg active:scale-95 transition-transform">-</button>
                 <button @click="store.bubbleZoom = 1" class="w-8 sm:w-[42px] text-[10px] sm:text-[11px] font-bold text-gray-500 text-center hover:text-gray-700 active:scale-95 transition-transform" title="Сбросить масштаб">
@@ -140,6 +211,13 @@ const isMenuOpen = ref(false);
 const showTaskList = ref(false);
 const editingTask = ref(null);
 const isInitializing = ref(true);
+const currentMobileScreen = ref(0);
+
+const handleMobileScroll = (e) => {
+    const scrollLeft = e.target.scrollLeft;
+    const width = e.target.clientWidth;
+    currentMobileScreen.value = Math.round(scrollLeft / width);
+};
 
 const loginWithGoogle = () => {
     window.location.href = store.googleAuthUrl;

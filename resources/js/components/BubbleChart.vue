@@ -376,7 +376,7 @@ onUnmounted(() => {
 
 <style scoped>
 .bubble-wrapper {
-    touch-action: pan-y;
+    touch-action: auto;
 }
 .bubble {
     user-select: none;
