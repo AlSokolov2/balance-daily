@@ -33,3 +33,5 @@ Thumbs.db
 
 commit_message.txt
 .gemini
+/public/sw.js
+/public/workbox-*.js

@@ -27,6 +27,7 @@ export default defineConfig({
         }),
         tailwindcss(),
         VitePWA({
+            outDir: 'public',
             registerType: 'prompt',
             injectRegister: 'auto',
             includeAssets: ['favicon.svg', 'robots.txt'],
