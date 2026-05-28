@@ -245,10 +245,15 @@ onMounted(() => {
     isTouchDevice.value = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     
     if (typeof Worker !== 'undefined') {
-        // Strip leading slashes/prefixes from Vite's workerUrl
-        // and join it with our dynamic assetBaseUrl from Laravel
-        const cleanWorkerPath = workerUrl.replace(/^(\.\/|\/)/, '').replace(/^build\//, '');
-        const finalUrl = (window.assetBaseUrl || '/build/') + cleanWorkerPath;
+        // If Vite already gave us a full URL (e.g. from a CDN or absolute build), use it as is.
+        // Otherwise, resolve it against our dynamic assetBaseUrl.
+        let finalUrl;
+        if (workerUrl.startsWith('http')) {
+            finalUrl = workerUrl;
+        } else {
+            const cleanWorkerPath = workerUrl.replace(/^(\.\/|\/)/, '').replace(/^build\//, '');
+            finalUrl = (window.assetBaseUrl || '/build/') + cleanWorkerPath;
+        }
 
         worker = new Worker(finalUrl, {
             type: 'module'
