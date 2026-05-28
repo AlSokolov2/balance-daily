@@ -9,6 +9,7 @@
     <meta name="theme-color" content="#f5f5f7">
     <script>
         window.apiBaseUrl = '{{ config('app.url') }}';
+        window.assetBaseUrl = '{{ asset('build') }}/';
     </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
