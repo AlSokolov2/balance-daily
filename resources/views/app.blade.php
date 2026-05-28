@@ -10,6 +10,21 @@
     <script>
         window.apiBaseUrl = '{{ config('app.url') }}';
         window.assetBaseUrl = '{{ asset('build') }}/';
+        
+        // V2.0.7 Cache Busting: Force unregister old Service Workers to fix MIME type errors
+        if (!localStorage.getItem('v2_0_7_cache_busted')) {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    for(let registration of registrations) {
+                        registration.unregister();
+                    }
+                    localStorage.setItem('v2_0_7_cache_busted', 'true');
+                    window.location.reload(true);
+                });
+            } else {
+                localStorage.setItem('v2_0_7_cache_busted', 'true');
+            }
+        }
     </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
