@@ -49,24 +49,24 @@ class TaskController extends Controller
      * Get a specific task.
      *
      * @param Request $request
-     * @param int $id
+     * @param int $task
      * @return \App\Models\Task
      */
-    public function show(Request $request, $id)
+    public function show(Request $request, $task)
     {
-        return $request->user()->tasks()->findOrFail($id);
+        return $request->user()->tasks()->findOrFail($task);
     }
 
     /**
      * Update an existing task.
      *
      * @param Request $request
-     * @param int $id
+     * @param int $task
      * @return \App\Models\Task
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, $task)
     {
-        $task = $request->user()->tasks()->findOrFail($id);
+        $taskModel = $request->user()->tasks()->findOrFail($task);
 
         $validated = $request->validate([
             'title' => 'sometimes|required|string',
@@ -85,22 +85,22 @@ class TaskController extends Controller
             'completed_at' => 'nullable|date',
         ]);
 
-        $task->update($validated);
+        $taskModel->update($validated);
 
-        return $task;
+        return $taskModel;
     }
 
     /**
      * Delete a task.
      *
      * @param Request $request
-     * @param int $id
+     * @param int $task
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, $task)
     {
-        $task = $request->user()->tasks()->findOrFail($id);
-        $task->delete();
+        $taskModel = $request->user()->tasks()->findOrFail($task);
+        $taskModel->delete();
 
         return response()->noContent();
     }

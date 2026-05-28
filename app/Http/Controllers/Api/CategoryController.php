@@ -45,24 +45,24 @@ class CategoryController extends Controller
      * Get a specific category.
      *
      * @param Request $request
-     * @param int $id
+     * @param int $category
      * @return \App\Models\Category
      */
-    public function show(Request $request, $id)
+    public function show(Request $request, $category)
     {
-        return $request->user()->categories()->findOrFail($id);
+        return $request->user()->categories()->findOrFail($category);
     }
 
     /**
      * Update a category.
      *
      * @param Request $request
-     * @param int $id
+     * @param int $category
      * @return \App\Models\Category
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, $category)
     {
-        $category = $request->user()->categories()->findOrFail($id);
+        $categoryModel = $request->user()->categories()->findOrFail($category);
         
         $validated = $request->validate([
             'name' => 'sometimes|required|string',
@@ -71,22 +71,22 @@ class CategoryController extends Controller
             'hide_until' => 'nullable|string',
         ]);
 
-        $category->update($validated);
+        $categoryModel->update($validated);
 
-        return $category;
+        return $categoryModel;
     }
 
     /**
      * Delete a category.
      *
      * @param Request $request
-     * @param int $id
+     * @param int $category
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, $category)
     {
-        $category = $request->user()->categories()->findOrFail($id);
-        $category->delete();
+        $categoryModel = $request->user()->categories()->findOrFail($category);
+        $categoryModel->delete();
 
         return response()->noContent();
     }
