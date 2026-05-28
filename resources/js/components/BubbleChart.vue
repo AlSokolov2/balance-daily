@@ -245,10 +245,8 @@ onMounted(() => {
     isTouchDevice.value = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     
     if (typeof Worker !== 'undefined') {
-        // Correct the path manually for Laravel /build/ directory
-        const finalUrl = workerUrl.startsWith('/') ? `/build${workerUrl}` : `/build/${workerUrl}`;
-        
-        worker = new Worker(finalUrl, {
+        // Vite will now handle this URL correctly due to base: '/build/'
+        worker = new Worker(workerUrl, {
             type: 'module'
         });
         

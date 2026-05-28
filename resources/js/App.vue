@@ -207,6 +207,34 @@
         <!-- Модальные окна -->
         <EditTaskModal v-if="editingTask" :task="editingTask" :isNew="editingTask.isNew" @close="editingTask = null" />
         <SettingsModal v-if="showSettingsModal" @close="showSettingsModal = false" />
+
+        <!-- PWA Уведомления -->
+        <div v-if="offlineReady || needRefresh" 
+             class="fixed top-4 left-1/2 -translate-x-1/2 z-[1000] w-[calc(100%-2rem)] max-w-sm bg-[var(--bg-card)] border border-[var(--color-border)] rounded-2xl shadow-2xl p-4 flex flex-col gap-3 backdrop-blur-xl">
+            <div class="flex items-start gap-3">
+                <div class="w-10 h-10 rounded-xl bg-[var(--bg-secondary)] flex items-center justify-center text-xl shrink-0">
+                    {{ needRefresh ? '🚀' : '📱' }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-[var(--color-text)]">
+                        {{ needRefresh ? 'Доступно обновление' : 'Готово к работе офлайн' }}
+                    </p>
+                    <p class="text-[12px] text-[var(--color-secondary)] leading-snug mt-0.5">
+                        {{ needRefresh ? 'Новая версия приложения готова к установке.' : 'Приложение теперь работает без интернета.' }}
+                    </p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button v-if="needRefresh" @click="updateServiceWorker(true)" 
+                        class="flex-1 py-2.5 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] rounded-xl text-xs font-bold shadow-sm">
+                    Обновить сейчас
+                </button>
+                <button @click="closePWA" 
+                        :class="['py-2.5 rounded-xl text-xs font-bold transition-all border border-[var(--color-border)]', needRefresh ? 'px-4 bg-[var(--bg-secondary)] text-[var(--color-text)]' : 'flex-1 bg-[var(--bg-secondary)] text-[var(--color-text)]']">
+                    {{ needRefresh ? 'Позже' : 'Понятно' }}
+                </button>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -218,6 +246,18 @@ import TaskItem from './components/TaskItem.vue';
 import EditTaskModal from './components/EditTaskModal.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import axios from 'axios';
+import { useRegisterSW } from 'virtual:pwa-register/vue';
+
+const {
+    offlineReady,
+    needRefresh,
+    updateServiceWorker,
+} = useRegisterSW();
+
+const closePWA = () => {
+    offlineReady.value = false;
+    needRefresh.value = false;
+};
 
 const store = useBalanceStore();
 const showTaskList = ref(false);
