@@ -44,7 +44,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useBalanceStore } from '../stores/balance';
-import workerUrl from '../workers/packer.worker.js?worker&url';
+import PackerWorker from '../workers/packer.worker.js?worker';
 
 const emit = defineEmits(['edit']);
 const store = useBalanceStore();
@@ -245,19 +245,7 @@ onMounted(() => {
     isTouchDevice.value = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     
     if (typeof Worker !== 'undefined') {
-        // If Vite already gave us a full URL (e.g. from a CDN or absolute build), use it as is.
-        // Otherwise, resolve it against our dynamic assetBaseUrl.
-        let finalUrl;
-        if (workerUrl.startsWith('http')) {
-            finalUrl = workerUrl;
-        } else {
-            const cleanWorkerPath = workerUrl.replace(/^(\.\/|\/)/, '').replace(/^build\//, '');
-            finalUrl = (window.assetBaseUrl || '/build/') + cleanWorkerPath;
-        }
-
-        worker = new Worker(finalUrl, {
-            type: 'module'
-        });
+        worker = new PackerWorker();
         
         worker.onmessage = (e) => {
             bubblePositions.value = e.data.bubblePositions;
