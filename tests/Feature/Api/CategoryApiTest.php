@@ -51,9 +51,11 @@ class CategoryApiTest extends TestCase
         ]);
 
         $response->assertStatus(200);
+        
+        $this->assertEquals('New Name', $cat->refresh()->name);
         $this->assertDatabaseHas('categories', [
             'id' => $cat->id,
-            'name' => 'New Name'
+            'slug' => 'work'
         ]);
     }
 

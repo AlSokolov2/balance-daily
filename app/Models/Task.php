@@ -29,6 +29,9 @@ class Task extends Model
     ];
 
     protected $casts = [
+        'title' => 'encrypted',
+        'notes' => 'encrypted',
+        'subcategory' => 'encrypted',
         'repeat_days' => 'array',
         'ha' => 'boolean',
         'force_active' => 'boolean',

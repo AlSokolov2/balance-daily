@@ -119,4 +119,45 @@ describe('Balance Store - Prioritization Engine', () => {
         expect(store.tasks).toHaveLength(0);
         expect(axios.defaults.headers.common['Authorization']).toBeUndefined();
     });
+
+    describe('Pulse & Sync', () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('recalculates priorities every minute', () => {
+            const store = useBalanceStore();
+            const spy = vi.spyOn(store, 'recalculateAll');
+            
+            store.startPulse();
+            
+            vi.advanceTimersByTime(61000); // 1 minute + margin
+            expect(spy).toHaveBeenCalledTimes(1);
+            
+            vi.advanceTimersByTime(60000);
+            expect(spy).toHaveBeenCalledTimes(2);
+        });
+
+        it('triggers fetchAll when date changes during pulse', async () => {
+            const store = useBalanceStore();
+            const spyFetch = vi.spyOn(store, 'fetchAll');
+            const spyRecalc = vi.spyOn(store, 'recalculateAll');
+            
+            store.lastPulse = 'Mon Jan 01 2026';
+            store.startPulse();
+
+            // Mock date change to next day
+            vi.setSystemTime(new Date('2026-01-02T12:00:00Z'));
+            
+            vi.advanceTimersByTime(61000);
+            
+            expect(spyFetch).toHaveBeenCalled();
+            // recalculateAll is called inside fetchAll, so we don't expect it to be called directly in the interval
+            expect(spyRecalc).not.toHaveBeenCalled(); 
+        });
+    });
 });

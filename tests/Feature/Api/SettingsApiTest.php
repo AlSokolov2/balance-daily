@@ -36,9 +36,9 @@ class SettingsApiTest extends TestCase
         $response->assertStatus(200)
                  ->assertJson(['notepad_text' => 'Updated Text', 'theme' => 'dark']);
         
+        $this->assertEquals('Updated Text', Setting::where('key', 'notepad_text')->where('user_id', $user->id)->first()->value);
         $this->assertDatabaseHas('settings', [
             'key' => 'notepad_text',
-            'value' => 'Updated Text',
             'user_id' => $user->id
         ]);
     }
@@ -53,5 +53,18 @@ class SettingsApiTest extends TestCase
 
         $response->assertStatus(200)
                  ->assertJsonMissing(['secret' => 'private']);
+    }
+
+    public function test_user_automatically_resets_date_on_new_day(): void
+    {
+        $user = User::factory()->create(['last_reset_date' => '2020-01-01']);
+        
+        // Fetch settings - this should trigger the auto-reset logic for 'today'
+        $response = $this->actingAs($user)->getJson('/api/settings');
+        
+        $response->assertStatus(200);
+        
+        $user->refresh();
+        $this->assertEquals(now()->toDateString(), $user->last_reset_date);
     }
 }

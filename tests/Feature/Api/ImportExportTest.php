@@ -47,8 +47,8 @@ class ImportExportTest extends TestCase
         $response->assertStatus(200);
         
         $this->assertDatabaseHas('categories', ['slug' => 'work', 'user_id' => $user->id]);
-        $this->assertDatabaseHas('tasks', ['title' => 'Legacy Task', 'user_id' => $user->id]);
+        $this->assertEquals('Legacy Task', Task::where('user_id', $user->id)->first()->title);
         $this->assertDatabaseHas('subcat_coeffs', ['name' => 'Urgent', 'coefficient' => 1.5, 'user_id' => $user->id]);
-        $this->assertDatabaseHas('settings', ['key' => 'notepad_text', 'value' => 'Hello World', 'user_id' => $user->id]);
+        $this->assertEquals('Hello World', \App\Models\Setting::where('user_id', $user->id)->where('key', 'notepad_text')->first()->value);
     }
 }

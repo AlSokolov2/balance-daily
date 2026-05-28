@@ -25,10 +25,22 @@ All endpoints require authentication via the `Authorization: Bearer <token>` hea
 
 ## Settings & Data
 
-*   `GET /api/settings` — Get a dictionary of settings (e.g., `notepad_text`).
+*   `GET /api/settings` — Get settings dictionary. **Note:** This request triggers the automatic "New Day" logic on the server.
 *   `POST /api/settings` — Batch update settings.
 *   `GET /api/export` — Export all user data in JSON format.
 *   `POST /api/import` — Full replacement of user data with JSON data.
+
+---
+
+## 🔒 Security & Encryption
+
+The following fields are **encrypted on the server** (SSE, AES-256) and are never stored in plain text in the database:
+*   **Tasks:** `title`, `notes`, `subcategory`.
+*   **Categories:** `name`.
+*   **Settings:** `value` (for sensitive keys).
+*   **Users:** `google_token`, `google_refresh_token`.
+
+Encryption is transparent — the API returns decrypted values to authenticated users.
 
 ---
 
