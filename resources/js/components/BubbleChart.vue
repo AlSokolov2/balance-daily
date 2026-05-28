@@ -44,7 +44,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useBalanceStore } from '../stores/balance';
-import PackerWorker from '../workers/packer.worker.js?worker';
 
 const emit = defineEmits(['edit']);
 const store = useBalanceStore();
@@ -245,7 +244,8 @@ onMounted(() => {
     isTouchDevice.value = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     
     if (typeof Worker !== 'undefined') {
-        worker = new PackerWorker();
+        const baseUrl = (window.apiBaseUrl || '').replace(/\/$/, '');
+        worker = new Worker(baseUrl + '/workers/packer.worker.js');
         
         worker.onmessage = (e) => {
             bubblePositions.value = e.data.bubblePositions;
