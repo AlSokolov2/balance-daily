@@ -11,7 +11,5 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 // Добавляем перехватчик для отладки (поможет увидеть финальные URL и заголовки в консоли)
 window.axios.interceptors.request.use(config => {
-    const hasAuth = !!config.headers.Authorization || !!window.axios.defaults.headers.common['Authorization'];
-    console.log(`API Request: ${config.method.toUpperCase()} ${config.baseURL}${config.url} [Auth: ${hasAuth}]`);
     return config;
 });
