@@ -2,6 +2,7 @@
 
 [![Laravel](https://img.shields.io/badge/backend-Laravel%2013-ff2d20.svg)](https://laravel.com)
 [![Vue](https://img.shields.io/badge/frontend-Vue%203-42b883.svg)](https://vuejs.org)
+[![PWA](https://img.shields.io/badge/PWA-Ready-blue.svg)](https://web.dev/progressive-web-apps/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 [🇷🇺 Читать на русском](README.ru.md)
@@ -11,17 +12,19 @@
 ## 🚀 Key Features
 
 *   **Smart Prioritization:** Automatically calculates task weight based on category, importance, deadlines, and overdue days.
-*   **Dynamic Balance:** The system automatically increases the priority of life spheres that haven't received enough attention recently.
-*   **Interactive Visualization:** A custom-built bubble chart to visually highlight your most important daily tasks.
-*   **Mobile-First Design:** Gesture controls (long press for tooltips, tap to edit) and a responsive UI with full-screen visualization.
-*   **Recurring Tasks:** Flexible cycle settings (intervals or specific weekdays) with automatic "hide-until-next" logic.
-*   **Google Auth:** Secure authentication and cloud synchronization for your personal data.
-*   **Full Data Isolation:** Strict privacy enforcement — every user operates within their own secured sandbox.
+*   **Dynamic Balance:** The system automatically increases the priority of life spheres that haven't received enough attention.
+*   **Interactive Visualization:** A custom-built bubble chart powered by **Web Workers** for 60fps performance even with many tasks.
+*   **Dark Mode:** Full support for dark themes with automatic system preference detection.
+*   **PWA (Progressive Web App):** Installable on mobile and desktop. Loads instantly via Service Worker caching.
+*   **Real-time Sync:** Automatic priority updates every minute and automatic "New Day" reset at midnight.
+*   **Data Security (SSE):** Server-Side Encryption (AES-256) for all personal user data in the database.
+*   **Handheld-First Design:** Optimized for one-handed use with advanced gestures (pinch-to-zoom, horizontal swipes).
 
 ## 🛠 Technology Stack
 
 *   **Backend:** PHP 8.4+, Laravel 13, Sanctum (API Auth), Socialite (OAuth).
-*   **Frontend:** Vue 3 (Composition API), Pinia (State Management), Tailwind CSS 4.
+*   **Frontend:** Vue 3 (Composition API), Pinia (State Management), Vite 6, Tailwind CSS 4.
+*   **Infrastructure:** Service Workers (PWA), Web Workers (Offloaded calculations).
 *   **DevOps:** Docker, GitHub Actions (CI/CD), SSH Deployment.
 
 ## 🏁 Quick Start
