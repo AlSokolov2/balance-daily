@@ -1,6 +1,9 @@
 <template>
     <div ref="wrapper" class="bubble-wrapper relative w-full h-full transition-all duration-300"
-         :class="{ 'zoomed overflow-visible z-40': store.bubbleZoom !== 1 }">
+         :class="{ 'zoomed overflow-visible z-40': store.bubbleZoom !== 1 }"
+         @touchstart="handleTouchStart"
+         @touchmove="handleTouchMove"
+         @touchend="handleTouchEnd">
         <div ref="container" class="bubble-container relative w-full h-full transition-transform duration-300"
              :style="bubbleContainerStyle"
              @click="hideTooltip">
@@ -117,6 +120,42 @@ const hideTooltip = () => {
 let touchTimer = null;
 let touchMoved = false;
 let isLongPress = false;
+
+// Pinch zoom state
+const initialPinchDist = ref(0);
+const initialZoom = ref(1);
+
+const getDistance = (t1, t2) => {
+    return Math.sqrt(Math.pow(t2.clientX - t1.clientX, 2) + Math.pow(t2.clientY - t1.clientY, 2));
+};
+
+const handleTouchStart = (e) => {
+    if (e.touches.length === 2) {
+        initialPinchDist.value = getDistance(e.touches[0], e.touches[1]);
+        initialZoom.value = store.bubbleZoom;
+    }
+};
+
+const handleTouchMove = (e) => {
+    if (e.touches.length === 2 && initialPinchDist.value > 0) {
+        // Prevent page scroll when pinching
+        if (e.cancelable) e.preventDefault();
+        
+        const dist = getDistance(e.touches[0], e.touches[1]);
+        const ratio = dist / initialPinchDist.value;
+        let newZoom = initialZoom.value * ratio;
+        
+        // Clamp zoom
+        newZoom = Math.max(0.5, Math.min(2, newZoom));
+        store.bubbleZoom = parseFloat(newZoom.toFixed(2));
+    }
+};
+
+const handleTouchEnd = (e) => {
+    if (e.touches.length < 2) {
+        initialPinchDist.value = 0;
+    }
+};
 
 const handlePointerDown = (event, task) => {
     if (!isTouchDevice.value) return;
@@ -358,7 +397,7 @@ const calcBubbles = () => {
     bubblePositions.value = bestPlaced || [];
 };
 
-defineExpose({ calcBubbles, bubblePositions, handlePointerDown, handlePointerUp, handleBubbleClick, tooltip, isTouchDevice, container });
+defineExpose({ calcBubbles, bubblePositions, handlePointerDown, handlePointerUp, handleBubbleClick, handleTouchStart, handleTouchMove, handleTouchEnd, tooltip, isTouchDevice, container });
 
 watch(() => store.bubbleTasks, calcBubbles, { deep: true });
 watch(() => store.bubbleZoom, calcBubbles);

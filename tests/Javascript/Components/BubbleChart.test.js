@@ -128,4 +128,48 @@ describe('BubbleChart Component', () => {
         const t3 = positions.find(p => p.id === 3);
         expect(t3.y).toBeGreaterThan(padding + hPart * 2 - 1);
     });
+
+    it('updates zoom on pinch gesture', async () => {
+        const store = useBalanceStore();
+        const wrapper = mount(BubbleChart);
+        
+        // Initial state
+        store.bubbleZoom = 1.0;
+
+        // Simulate touchstart with two fingers (100px apart)
+        const touchStartEvent = {
+            touches: [
+                { clientX: 0, clientY: 0 },
+                { clientX: 100, clientY: 0 }
+            ]
+        };
+        await wrapper.vm.handleTouchStart(touchStartEvent);
+
+        // Simulate touchmove with fingers moved further apart (200px apart)
+        const touchMoveEvent = {
+            touches: [
+                { clientX: 0, clientY: 0 },
+                { clientX: 200, clientY: 0 }
+            ],
+            cancelable: true,
+            preventDefault: vi.fn()
+        };
+        await wrapper.vm.handleTouchMove(touchMoveEvent);
+
+        // Ratio 200/100 = 2.0. Initial 1.0 * 2.0 = 2.0
+        expect(store.bubbleZoom).toBe(2.0);
+
+        // Fingers moved closer (50px apart)
+        const touchMoveCloseEvent = {
+            touches: [
+                { clientX: 0, clientY: 0 },
+                { clientX: 50, clientY: 0 }
+            ],
+            cancelable: true,
+            preventDefault: vi.fn()
+        };
+        // ratio 50/100 = 0.5. Initial 1.0 * 0.5 = 0.5
+        await wrapper.vm.handleTouchMove(touchMoveCloseEvent);
+        expect(store.bubbleZoom).toBe(0.5);
+    });
 });
