@@ -88,7 +88,7 @@ const getBubbleStyle = (task) => {
         border: `${borderWidth} solid ${color}`,
         opacity: postponed ? 0.4 : 1,
         fontSize: fontSize + 'px',
-        color: '#1c1c1e'
+        color: 'var(--color-text)'
     };
 };
 

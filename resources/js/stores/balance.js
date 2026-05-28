@@ -10,6 +10,7 @@ export const useBalanceStore = defineStore('balance', {
         loading: false,
         bubbleZoom: 1,
         notepadText: '',
+        theme: 'system',
         user: null,
         token: localStorage.getItem('auth_token') || null,
     }),
@@ -124,17 +125,36 @@ export const useBalanceStore = defineStore('balance', {
                 this.categories = Array.isArray(catsRes.data) ? catsRes.data : [];
                 this.tasks = Array.isArray(tasksRes.data) ? tasksRes.data : [];
                 this.notepadText = settingsRes.data?.notepad_text || '';
+                this.theme = settingsRes.data?.theme || 'system';
                 
                 const subRes = await axios.get('export');
                 this.subcatCoeffs = subRes.data?.subcatCoeffs || {};
                 
                 this.recalculateAll();
+                this.applyTheme();
             } catch (e) {
                 console.error('Fetch error:', e);
                 this.tasks = [];
                 this.categories = [];
             } finally {
                 this.loading = false;
+            }
+        },
+
+        async setTheme(newTheme) {
+            this.theme = newTheme;
+            this.applyTheme();
+            await axios.post('settings', { settings: { theme: newTheme } });
+        },
+
+        applyTheme() {
+            const isDark = this.theme === 'dark' || 
+                (this.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
             }
         },
 
