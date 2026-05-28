@@ -319,7 +319,8 @@ export const useBalanceStore = defineStore('balance', {
 
             if (t.repeat_type === 'none') {
                 const completedAt = new Date().toISOString();
-                await axios.put(`tasks/${id}`, { 
+                await axios.post(`tasks/${id}`, { 
+                    _method: 'PUT',
                     completed: true, 
                     completed_at: completedAt 
                 });
@@ -344,7 +345,8 @@ export const useBalanceStore = defineStore('balance', {
                 const hiddenUntil = nextDate.toISOString();
                 const lastCompletedDate = now.toISOString();
 
-                await axios.put(`tasks/${id}`, {
+                await axios.post(`tasks/${id}`, {
+                    _method: 'PUT',
                     notes: newNotes,
                     hidden_until: hiddenUntil,
                     last_completed_date: lastCompletedDate,
@@ -360,7 +362,7 @@ export const useBalanceStore = defineStore('balance', {
         },
 
         async deleteTask(id) {
-            await axios.delete(`tasks/${id}`);
+            await axios.post(`tasks/${id}?_method=DELETE`);
             this.tasks = this.tasks.filter(t => t.id !== id);
             this.recalculateAll();
         },
@@ -369,7 +371,8 @@ export const useBalanceStore = defineStore('balance', {
             const t = this.tasks.find(x => x.id === id);
             if (!t) return;
             
-            await axios.put(`tasks/${id}`, {
+            await axios.post(`tasks/${id}`, {
+                _method: 'PUT',
                 completed: false,
                 completed_at: null,
                 hidden_until: null
@@ -385,7 +388,8 @@ export const useBalanceStore = defineStore('balance', {
             const t = this.tasks.find(x => x.id === id);
             if (!t) return;
             
-            await axios.put(`tasks/${id}`, {
+            await axios.post(`tasks/${id}`, {
+                _method: 'PUT',
                 hidden_until: null
             });
 
