@@ -8,20 +8,22 @@
 
     <!-- Экран входа (если не авторизован) -->
     <div v-else-if="!store.isAuthenticated" class="min-h-screen flex items-center justify-center bg-[#f5f5f7] p-4">
-        <div class="card bg-white rounded-[24px] p-8 w-full max-w-sm shadow-[0_4px_24px_rgba(0,0,0,0.06)] border border-[#e5e5ea] text-center">
-            <div class="w-16 h-16 bg-[#007aff] rounded-2xl mx-auto mb-6 flex items-center justify-center text-white text-3xl shadow-lg">⚖️</div>
-            <h1 class="text-2xl font-bold text-[#1c1c1e] mb-2">Баланс.Дейли</h1>
-            <p class="text-[#8e8e93] text-sm mb-8 leading-relaxed">
+        <div class="card bg-white rounded-[32px] p-10 w-full max-w-sm shadow-[0_8px_40px_rgba(0,0,0,0.04)] border border-[#e5e5ea] text-center">
+            <div class="w-20 h-20 bg-white border border-gray-100 rounded-2xl mx-auto mb-8 flex items-center justify-center text-[var(--color-text)] shadow-sm">
+                <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+            </div>
+            <h1 class="text-2xl font-bold text-[var(--color-text)] mb-2 tracking-tight">Баланс.Дейли</h1>
+            <p class="text-[#8e8e93] text-[15px] mb-10 leading-relaxed px-4">
                 Ваш персональный помощник для управления балансом жизни и задачами.
             </p>
             
-            <button @click="loginWithGoogle" class="w-full py-3 bg-white border border-[#c6c6c8] text-[#1c1c1e] rounded-12 font-semibold text-[15px] flex items-center justify-center gap-3 hover:bg-gray-50 transition-all active:scale-[0.98]">
+            <button @click="loginWithGoogle" class="w-full py-3.5 bg-white border border-[#c6c6c8] text-[var(--color-text)] rounded-xl font-bold text-[15px] flex items-center justify-center gap-3 hover:bg-gray-50 transition-all active:scale-[0.98] shadow-sm">
                 <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.18 1-.78 1.85-1.63 2.53v2.1h2.64c1.55-1.42 2.43-3.52 2.43-6.64z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-2.64-2.1c-.73.49-1.66.78-2.64.78-2.85 0-5.27-1.92-6.13-4.51H5.17v2.13A11.997 11.997 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.87 14.51c-.22-.66-.35-1.36-.35-2.01s.13-1.35.35-2.01V7.87H3.04C2.37 9.13 2 10.52 2 12s.37 2.87 1.04 4.13l2.83-2.12z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.73 1 4.15 3.13 3.04 6.22l2.83 2.12c.86-2.59 3.28-4.51 6.13-4.51z"/></svg>
                 Войти через Google
             </button>
             
-            <p class="mt-8 text-[11px] text-[#8e8e93]">
-                Продолжая, вы соглашаетесь с условиями использования и политикой конфиденциальности.
+            <p class="mt-10 text-[11px] text-[#aeaeb2] leading-relaxed uppercase tracking-wider font-semibold">
+                Productivity & Balance
             </p>
         </div>
     </div>
@@ -29,27 +31,28 @@
     <!-- Основное приложение (после входа) -->
     <div v-else class="app-container w-full max-w-[1600px] mx-auto flex flex-col h-[100dvh] p-2 sm:p-4 overflow-hidden relative">
         <header v-if="!isHandheld" class="flex justify-between items-center px-1 py-2 shrink-0 z-50">
-            <h1 class="text-xl sm:text-2xl font-bold text-[#1c1c1e]">
+            <h1 class="text-xl sm:text-2xl font-bold text-[var(--color-text)] tracking-tight">
                 Баланс.Дейли
             </h1>
             
             <div class="flex items-center gap-2 relative">
-                <button @click="showTaskList = !showTaskList" class="text-xs sm:text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1.5 rounded-xl hover:bg-blue-100 transition-colors">
+                <button @click="showTaskList = !showTaskList" class="text-xs sm:text-sm font-bold text-gray-600 bg-gray-100 px-4 py-2 rounded-xl hover:bg-gray-200 transition-colors">
                     {{ showTaskList ? 'Скрыть список' : 'Список задач' }}
                 </button>
                 <div v-if="store.user" class="flex items-center gap-2 cursor-pointer ml-1 sm:ml-2" @click="isMenuOpen = !isMenuOpen">
-                    <img :src="store.user.avatar" class="w-8 h-8 rounded-full border border-gray-200 object-cover" referrerpolicy="no-referrer" :title="store.user.name">
-                    <span class="text-sm font-medium">{{ store.user.name }}</span>
+                    <img :src="store.user.avatar" class="w-9 h-9 rounded-xl border border-gray-100 object-cover shadow-sm" referrerpolicy="no-referrer" :title="store.user.name">
                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
                 
                 <!-- Выпадающее меню (Desktop) -->
-                <div v-if="isMenuOpen" class="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50">
-                    <button @click="openSettings" class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                        <span>⚙️</span> Настройки
+                <div v-if="isMenuOpen" class="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
+                    <button @click="openSettings" class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
+                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        Настройки
                     </button>
-                    <button @click="handleLogout" class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-100">
-                        <span>🚪</span> Выйти
+                    <button @click="handleLogout" class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-gray-50 flex items-center gap-3 border-t border-gray-50">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        Выйти
                     </button>
                 </div>
             </div>
@@ -68,22 +71,22 @@
 
         <!-- Фильтры (Desktop only) -->
         <div v-if="!isHandheld" class="px-1 mb-3 shrink-0">
-            <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x">
+            <div class="flex gap-1 bg-gray-100/60 p-1 rounded-2xl overflow-x-auto pb-1 scrollbar-hide snap-x">
                 <div @click="store.filterCat = 'all'" 
-                     :class="['whitespace-nowrap px-4 py-2 rounded-xl cursor-pointer text-sm font-medium transition-all snap-start shadow-sm', store.filterCat === 'all' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50']">
+                     :class="['whitespace-nowrap px-6 py-2 rounded-xl cursor-pointer text-xs font-bold uppercase tracking-wider transition-all snap-start', store.filterCat === 'all' ? 'bg-white text-[var(--color-text)] shadow-sm' : 'text-gray-400 hover:text-gray-600']">
                     Все ({{ store.bubbleTasks.length }})
                 </div>
                 <div v-for="cat in store.categories.filter(c => c.slug !== '__archive__')" :key="cat.slug"
                      @click="store.filterCat = cat.slug"
-                     :class="['whitespace-nowrap px-4 py-2 rounded-xl cursor-pointer text-sm font-medium transition-all snap-start shadow-sm', store.filterCat === cat.slug ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50']">
+                     :class="['whitespace-nowrap px-6 py-2 rounded-xl cursor-pointer text-xs font-bold uppercase tracking-wider transition-all snap-start', store.filterCat === cat.slug ? 'bg-white text-[var(--color-text)] shadow-sm' : 'text-gray-400 hover:text-gray-600']">
                     {{ cat.name }}
                 </div>
                 <div @click="store.filterCat = 'hidden'"
-                     :class="['whitespace-nowrap px-4 py-2 rounded-xl cursor-pointer text-sm font-medium transition-all snap-start shadow-sm', store.filterCat === 'hidden' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50']">
+                     :class="['whitespace-nowrap px-6 py-2 rounded-xl cursor-pointer text-xs font-bold uppercase tracking-wider transition-all snap-start', store.filterCat === 'hidden' ? 'bg-white text-[var(--color-text)] shadow-sm' : 'text-gray-400 hover:text-gray-600']">
                     Скрытые
                 </div>
                 <div @click="store.filterCat = 'archive'"
-                     :class="['whitespace-nowrap px-4 py-2 rounded-xl cursor-pointer text-sm font-medium transition-all snap-start shadow-sm', store.filterCat === 'archive' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50']">
+                     :class="['whitespace-nowrap px-6 py-2 rounded-xl cursor-pointer text-xs font-bold uppercase tracking-wider transition-all snap-start', store.filterCat === 'archive' ? 'bg-white text-[var(--color-text)] shadow-sm' : 'text-gray-400 hover:text-gray-600']">
                     Архив
                 </div>
             </div>
@@ -137,11 +140,11 @@
 
         <!-- Нижняя панель управления (Handheld) -->
         <div v-if="isHandheld" 
-             class="flex items-center gap-2 py-3 px-2 shrink-0 z-[60] bg-[#f5f5f7]/50 backdrop-blur-md">
+             class="flex items-center gap-2 py-3 px-2 shrink-0 z-[60] bg-white border-t border-gray-100">
             
             <!-- Фильтр (Слева) -->
             <div class="flex-1 min-w-0 relative">
-                <select v-model="store.filterCat" class="w-full bg-white border border-[#e5e5ea] p-2.5 rounded-xl text-xs font-bold text-gray-700 outline-none appearance-none shadow-sm">
+                <select v-model="store.filterCat" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl text-xs font-bold text-gray-700 outline-none appearance-none shadow-sm focus:ring-2 focus:ring-gray-200 transition-all">
                     <option value="all">Все ({{ store.bubbleTasks.length }})</option>
                     <option v-for="cat in store.categories.filter(c => c.slug !== '__archive__')" :key="cat.slug" :value="cat.slug">
                         {{ cat.name }}
@@ -155,40 +158,46 @@
             </div>
 
             <!-- Пагинация (Центр) -->
-            <div class="flex gap-1 px-1">
-                <div :class="['w-1.5 h-1.5 rounded-full transition-all', currentMobileScreen === 0 ? 'bg-blue-600 w-3' : 'bg-gray-300']"></div>
-                <div :class="['w-1.5 h-1.5 rounded-full transition-all', currentMobileScreen === 1 ? 'bg-blue-600 w-3' : 'bg-gray-300']"></div>
+            <div class="flex gap-1.5 px-1.5">
+                <div :class="['w-1.5 h-1.5 rounded-full transition-all', currentMobileScreen === 0 ? 'bg-[var(--color-text)] w-3.5' : 'bg-gray-200']"></div>
+                <div :class="['w-1.5 h-1.5 rounded-full transition-all', currentMobileScreen === 1 ? 'bg-[var(--color-text)] w-3.5' : 'bg-gray-200']"></div>
             </div>
 
             <!-- Управление (Справа: FAB + Avatar) -->
             <div class="flex items-center gap-2 relative">
-                <button @click="openAdvancedAdd" class="w-11 h-11 bg-blue-600 text-white rounded-xl shadow-md flex items-center justify-center active:scale-90 transition-transform shrink-0">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                <button @click="openAdvancedAdd" class="w-12 h-12 bg-[var(--color-text)] text-white rounded-xl shadow-lg flex items-center justify-center active:scale-90 transition-transform shrink-0">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                 </button>
                 
                 <div v-if="store.user" class="relative">
                     <img :src="store.user.avatar" @click="isMenuOpen = !isMenuOpen" 
-                         class="w-11 h-11 rounded-xl border border-white shadow-sm object-cover cursor-pointer active:scale-90 transition-transform" 
+                         class="w-12 h-12 rounded-xl border border-gray-100 shadow-sm object-cover cursor-pointer active:scale-90 transition-transform" 
                          referrerpolicy="no-referrer">
                     
                     <!-- Выпадающее меню (Handheld - открывается вверх) -->
-                    <div v-if="isMenuOpen" class="absolute right-0 bottom-full mb-3 w-52 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-[70]">
-                        <div class="px-4 py-3 bg-gray-50 border-b border-gray-100">
-                            <div class="text-xs font-bold text-gray-900 truncate">{{ store.user.name }}</div>
-                            <div class="text-[10px] text-gray-500 truncate">{{ store.user.email }}</div>
+                    <div v-if="isMenuOpen" class="absolute right-0 bottom-full mb-3 w-56 bg-white rounded-[24px] shadow-[0_12px_40px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden z-[70]">
+                        <div class="px-5 py-4 bg-gray-50/50 border-b border-gray-100">
+                            <div class="text-[13px] font-bold text-gray-900 truncate">{{ store.user.name }}</div>
+                            <div class="text-[11px] text-gray-500 truncate">{{ store.user.email }}</div>
                         </div>
-                        <button @click="openSettings" class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                            <span>⚙️</span> Настройки
-                        </button>
-                        <button @click="store.fetchAll" class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-50">
-                            <span>🔄</span> Обновить данные
-                        </button>
-                        <button @click="resetDay" class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                            <span>☀️</span> Новый день (сброс)
-                        </button>
-                        <button @click="handleLogout" class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-100">
-                            <span>🚪</span> Выйти
-                        </button>
+                        <div class="p-1.5">
+                            <button @click="openSettings" class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 rounded-xl transition-colors">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                Настройки
+                            </button>
+                            <button @click="store.fetchAll" class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 rounded-xl transition-colors">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Обновить данные
+                            </button>
+                            <button @click="resetDay" class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 rounded-xl transition-colors">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                Новый день
+                            </button>
+                            <button @click="handleLogout" class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-gray-50 flex items-center gap-3 rounded-xl transition-colors mt-1 border-t border-gray-100 pt-3">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                                Выйти
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -353,17 +362,22 @@ onMounted(async () => {
 .rounded-8 { border-radius: 8px; }
 
 button {
-    background: #007aff;
-    color: white;
-    border: none;
-    font-weight: 600;
+    background: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
+    border: 1px solid var(--color-border);
+    font-weight: 700;
     cursor: pointer;
+    transition: all 0.2s ease;
+}
+button:hover {
+    background: var(--bg-secondary);
+    border-color: var(--color-secondary);
 }
 button.secondary {
-    background: #e5e5ea;
-    color: #007aff;
+    background: var(--btn-secondary-bg);
+    color: var(--btn-secondary-text);
 }
 input[type="range"] {
-    accent-color: #007aff;
+    accent-color: var(--color-text);
 }
 </style>
