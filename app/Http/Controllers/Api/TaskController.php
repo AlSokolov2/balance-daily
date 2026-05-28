@@ -49,25 +49,24 @@ class TaskController extends Controller
      * Get a specific task.
      *
      * @param Request $request
-     * @param \App\Models\Task $task
+     * @param int $id
      * @return \App\Models\Task
      */
-    public function show(Request $request, Task $task)
+    public function show(Request $request, $id)
     {
-        abort_if($task->user_id !== $request->user()->id, 404);
-        return $task;
+        return $request->user()->tasks()->findOrFail($id);
     }
 
     /**
      * Update an existing task.
      *
      * @param Request $request
-     * @param \App\Models\Task $task
+     * @param int $id
      * @return \App\Models\Task
      */
-    public function update(Request $request, Task $task)
+    public function update(Request $request, $id)
     {
-        abort_if($task->user_id !== $request->user()->id, 404);
+        $task = $request->user()->tasks()->findOrFail($id);
 
         $validated = $request->validate([
             'title' => 'sometimes|required|string',
@@ -95,12 +94,12 @@ class TaskController extends Controller
      * Delete a task.
      *
      * @param Request $request
-     * @param \App\Models\Task $task
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Request $request, Task $task)
+    public function destroy(Request $request, $id)
     {
-        abort_if($task->user_id !== $request->user()->id, 404);
+        $task = $request->user()->tasks()->findOrFail($id);
         $task->delete();
 
         return response()->noContent();
