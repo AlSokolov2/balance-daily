@@ -49,11 +49,11 @@ class TaskController extends Controller
      * Get a specific task.
      *
      * @param Request $request
+     * @param mixed $id
      * @return \App\Models\Task
      */
-    public function show(Request $request)
+    public function show(Request $request, $id)
     {
-        $id = $request->route('id') ?? $request->route('task');
         return $request->user()->tasks()->findOrFail($id);
     }
 
@@ -61,11 +61,11 @@ class TaskController extends Controller
      * Update an existing task.
      *
      * @param Request $request
+     * @param mixed $id
      * @return \App\Models\Task
      */
-    public function update(Request $request)
+    public function update(Request $request, $id)
     {
-        $id = $request->route('id') ?? $request->route('task');
         $task = $request->user()->tasks()->findOrFail($id);
 
         $validated = $request->validate([
@@ -94,11 +94,11 @@ class TaskController extends Controller
      * Delete a task.
      *
      * @param Request $request
+     * @param mixed $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Request $request)
+    public function destroy(Request $request, $id)
     {
-        $id = $request->route('id') ?? $request->route('task');
         $task = $request->user()->tasks()->findOrFail($id);
         $task->delete();
 
