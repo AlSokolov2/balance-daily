@@ -68,6 +68,36 @@ export const useBalanceStore = defineStore('balance', {
             }
 
             return tasks.sort((a, b) => b.calculatedPriority - a.calculatedPriority);
+        },
+
+        counts: (state) => {
+            const now = new Date();
+            const res = {
+                all: 0,
+                hidden: 0,
+                archive: 0,
+                byCat: {}
+            };
+
+            if (!Array.isArray(state.tasks)) return res;
+
+            state.tasks.forEach(t => {
+                if (t.completed) {
+                    res.archive++;
+                } else {
+                    const isHidden = t.hidden_until && new Date(t.hidden_until) > now;
+                    if (isHidden) {
+                        res.hidden++;
+                    } else {
+                        res.all++;
+                        if (t.category_slug) {
+                            res.byCat[t.category_slug] = (res.byCat[t.category_slug] || 0) + 1;
+                        }
+                    }
+                }
+            });
+
+            return res;
         }
     },
 

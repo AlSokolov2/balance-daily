@@ -74,20 +74,20 @@
             <div class="flex gap-1 bg-[var(--bg-secondary)] p-1 rounded-2xl overflow-x-auto pb-1 scrollbar-hide snap-x border border-[var(--color-border)]">
                 <div @click="store.filterCat = 'all'" 
                      :class="['whitespace-nowrap px-6 py-2 rounded-xl cursor-pointer text-xs font-bold uppercase tracking-wider transition-all snap-start shadow-sm', store.filterCat === 'all' ? 'bg-[var(--bg-card)] text-[var(--color-text)] border border-[var(--color-border)]' : 'text-[var(--color-secondary)] hover:text-[var(--color-text)]']">
-                    {{ $t('app.filter.all') }} ({{ store.bubbleTasks.length }})
+                    {{ $t('app.filter.all') }} ({{ store.counts.all }})
                 </div>
                 <div v-for="cat in store.categories.filter(c => c.slug !== '__archive__')" :key="cat.slug"
                      @click="store.filterCat = cat.slug"
                      :class="['whitespace-nowrap px-6 py-2 rounded-xl cursor-pointer text-xs font-bold uppercase tracking-wider transition-all snap-start shadow-sm', store.filterCat === cat.slug ? 'bg-[var(--bg-card)] text-[var(--color-text)] border border-[var(--color-border)]' : 'text-[var(--color-secondary)] hover:text-[var(--color-text)]']">
-                    {{ cat.name }}
+                    {{ cat.name }} ({{ store.counts.byCat[cat.slug] || 0 }})
                 </div>
                 <div @click="store.filterCat = 'hidden'"
                      :class="['whitespace-nowrap px-6 py-2 rounded-xl cursor-pointer text-xs font-bold uppercase tracking-wider transition-all snap-start shadow-sm', store.filterCat === 'hidden' ? 'bg-[var(--bg-card)] text-[var(--color-text)] border border-[var(--color-border)]' : 'text-[var(--color-secondary)] hover:text-[var(--color-text)]']">
-                    {{ $t('app.filter.hidden') }}
+                    {{ $t('app.filter.hidden') }} ({{ store.counts.hidden }})
                 </div>
                 <div @click="store.filterCat = 'archive'"
                      :class="['whitespace-nowrap px-6 py-2 rounded-xl cursor-pointer text-xs font-bold uppercase tracking-wider transition-all snap-start shadow-sm', store.filterCat === 'archive' ? 'bg-[var(--bg-card)] text-[var(--color-text)] border border-[var(--color-border)]' : 'text-[var(--color-secondary)] hover:text-[var(--color-text)]']">
-                    {{ $t('app.filter.archive') }}
+                    {{ $t('app.filter.archive') }} ({{ store.counts.archive }})
                 </div>
             </div>
         </div>
@@ -154,12 +154,12 @@
             <!-- Фильтр (Слева) -->
             <div class="flex-1 min-w-0 relative">
                 <select v-model="store.filterCat" class="w-full bg-[var(--bg-secondary)] border border-[var(--color-border)] p-3 rounded-xl text-xs font-bold text-[var(--color-text)] outline-none appearance-none shadow-sm focus:ring-2 focus:ring-[var(--color-border)] transition-all">
-                    <option value="all">{{ $t('app.filter.all') }} ({{ store.bubbleTasks.length }})</option>
+                    <option value="all">{{ $t('app.filter.all') }} ({{ store.counts.all }})</option>
                     <option v-for="cat in store.categories.filter(c => c.slug !== '__archive__')" :key="cat.slug" :value="cat.slug">
-                        {{ cat.name }}
+                        {{ cat.name }} ({{ store.counts.byCat[cat.slug] || 0 }})
                     </option>
-                    <option value="hidden">{{ $t('app.filter.hidden') }}</option>
-                    <option value="archive">{{ $t('app.filter.archive') }}</option>
+                    <option value="hidden">{{ $t('app.filter.hidden') }} ({{ store.counts.hidden }})</option>
+                    <option value="archive">{{ $t('app.filter.archive') }} ({{ store.counts.archive }})</option>
                 </select>
                 <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--color-secondary)]">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
