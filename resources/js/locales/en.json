@@ -43,6 +43,8 @@
         "placeholder": "What needs to be done?",
         "no_tasks": "No tasks",
         "no_tasks_in_category": "No tasks in this category",
+        "archive_info": "Completed tasks are available in the list",
+        "hidden_info": "Hidden tasks are available in the list",
         "filter": {
             "all": "All",
             "hidden": "Hidden",

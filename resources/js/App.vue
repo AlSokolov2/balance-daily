@@ -95,7 +95,7 @@
         <!-- Контент свайпа (Handheld: Chart <-> List, Desktop: Just content) -->
         <div class="flex-1 min-h-0 flex flex-col overflow-hidden pt-1 handheld:pt-0">
             <!-- Mobile/Handheld Swipe View -->
-            <div v-if="isHandheld" class="flex-1 flex overflow-x-auto snap-x snap-mandatory scrollbar-hide scroll-smooth" @scroll="handleMobileScroll">
+            <div v-if="isHandheld" ref="mobileScrollContainer" class="mobile-scroll-container flex-1 flex overflow-x-auto snap-x snap-mandatory scrollbar-hide scroll-smooth" @scroll="handleMobileScroll">
                 <!-- Screen 1: Bubble Chart -->
                 <div class="min-w-full h-full snap-start p-1 flex flex-col">
                     <div class="flex-1 bg-[var(--bg-card)] rounded-3xl shadow-sm border border-[var(--color-border)] relative overflow-hidden flex flex-col min-h-0 min-w-0">
@@ -239,7 +239,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useBalanceStore } from './stores/balance';
 import BubbleChart from './components/BubbleChart.vue';
 import TaskItem from './components/TaskItem.vue';
@@ -262,6 +262,7 @@ const closePWA = () => {
 };
 
 const store = useBalanceStore();
+const mobileScrollContainer = ref(null);
 
 // Sync i18n locale with store locale
 watch(() => store.locale, (newLocale) => {
@@ -269,6 +270,22 @@ watch(() => store.locale, (newLocale) => {
         locale.value = String(newLocale);
     }
 }, { immediate: true });
+
+// Auto-open task list when filtering by Archive or Hidden
+watch(() => store.filterCat, (newCat) => {
+    if (newCat === 'archive' || newCat === 'hidden') {
+        showTaskList.value = true;
+        scrollToList();
+    }
+});
+
+const scrollToList = () => {
+    if (isHandheld.value && mobileScrollContainer.value) {
+        nextTick(() => {
+            mobileScrollContainer.value.scrollLeft = mobileScrollContainer.value.clientWidth;
+        });
+    }
+};
 
 const showTaskList = ref(false);
 const showSettingsModal = ref(false);
@@ -382,6 +399,15 @@ const deleteTask = async (id) => {
 const handleEdit = (task) => {
     editingTask.value = task;
 };
+
+defineExpose({
+    showTaskList,
+    isHandheld,
+    mobileScrollContainer,
+    updateDimensions,
+    isInitializing,
+    scrollToList
+});
 
 const resetDay = async () => {
     if (confirm(t('app.alerts.reset_day_confirm'))) {

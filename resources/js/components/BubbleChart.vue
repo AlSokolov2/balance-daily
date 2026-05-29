@@ -23,8 +23,16 @@
                 </span>
             </div>
             
-            <div v-if="!store.bubbleTasks.length" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[#8e8e93] text-sm">
-                {{ $t('app.no_tasks') }}
+            <div v-if="!store.bubbleTasks.length" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[var(--color-secondary)] text-sm text-center px-6">
+                <template v-if="store.filterCat === 'archive'">
+                    {{ $t('app.archive_info') }}
+                </template>
+                <template v-else-if="store.filterCat === 'hidden'">
+                    {{ $t('app.hidden_info') }}
+                </template>
+                <template v-else>
+                    {{ $t('app.no_tasks') }}
+                </template>
             </div>
 
             <div v-if="tooltip.visible" 
