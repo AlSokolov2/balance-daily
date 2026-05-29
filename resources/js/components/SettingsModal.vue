@@ -93,6 +93,12 @@
                 </div>
                 <input type="file" ref="fileInput" @change="handleImport" accept=".json" class="hidden">
             </div>
+
+            <!-- Footer / Version -->
+            <div class="mt-8 pt-4 border-t border-[var(--color-border)] flex justify-between items-center opacity-40">
+                <span class="text-[9px] font-black uppercase tracking-widest text-[var(--color-secondary)]">Balance.Daily</span>
+                <span class="text-[9px] font-bold font-mono text-[var(--color-secondary)]">v{{ version }}</span>
+            </div>
         </div>
 
         <EditCategoryModal 
@@ -122,6 +128,7 @@ const tabNames = { gen: 'Общие', cat: 'Категории', sub: 'Подк�
 const editableCats = reactive({});
 const localNotepad = ref('');
 const editingCategory = ref(null);
+const version = __APP_VERSION__;
 
 const initData = () => {
     store.categories.filter(c => c.slug !== '__archive__').forEach(c => {

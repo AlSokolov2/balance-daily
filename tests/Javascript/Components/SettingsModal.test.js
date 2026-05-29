@@ -70,4 +70,9 @@ describe('SettingsModal Component', () => {
         expect(vm.editableCats['chor'].weight).toBe(50);
         expect(vm.editableCats['prog'].weight).toBe(50);
     });
+
+    it('displays the correct application version', () => {
+        const wrapper = mount(SettingsModal);
+        expect(wrapper.text()).toContain('v2.0.9');
+    });
 });
