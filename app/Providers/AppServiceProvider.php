@@ -28,11 +28,8 @@ class AppServiceProvider extends ServiceProvider
             
             $root = parse_url($url, PHP_URL_PATH);
             if ($root && $root !== '/') {
-                // Коррекция для Apache: убираем префикс подпапки из внутреннего пути
-                $path = request()->getBasePath();
-                if (!str_contains($path, $root)) {
-                    request()->server->set('SCRIPT_NAME', $root . '/index.php');
-                }
+                // Всегда форсируем SCRIPT_NAME, если мы в подпапке
+                request()->server->set('SCRIPT_NAME', $root . '/index.php');
             }
         }
     }
