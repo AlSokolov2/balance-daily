@@ -82,6 +82,11 @@
         "new_task": "New Task",
         "edit": "Edit",
         "done": "Completed",
+        "tabs": {
+            "notes": "Notes",
+            "setup": "Setup",
+            "schedule": "Schedule"
+        },
         "title": "Title",
         "notes": "Notes",
         "notes_placeholder": "Task notes",
