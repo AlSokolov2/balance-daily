@@ -9,7 +9,9 @@ const cleanBaseUrl = rawBaseUrl.replace(/\/$/, '');
 window.axios.defaults.baseURL = cleanBaseUrl + '/api/';
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
-// Добавляем перехватчик для отладки (поможет увидеть финальные URL и заголовки в консоли)
+// Добавляем перехватчик для отладки и установки локали
 window.axios.interceptors.request.use(config => {
+    const locale = localStorage.getItem('locale') || 'ru';
+    config.headers['X-Locale'] = locale;
     return config;
 });

@@ -10,19 +10,19 @@
         <div class="task-info flex-[3] min-w-0">
             <div class="task-title font-bold text-[15px] mb-[2px] text-[var(--color-text)]">
                 {{ task.title }}
-                <span v-if="store.isEffectivelyPostponed(task) && !store.isHidden(task)" class="badge bg-[var(--bg-secondary)] text-[var(--color-secondary)]">отложено</span>
+                <span v-if="store.isEffectivelyPostponed(task) && !store.isHidden(task)" class="badge bg-[var(--bg-secondary)] text-[var(--color-secondary)]">{{ $t('task.status.postponed') }}</span>
                 <span v-if="task.ha" class="badge bg-[var(--bg-secondary)] text-[var(--color-text)] border border-[var(--color-border)]">HA</span>
-                <span v-if="task.force_active" class="badge bg-[var(--bg-secondary)] text-[var(--color-text)] border border-[var(--color-border)]">актуально</span>
-                <span v-if="store.isHidden(task)" class="badge bg-[var(--bg-secondary)] text-[var(--color-secondary)]">появится {{ formatDate(task.hidden_until) }}</span>
-                <span v-if="task.repeat_type !== 'none' && !task.completed && task.missed_count > 0 && !store.isHidden(task)" class="badge bg-red-500/20 text-red-500 font-black">проср. {{ task.missed_count }}д</span>
-                <span v-if="task.repeat_type !== 'none' && !task.completed && task.missed_count === 0 && !store.isHidden(task) && !store.isEffectivelyPostponed(task)" class="badge bg-[var(--bg-secondary)] text-[var(--color-secondary)]">повтор</span>
-                <span v-if="task.completed" class="badge-text">вып. {{ formatDate(task.completed_at) }}</span>
+                <span v-if="task.force_active" class="badge bg-[var(--bg-secondary)] text-[var(--color-text)] border border-[var(--color-border)]">{{ $t('task.status.active') }}</span>
+                <span v-if="store.isHidden(task)" class="badge bg-[var(--bg-secondary)] text-[var(--color-secondary)]">{{ $t('task.status.appears') }} {{ formatDate(task.hidden_until) }}</span>
+                <span v-if="task.repeat_type !== 'none' && !task.completed && task.missed_count > 0 && !store.isHidden(task)" class="badge bg-red-500/20 text-red-500 font-black">{{ $t('task.status.missed', { n: task.missed_count }) }}</span>
+                <span v-if="task.repeat_type !== 'none' && !task.completed && task.missed_count === 0 && !store.isHidden(task) && !store.isEffectivelyPostponed(task)" class="badge bg-[var(--bg-secondary)] text-[var(--color-secondary)]">{{ $t('task.status.repeat') }}</span>
+                <span v-if="task.completed" class="badge-text">{{ $t('task.status.completed') }} {{ formatDate(task.completed_at) }}</span>
             </div>
             <div class="task-meta text-[11px] text-[var(--color-secondary)]">
                 {{ categoryName }} 
                 <span v-if="task.subcategory">| {{ task.subcategory }} x{{ getCoeff(task.subcategory) }}</span>
-                | Важн: {{ task.importance }} 
-                <span v-if="task.deadline">| Дедлайн {{ formatDate(task.deadline) }}</span>
+                | {{ $t('task.meta.importance') }}: {{ task.importance }} 
+                <span v-if="task.deadline">| {{ $t('task.meta.deadline') }} {{ formatDate(task.deadline) }}</span>
                 | <span class="priority-value font-black" :style="{ color: categoryColor }">
                     {{ task.calculatedPriority?.toFixed(1) }}
                 </span>
@@ -61,7 +61,9 @@
 <script setup>
 import { computed } from 'vue';
 import { useBalanceStore } from '../stores/balance';
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const props = defineProps({
     task: Object
 });
@@ -76,7 +78,8 @@ const getCoeff = (s) => store.subcatCoeffs[s] || 1;
 
 const formatDate = (d) => {
     if (!d) return '';
-    return new Date(d).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const dateLocale = store.locale === 'ru' ? 'ru-RU' : 'en-US';
+    return new Date(d).toLocaleString(dateLocale, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 };
 </script>
 

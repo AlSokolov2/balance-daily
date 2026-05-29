@@ -1,0 +1,147 @@
+{
+    "settings": {
+        "title": "Settings",
+        "tabs": {
+            "gen": "General",
+            "cat": "Categories",
+            "sub": "Subcategories",
+            "notepad": "Notepad",
+            "data": "Data"
+        },
+        "general": {
+            "appearance": "Appearance",
+            "theme": {
+                "system": "System",
+                "light": "Light",
+                "dark": "Dark"
+            },
+            "language": "Interface Language"
+        }
+    },
+    "common": {
+        "save": "Save",
+        "add": "Add",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "later": "Later",
+        "understand": "Got it",
+        "yes": "Yes",
+        "no": "No"
+    },
+    "auth": {
+        "login_with_google": "Login with Google",
+        "description": "Your personal assistant for managing life balance and tasks.",
+        "loading_app": "Loading Balance.Daily..."
+    },
+    "app": {
+        "title": "Balance.Daily",
+        "hide_list": "Hide list",
+        "show_list": "Task list",
+        "logout": "Logout",
+        "settings": "Settings",
+        "placeholder": "What needs to be done?",
+        "no_tasks": "No tasks",
+        "no_tasks_in_category": "No tasks in this category",
+        "filter": {
+            "all": "All",
+            "hidden": "Hidden",
+            "archive": "Archive"
+        },
+        "alerts": {
+            "add_error": "Error adding task.",
+            "delete_confirm": "Delete task?",
+            "delete_error": "Error deleting task.",
+            "reset_day_confirm": "Reset daily counters? (Simulate \"New Day\")"
+        }
+    },
+    "pwa": {
+        "update_available": "Update available",
+        "offline_ready": "Ready for offline",
+        "update_ready_text": "A new version of the app is ready for installation.",
+        "offline_ready_text": "The app now works without an internet connection.",
+        "update_now": "Update now"
+    },
+    "task": {
+        "status": {
+            "postponed": "postponed",
+            "active": "active",
+            "appears": "appears",
+            "missed": "missed {n}d",
+            "repeat": "repeat",
+            "completed": "done"
+        },
+        "meta": {
+            "importance": "Imp",
+            "deadline": "Deadline"
+        }
+    },
+    "edit_task": {
+        "new_task": "New Task",
+        "edit": "Edit",
+        "done": "Completed",
+        "title": "Title",
+        "notes": "Notes",
+        "notes_placeholder": "Task notes",
+        "category": "Category",
+        "importance": "Importance",
+        "importance_levels": {
+            "very_high": "Very High",
+            "high": "High",
+            "medium": "Medium",
+            "low": "Low",
+            "very_low": "Very Low"
+        },
+        "subcategory": "Subcategory",
+        "deadline": "Deadline",
+        "postpone_until": "Postpone until",
+        "repeat": {
+            "type": "Repeat type",
+            "none": "No repeat",
+            "interval": "Every N days",
+            "weekly": "Weekly",
+            "every": "Every",
+            "days": "days"
+        },
+        "ha": "HA",
+        "force_active": "Relevant",
+        "completed_at": "Completion date",
+        "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        "save_error": "Error saving task"
+    },
+    "edit_category": {
+        "title": "Category Settings",
+        "name": "Name",
+        "weight": "Weight (affects bubble size)",
+        "color": "Color",
+        "hide_until": "Hidden until (time)",
+        "done": "Done"
+    },
+    "settings_modal": {
+        "categories": {
+            "hide_until_prefix": "Until",
+            "add_button": "+ Add",
+            "save_button": "Save",
+            "new_category_name": "New",
+            "delete_last_error": "Cannot delete the last category",
+            "save_error": "Error saving categories"
+        },
+        "subcategories": {
+            "save_all_button": "Save All"
+        },
+        "notepad": {
+            "placeholder": "Notes...",
+            "save_button": "Save",
+            "saved_message": "Notepad saved"
+        },
+        "data": {
+            "title": "Data Management",
+            "description": "You can export your data to a JSON file or import a backup.",
+            "warning": "Warning: Import will completely replace current tasks and settings!",
+            "sync_button": "Force Sync",
+            "export_button": "Export (JSON)",
+            "import_button": "Import (JSON)",
+            "import_error": "Import error: {msg}"
+        }
+    }
+}

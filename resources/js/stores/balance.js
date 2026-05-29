@@ -11,6 +11,7 @@ export const useBalanceStore = defineStore('balance', {
         bubbleZoom: 1,
         notepadText: '',
         theme: 'system',
+        locale: localStorage.getItem('locale') || 'ru',
         lastPulse: new Date().toDateString(),
         pulseTimer: null,
         user: null,
@@ -149,6 +150,13 @@ export const useBalanceStore = defineStore('balance', {
             this.theme = newTheme;
             this.applyTheme();
             await axios.post('settings', { settings: { theme: newTheme } });
+        },
+
+        async setLocale(newLocale) {
+            this.locale = newLocale;
+            localStorage.setItem('locale', newLocale);
+            // We'll update the i18n instance from the component or here if we import it
+            await axios.post('settings', { settings: { locale: newLocale } });
         },
 
         startPulse() {
@@ -329,7 +337,8 @@ export const useBalanceStore = defineStore('balance', {
                 t.missed_count = 0;
             } else {
                 const now = new Date();
-                const dateStr = now.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                const dateLocale = this.locale === 'ru' ? 'ru-RU' : 'en-US';
+                const dateStr = now.toLocaleString(dateLocale, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
                 const newNotes = (t.notes ? t.notes + '\n' : '') + '✔ ' + dateStr;
                 
                 let nextDate = new Date();

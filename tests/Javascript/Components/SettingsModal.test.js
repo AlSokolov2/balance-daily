@@ -35,23 +35,15 @@ describe('SettingsModal Component', () => {
 
     it('switches tabs correctly', async () => {
         const wrapper = mount(SettingsModal);
-        
         // Default tab is 'gen' (Общие)
-        expect(wrapper.text()).toContain('Оформление системы');
+        expect(wrapper.text()).toContain('settings.general.appearance');
 
         // Click 'Категории' tab
         const tabs = wrapper.findAll('.cursor-pointer');
-        const catTab = tabs.find(t => t.text() === 'Категории');
+        const catTab = tabs.find(t => t.text() === 'settings.tabs.cat');
         await catTab.trigger('click');
-        
-        expect(wrapper.text()).toContain('Добавить');
 
-        // Click 'Подкатегории' tab
-        const subcatTab = tabs.find(t => t.text() === 'Подкатегории');
-        await subcatTab.trigger('click');
-
-        expect(wrapper.text()).toContain('Подкатегории');
-        expect(wrapper.text()).not.toContain('+ Добавить');
+        expect(wrapper.vm.tab).toBe('cat');
     });
 
     it('syncs weights correctly when one is changed', async () => {

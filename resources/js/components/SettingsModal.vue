@@ -2,7 +2,7 @@
     <div class="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4" @click.self="$emit('close')">
         <div class="bg-[var(--bg-card)] rounded-2xl p-4 sm:p-5 w-full max-w-[560px] max-h-[90vh] overflow-y-auto overflow-x-hidden shadow-2xl relative border border-[var(--color-border)]">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold tracking-tight text-[var(--color-text)]">Настройки</h2>
+                <h2 class="text-lg font-bold tracking-tight text-[var(--color-text)]">{{ $t('settings.title') }}</h2>
                 <span @click="$emit('close')" class="cursor-pointer text-2xl text-[var(--color-secondary)] hover:text-[var(--color-text)] transition-colors">&times;</span>
             </div>
 
@@ -10,19 +10,30 @@
                 <div v-for="t in ['gen', 'cat', 'sub', 'notepad', 'data']" :key="t"
                      @click="tab = t"
                      :class="['flex-1 text-center py-2 rounded-lg cursor-pointer text-[11px] font-bold uppercase tracking-wider transition-all', tab === t ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm' : 'text-[var(--color-secondary)] hover:text-[var(--color-text)]']">
-                    {{ tabNames[t] }}
+                    {{ $t(`settings.tabs.${t}`) }}
                 </div>
             </div>
 
-            <!-- Общие (Тема) -->
+            <!-- Общие (Тема и Язык) -->
             <div v-if="tab === 'gen'" class="space-y-6 pb-2">
                 <div>
-                    <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-3">Оформление системы</label>
+                    <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-3">{{ $t('settings.general.language') }}</label>
+                    <div class="grid grid-cols-2 gap-2 bg-[var(--bg-secondary)] p-1 rounded-2xl border border-[var(--color-border)]">
+                        <button v-for="l in ['ru', 'en']" :key="l"
+                                @click="changeLanguage(l)"
+                                :class="['py-3 rounded-xl text-xs font-bold transition-all', store.locale === l ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm border border-[var(--color-border)]' : 'bg-transparent text-[var(--color-secondary)] border border-transparent']">
+                            {{ l === 'ru' ? 'Русский' : 'English' }}
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-3">{{ $t('settings.general.appearance') }}</label>
                     <div class="grid grid-cols-3 gap-2 bg-[var(--bg-secondary)] p-1 rounded-2xl border border-[var(--color-border)]">
                         <button v-for="m in ['system', 'light', 'dark']" :key="m"
                                 @click="store.setTheme(m)"
                                 :class="['py-3 rounded-xl text-xs font-bold transition-all', store.theme === m ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm border border-[var(--color-border)]' : 'bg-transparent text-[var(--color-secondary)] border border-transparent']">
-                            {{ m === 'system' ? 'Система' : (m === 'light' ? 'Светлая' : 'Тёмная') }}
+                            {{ $t(`settings.general.theme.${m}`) }}
                         </button>
                     </div>
                 </div>
@@ -39,15 +50,15 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <span v-if="c.hide_until" class="text-[10px] bg-[var(--bg-secondary)] text-[var(--color-secondary)] px-2.5 py-1 rounded-lg font-bold border border-[var(--color-border)]">
-                            До {{ c.hide_until.substring(0, 10) }}
+                            {{ $t('settings_modal.categories.hide_until_prefix') }} {{ c.hide_until.substring(0, 10) }}
                         </span>
                         <span class="text-xs font-black text-[var(--color-border)] w-10 text-right">{{ c.weight }}%</span>
                         <svg class="w-4 h-4 text-[var(--color-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </div>
                 </div>
                 <div class="flex gap-2 pt-4">
-                    <button @click="addCategory" class="flex-1 py-3 bg-[var(--bg-secondary)] text-[var(--color-text)] rounded-xl font-bold text-xs hover:opacity-80 transition-opacity border border-[var(--color-border)]">+ Добавить</button>
-                    <button @click="saveCats" class="flex-1 py-3 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] border border-[var(--color-border)] rounded-xl font-bold text-xs">Сохранить</button>
+                    <button @click="addCategory" class="flex-1 py-3 bg-[var(--bg-secondary)] text-[var(--color-text)] rounded-xl font-bold text-xs hover:opacity-80 transition-opacity border border-[var(--color-border)]">{{ $t('settings_modal.categories.add_button') }}</button>
+                    <button @click="saveCats" class="flex-1 py-3 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] border border-[var(--color-border)] rounded-xl font-bold text-xs">{{ $t('settings_modal.categories.save_button') }}</button>
                 </div>
             </div>
 
@@ -61,34 +72,34 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     </button>
                 </div>
-                <button @click="saveSubcats" class="w-full py-3.5 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] border border-[var(--color-border)] rounded-2xl font-bold text-sm mt-6 shadow-sm transition-all">Сохранить всё</button>
+                <button @click="saveSubcats" class="w-full py-3.5 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] border border-[var(--color-border)] rounded-2xl font-bold text-sm mt-6 shadow-sm transition-all">{{ $t('settings_modal.subcategories.save_all_button') }}</button>
             </div>
 
             <!-- Блокнот -->
             <div v-if="tab === 'notepad'">
-                <textarea v-model="localNotepad" class="w-full h-72 p-4 border border-[var(--color-border)] rounded-2xl text-sm mb-4 focus:ring-2 focus:ring-[var(--color-border)] outline-none transition-all bg-[var(--bg-secondary)]/30 text-[var(--color-text)]" placeholder="Заметки..."></textarea>
-                <button @click="saveNotepad" class="w-full py-3.5 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] border border-[var(--color-border)] rounded-2xl font-bold text-sm shadow-sm transition-all">Сохранить</button>
+                <textarea v-model="localNotepad" class="w-full h-72 p-4 border border-[var(--color-border)] rounded-2xl text-sm mb-4 focus:ring-2 focus:ring-[var(--color-border)] outline-none transition-all bg-[var(--bg-secondary)]/30 text-[var(--color-text)]" :placeholder="$t('settings_modal.notepad.placeholder')"></textarea>
+                <button @click="saveNotepad" class="w-full py-3.5 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] border border-[var(--color-border)] rounded-2xl font-bold text-sm shadow-sm transition-all">{{ $t('settings_modal.notepad.save_button') }}</button>
             </div>
 
             <!-- Данные -->
             <div v-if="tab === 'data'" class="space-y-4">
                 <div class="p-5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-2xl text-[12px] text-[var(--color-secondary)] leading-relaxed">
-                    <p class="font-bold text-[var(--color-text)] mb-1">Управление данными</p>
-                    Вы можете экспортировать свои данные в JSON-файл или импортировать бэкап. 
-                    <br><span class="text-red-500 font-medium">Внимание:</span> Импорт полностью заменит текущие задачи и настройки!
+                    <p class="font-bold text-[var(--color-text)] mb-1">{{ $t('settings_modal.data.title') }}</p>
+                    {{ $t('settings_modal.data.description') }}
+                    <br><span class="text-red-500 font-medium">{{ $t('settings_modal.data.warning') }}</span>
                 </div>
                 <div class="grid grid-cols-1 gap-2">
                     <button @click="store.fetchAll()" class="w-full py-3.5 bg-[var(--bg-secondary)] text-[var(--color-text)] rounded-2xl font-bold text-sm hover:opacity-80 transition-all flex items-center justify-center gap-3 border border-[var(--color-border)]">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                        Принудительная синхронизация
+                        {{ $t('settings_modal.data.sync_button') }}
                     </button>
                     <button @click="exportData" class="w-full py-3.5 bg-[var(--bg-card)] border border-[var(--color-border)] text-[var(--color-text)] rounded-2xl font-bold text-sm hover:bg-[var(--bg-secondary)] transition-all flex items-center justify-center gap-3">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        Экспорт (JSON)
+                        {{ $t('settings_modal.data.export_button') }}
                     </button>
                     <button @click="$refs.fileInput.click()" class="w-full py-3.5 bg-[var(--bg-card)] border border-[var(--color-border)] text-[var(--color-text)] rounded-2xl font-bold text-sm hover:bg-[var(--bg-secondary)] transition-all flex items-center justify-center gap-3">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                        Импорт (JSON)
+                        {{ $t('settings_modal.data.import_button') }}
                     </button>
                 </div>
                 <input type="file" ref="fileInput" @change="handleImport" accept=".json" class="hidden">
@@ -119,16 +130,22 @@ import { ref, onMounted, reactive } from 'vue';
 import { useBalanceStore } from '../stores/balance';
 import EditCategoryModal from './EditCategoryModal.vue';
 import axios from 'axios';
+import { useI18n } from 'vue-i18n';
 
+const { locale, t } = useI18n();
 const emit = defineEmits(['close']);
 const store = useBalanceStore();
 const tab = ref('gen');
-const tabNames = { gen: 'Общие', cat: 'Категории', sub: 'Подкатегории', notepad: 'Блокнот', data: 'Данные' };
 
 const editableCats = reactive({});
 const localNotepad = ref('');
 const editingCategory = ref(null);
-const version = __APP_VERSION__;
+const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.0.9';
+
+const changeLanguage = (l) => {
+    store.setLocale(l);
+    locale.value = l;
+};
 
 const initData = () => {
     store.categories.filter(c => c.slug !== '__archive__').forEach(c => {
@@ -181,13 +198,13 @@ const openEditCategory = (slug) => {
 
 const handleSaveCategory = (slug, data) => {
     editableCats[slug] = data;
-    syncWeights(slug, data.weight); // Ensure weights are balanced after save
+    syncWeights(slug, data.weight); 
     editingCategory.value = null;
 };
 
 const handleDeleteCategory = (slug) => {
     if (Object.keys(editableCats).length <= 1) {
-        alert('Нельзя удалить последнюю категорию');
+        alert(t('settings_modal.categories.delete_last_error'));
         return;
     }
     delete editableCats[slug];
@@ -198,7 +215,7 @@ const handleDeleteCategory = (slug) => {
 
 const addCategory = () => {
     const newKey = 'cat_' + Date.now();
-    const newData = { name: 'Новая', weight: 10, color: '#8e8e93', hide_until: '' };
+    const newData = { name: t('settings_modal.categories.new_category_name'), weight: 10, color: '#8e8e93', hide_until: '' };
     editableCats[newKey] = newData;
     syncWeights(newKey, 10);
     
@@ -207,13 +224,6 @@ const addCategory = () => {
         data: { ...newData },
         isNew: true
     };
-};
-
-const deleteCategory = (slug) => {
-    if (Object.keys(editableCats).length <= 1) return;
-    delete editableCats[slug];
-    const firstRemaining = Object.keys(editableCats)[0];
-    syncWeights(firstRemaining, editableCats[firstRemaining].weight);
 };
 
 const saveCats = async () => {
@@ -230,7 +240,7 @@ const saveCats = async () => {
         await store.fetchAll();
         emit('close');
     } catch (e) {
-        alert('Ошибка при сохранении категорий');
+        alert(t('settings_modal.categories.save_error'));
     }
 };
 
@@ -245,7 +255,7 @@ const saveSubcats = async () => {
 const saveNotepad = async () => {
     await axios.post('settings', { settings: { notepad_text: localNotepad.value } });
     store.notepadText = localNotepad.value;
-    alert('Блокнот сохранен');
+    alert(t('settings_modal.notepad.saved_message'));
 };
 
 const exportData = async () => {
@@ -268,8 +278,8 @@ const handleImport = (e) => {
             window.location.reload();
         } catch (ex) {
             console.error('Import error:', ex);
-            const msg = ex.response?.data?.message || ex.message || 'Неверный формат JSON или ошибка сервера';
-            alert('Ошибка при импорте: ' + msg);
+            const msg = ex.response?.data?.message || ex.message || 'Error';
+            alert(t('settings_modal.data.import_error', { msg }));
         }
     };
     r.readAsText(f);

@@ -24,7 +24,7 @@
             </div>
             
             <div v-if="!store.bubbleTasks.length" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[#8e8e93] text-sm">
-                Нет задач
+                {{ $t('app.no_tasks') }}
             </div>
 
             <div v-if="tooltip.visible" 

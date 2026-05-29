@@ -1,0 +1,147 @@
+{
+    "settings": {
+        "title": "Настройки",
+        "tabs": {
+            "gen": "Общие",
+            "cat": "Категории",
+            "sub": "Подкатегории",
+            "notepad": "Блокнот",
+            "data": "Данные"
+        },
+        "general": {
+            "appearance": "Оформление системы",
+            "theme": {
+                "system": "Система",
+                "light": "Светлая",
+                "dark": "Тёмная"
+            },
+            "language": "Язык интерфейса"
+        }
+    },
+    "common": {
+        "save": "Сохранить",
+        "add": "Добавить",
+        "delete": "Удалить",
+        "cancel": "Отмена",
+        "loading": "Загрузка...",
+        "later": "Позже",
+        "understand": "Понятно",
+        "yes": "Да",
+        "no": "Нет"
+    },
+    "auth": {
+        "login_with_google": "Войти через Google",
+        "description": "Ваш персональный помощник для управления балансом жизни и задачами.",
+        "loading_app": "Загрузка Баланс.Дейли..."
+    },
+    "app": {
+        "title": "Баланс.Дейли",
+        "hide_list": "Скрыть список",
+        "show_list": "Список задач",
+        "logout": "Выйти",
+        "settings": "Настройки",
+        "placeholder": "Что нужно сделать?",
+        "no_tasks": "Нет задач",
+        "no_tasks_in_category": "Нет задач в этой категории",
+        "filter": {
+            "all": "Все",
+            "hidden": "Скрытые",
+            "archive": "Архив"
+        },
+        "alerts": {
+            "add_error": "Ошибка при добавлении задачи.",
+            "delete_confirm": "Удалить задачу?",
+            "delete_error": "Ошибка при удалении задачи.",
+            "reset_day_confirm": "Сбросить счетчики дня? (Симуляция \"Нового дня\")"
+        }
+    },
+    "pwa": {
+        "update_available": "Доступно обновление",
+        "offline_ready": "Готово к работе офлайн",
+        "update_ready_text": "Новая версия приложения готова к установке.",
+        "offline_ready_text": "Приложение теперь работает без интернета.",
+        "update_now": "Обновить сейчас"
+    },
+    "task": {
+        "status": {
+            "postponed": "отложено",
+            "active": "актуально",
+            "appears": "появится",
+            "missed": "проср. {n}д",
+            "repeat": "повтор",
+            "completed": "вып."
+        },
+        "meta": {
+            "importance": "Важн",
+            "deadline": "Дедлайн"
+        }
+    },
+    "edit_task": {
+        "new_task": "Новая задача",
+        "edit": "Редактировать",
+        "done": "Выполнено",
+        "title": "Заголовок",
+        "notes": "Заметка",
+        "notes_placeholder": "Заметка к задаче",
+        "category": "Категория",
+        "importance": "Важность",
+        "importance_levels": {
+            "very_high": "Очень высокая",
+            "high": "Высокая",
+            "medium": "Средняя",
+            "low": "Низкая",
+            "very_low": "Очень низкая"
+        },
+        "subcategory": "Подкатегория",
+        "deadline": "Дедлайн",
+        "postpone_until": "Отложить до",
+        "repeat": {
+            "type": "Тип повтора",
+            "none": "Без повтора",
+            "interval": "Каждые N дней",
+            "weekly": "По дням недели",
+            "every": "Каждые",
+            "days": "дней"
+        },
+        "ha": "HA",
+        "force_active": "Актуально",
+        "completed_at": "Дата выполнения",
+        "weekdays": ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
+        "save_error": "Ошибка при сохранении задачи"
+    },
+    "edit_category": {
+        "title": "Настройка категории",
+        "name": "Название",
+        "weight": "Вес (влияет на размер пузырька)",
+        "color": "Цвет",
+        "hide_until": "Скрыто до (время)",
+        "done": "Готово"
+    },
+    "settings_modal": {
+        "categories": {
+            "hide_until_prefix": "До",
+            "add_button": "+ Добавить",
+            "save_button": "Сохранить",
+            "new_category_name": "Новая",
+            "delete_last_error": "Нельзя удалить последнюю категорию",
+            "save_error": "Ошибка при сохранении категорий"
+        },
+        "subcategories": {
+            "save_all_button": "Сохранить всё"
+        },
+        "notepad": {
+            "placeholder": "Заметки...",
+            "save_button": "Сохранить",
+            "saved_message": "Блокнот сохранен"
+        },
+        "data": {
+            "title": "Управление данными",
+            "description": "Вы можете экспортировать свои данные в JSON-файл или импортировать бэкап.",
+            "warning": "Внимание: Импорт полностью заменит текущие задачи и настройки!",
+            "sync_button": "Принудительная синхронизация",
+            "export_button": "Экспорт (JSON)",
+            "import_button": "Импорт (JSON)",
+            "import_error": "Ошибка при импорте: {msg}"
+        }
+    }
+}
