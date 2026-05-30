@@ -102,9 +102,25 @@
                         <BubbleChart @edit="handleEdit" class="flex-1 w-full h-full" />
                     </div>
                 </div>
-                <!-- Screen 2: Task List -->
-                <div class="min-w-full h-full snap-start p-1 flex flex-col">
-                    <div class="flex-1 bg-[var(--bg-card)] rounded-3xl shadow-sm border border-[var(--color-border)] overflow-y-auto p-3">
+        <!-- Screen 2: Task List -->
+                <div class="min-w-full h-full snap-start p-1 flex flex-col relative overflow-hidden">
+                    <!-- Pull indicator -->
+                    <div class="absolute top-0 left-0 right-0 flex justify-center pointer-events-none transition-opacity duration-300"
+                         :style="{ height: pullDistance + 'px', opacity: pullDistance > 10 ? 1 : 0 }">
+                        <div class="mt-2 w-8 h-8 rounded-full bg-[var(--bg-card)] border border-[var(--color-border)] shadow-md flex items-center justify-center overflow-hidden">
+                            <div v-if="!isRefreshing" class="text-[var(--color-primary)] transition-transform duration-200"
+                                 :style="{ transform: `rotate(${pullDistance * 3}deg)` }">
+                                ↓
+                            </div>
+                            <div v-else class="w-4 h-4 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 bg-[var(--bg-card)] rounded-3xl shadow-sm border border-[var(--color-border)] overflow-y-auto p-3 transition-transform duration-200 ease-out"
+                         :style="{ transform: `translateY(${pullDistance}px)` }"
+                         @touchstart="handleTouchStartPull"
+                         @touchmove="handleTouchMovePull"
+                         @touchend="handleTouchEndPull">
                         <div v-if="!store.filteredTasks.length" class="text-center py-12 text-[var(--color-secondary)] text-sm">
                             {{ $t('app.no_tasks_in_category') }}
                         </div>
@@ -292,9 +308,68 @@ const showSettingsModal = ref(false);
 const isMenuOpen = ref(false);
 const editingTask = ref(null);
 const isInitializing = ref(true);
+const isRefreshing = ref(false);
 const currentMobileScreen = ref(0);
 const isLandscape = ref(window.innerWidth > window.innerHeight);
 const isHandheld = ref(false);
+
+// Pull-to-refresh logic
+const pullDistance = ref(0);
+const startY = ref(0);
+const isPulling = ref(false);
+
+const handleTouchStartPull = (e) => {
+    // Only pull if at the top of scroll
+    const container = e.currentTarget;
+    if (container.scrollTop <= 0) {
+        startY.value = e.touches[0].clientY;
+        isPulling.value = true;
+    }
+};
+
+const handleTouchMovePull = (e) => {
+    if (!isPulling.value) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - startY.value;
+    
+    if (diff > 0) {
+        // Apply resistance
+        pullDistance.value = Math.pow(diff, 0.85);
+        if (pullDistance.value > 10) {
+            // Prevent scrolling when pulling
+            if (e.cancelable) e.preventDefault();
+        }
+    } else {
+        pullDistance.value = 0;
+        isPulling.value = false;
+    }
+};
+
+const handleTouchEndPull = async () => {
+    if (!isPulling.value) return;
+    
+    if (pullDistance.value > 60 && !isRefreshing.value) {
+        await refreshData();
+    }
+    
+    pullDistance.value = 0;
+    isPulling.value = false;
+};
+
+const refreshData = async () => {
+    isRefreshing.value = true;
+    try {
+        await store.fetchAll();
+    } finally {
+        isRefreshing.value = false;
+    }
+};
+
+const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible' && store.isAuthenticated) {
+        refreshData();
+    }
+};
 
 const updateDimensions = () => {
     isLandscape.value = window.innerWidth > window.innerHeight;
@@ -322,6 +397,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
     window.removeEventListener('resize', updateDimensions);
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
 });
 
 const handleMobileScroll = (e) => {
