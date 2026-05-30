@@ -161,6 +161,8 @@ export const useBalanceStore = defineStore('balance', {
                 this.tasks = Array.isArray(tasksRes.data) ? tasksRes.data : [];
                 this.notepadText = settingsRes.data?.notepad_text || '';
                 this.theme = settingsRes.data?.theme || 'system';
+                this.locale = settingsRes.data?.locale || localStorage.getItem('locale') || 'ru';
+                this.pulseInterval = parseInt(settingsRes.data?.pulse_interval) || parseInt(localStorage.getItem('pulse_interval')) || 1;
                 
                 const subRes = await axios.get('export');
                 this.subcatCoeffs = subRes.data?.subcatCoeffs || {};
@@ -189,8 +191,17 @@ export const useBalanceStore = defineStore('balance', {
             await axios.post('settings', { settings: { locale: newLocale } });
         },
 
+        async setPulseInterval(minutes) {
+            this.pulseInterval = parseInt(minutes);
+            localStorage.setItem('pulse_interval', minutes);
+            this.startPulse(); // Restart with new interval
+            await axios.post('settings', { settings: { pulse_interval: minutes } });
+        },
+
         startPulse() {
             this.stopPulse();
+            if (this.pulseInterval <= 0) return; // Manual mode
+
             this.pulseTimer = setInterval(() => {
                 const today = new Date().toDateString();
                 if (today !== this.lastPulse) {
@@ -199,7 +210,7 @@ export const useBalanceStore = defineStore('balance', {
                 } else {
                     this.recalculateAll();
                 }
-            }, 60000); // Pulse every minute
+            }, this.pulseInterval * 60000);
         },
 
         stopPulse() {

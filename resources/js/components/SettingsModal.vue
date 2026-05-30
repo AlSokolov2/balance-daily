@@ -13,10 +13,10 @@
 
             <!-- Tabs Nav (Fixed) -->
             <div class="px-5 mb-2 shrink-0 landscape:px-3 landscape:mb-1">
-                <div class="flex gap-1 bg-[var(--bg-secondary)]/50 p-1 rounded-xl border border-[var(--color-border)] landscape:rounded-lg">
+                <div class="flex gap-1 bg-[var(--bg-secondary)]/50 p-1 rounded-xl border border-[var(--color-border)] landscape:rounded-lg overflow-x-auto scrollbar-hide">
                     <button v-for="t in tabs" :key="t"
                             @click="tab = t"
-                            :class="['flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border-none shadow-none relative landscape:py-1 landscape:text-[8px]', 
+                            :class="['flex-1 min-w-[70px] flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border-none shadow-none relative landscape:py-1 landscape:text-[8px]', 
                                      tab === t ? 'bg-[var(--bg-card)] text-[var(--color-primary)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)] hover:text-[var(--color-text)]']">
                         <!-- Tab Icons -->
                         <svg v-if="t === 'gen'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
@@ -58,6 +58,17 @@
                                 {{ $t(`settings.general.theme.${m}`) }}
                             </button>
                         </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-3">{{ $t('settings.general.pulse_frequency') }}</label>
+                        <select :value="store.pulseInterval" 
+                                @change="store.setPulseInterval($event.target.value)" 
+                                class="w-full p-3 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-2xl text-sm text-[var(--color-text)] outline-none focus:ring-2 focus:ring-[var(--color-border)] transition-all">
+                            <option v-for="val in [1, 5, 15, 30, 0]" :key="val" :value="val">
+                                {{ $t(`settings.general.pulse_intervals.${val}`) }}
+                            </option>
+                        </select>
                     </div>
                 </div>
 

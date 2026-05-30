@@ -15,7 +15,15 @@
                 "light": "Light",
                 "dark": "Dark"
             },
-            "language": "Interface Language"
+            "language": "Interface Language",
+            "pulse_frequency": "Update Frequency",
+            "pulse_intervals": {
+                "1": "Maximum (1 min)",
+                "5": "Balanced (5 min)",
+                "15": "Eco (15 min)",
+                "30": "Rare (30 min)",
+                "0": "Manual (no auto-update)"
+            }
         }
     },
     "common": {
