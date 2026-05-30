@@ -9,7 +9,6 @@
     <meta name="theme-color" content="#f5f5f7">
     <script>
         window.apiBaseUrl = '{{ config('app.url') }}';
-        window.assetBaseUrl = '{{ asset('build') }}/';
         
         // V2.1.3 PWA Fix: Force unregister old Service Workers to resolve scope conflicts
         if (!localStorage.getItem('v2_1_3_pwa_fix')) {
