@@ -51,6 +51,7 @@
         "logout": "Logout",
         "settings": "Settings",
         "placeholder": "What needs to be done?",
+        "search_placeholder": "Search tasks...",
         "no_tasks": "No tasks",
         "no_tasks_in_category": "No tasks in this category",
         "archive_info": "Completed tasks are available in the list",

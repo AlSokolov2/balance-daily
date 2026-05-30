@@ -36,7 +36,21 @@
             </h1>
             
             <div class="flex items-center gap-2 relative">
-                <button @click="showTaskList = !showTaskList" class="text-xs sm:text-sm font-bold text-[var(--color-text)] bg-[var(--bg-secondary)] px-4 py-2 rounded-xl hover:opacity-80 border border-[var(--color-border)] transition-colors">
+                <!-- Search Button (Desktop) -->
+                <div class="flex items-center bg-[var(--bg-secondary)] rounded-xl border border-[var(--color-border)] overflow-hidden transition-all duration-300"
+                     :class="[isSearchVisible ? 'w-64 pr-2' : 'w-10']">
+                    <button @click="toggleSearch" class="w-10 h-10 flex items-center justify-center shrink-0 text-[var(--color-text)] hover:opacity-80 transition-opacity">
+                        <svg v-if="!isSearchVisible" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <svg v-else class="w-4 h-4 text-[var(--color-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                    <input v-if="isSearchVisible" 
+                           ref="searchInput"
+                           type="text" v-model="store.searchQuery" 
+                           :placeholder="$t('app.search_placeholder')"
+                           class="flex-1 bg-transparent border-none outline-none text-sm text-[var(--color-text)] placeholder-[var(--color-secondary)]">
+                </div>
+
+                <button @click="showTaskList = !showTaskList" class="text-xs sm:text-sm font-bold text-[var(--color-text)] bg-[var(--bg-secondary)] h-10 px-4 rounded-xl hover:opacity-80 border border-[var(--color-border)] transition-colors">
                     {{ showTaskList ? $t('app.hide_list') : $t('app.show_list') }}
                 </button>
                 <div v-if="store.user" class="flex items-center gap-2 cursor-pointer ml-1 sm:ml-2" @click="isMenuOpen = !isMenuOpen">
@@ -116,19 +130,22 @@
                         </div>
                     </div>
 
-                    <div class="flex-1 bg-[var(--bg-card)] rounded-3xl shadow-sm border border-[var(--color-border)] overflow-y-auto p-3 transition-transform duration-200 ease-out"
+                    <div class="flex-1 bg-[var(--bg-card)] rounded-3xl shadow-sm border border-[var(--color-border)] flex flex-col overflow-hidden transition-transform duration-200 ease-out"
                          :style="{ transform: `translateY(${pullDistance}px)` }"
                          @touchstart="handleTouchStartPull"
                          @touchmove="handleTouchMovePull"
                          @touchend="handleTouchEndPull">
-                        <div v-if="!store.filteredTasks.length" class="text-center py-12 text-[var(--color-secondary)] text-sm">
-                            {{ $t('app.no_tasks_in_category') }}
+                        
+                        <div class="flex-1 overflow-y-auto p-3">
+                            <div v-if="!store.filteredTasks.length" class="text-center py-12 text-[var(--color-secondary)] text-sm">
+                                {{ $t('app.no_tasks_in_category') }}
+                            </div>
+                            <TaskItem v-for="task in store.filteredTasks" 
+                                      :key="task.id" 
+                                      :task="task"
+                                      @edit="handleEdit"
+                                      @delete="deleteTask" />
                         </div>
-                        <TaskItem v-for="task in store.filteredTasks" 
-                                  :key="task.id" 
-                                  :task="task"
-                                  @edit="handleEdit"
-                                  @delete="deleteTask" />
                     </div>
                 </div>
             </div>
@@ -141,15 +158,17 @@
                 </div>
 
                 <!-- Список задач (Desktop toggleable) -->
-                <div v-if="showTaskList" class="card bg-[var(--bg-card)] rounded-[16px] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[var(--color-border)] min-h-[100px] overflow-y-auto shrink-0 max-h-[30vh]">
-                    <div v-if="!store.filteredTasks.length" class="text-center py-8 text-[var(--color-secondary)] text-sm">
-                        {{ $t('app.no_tasks') }}
+                <div v-if="showTaskList" class="card bg-[var(--bg-card)] rounded-[16px] flex flex-col shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[var(--color-border)] min-h-[100px] shrink-0 max-h-[40vh] overflow-hidden">
+                    <div class="flex-1 overflow-y-auto p-4">
+                        <div v-if="!store.filteredTasks.length" class="text-center py-8 text-[var(--color-secondary)] text-sm">
+                            {{ $t('app.no_tasks') }}
+                        </div>
+                        <TaskItem v-for="task in store.filteredTasks" 
+                                  :key="task.id" 
+                                  :task="task"
+                                  @edit="handleEdit"
+                                  @delete="deleteTask" />
                     </div>
-                    <TaskItem v-for="task in store.filteredTasks" 
-                              :key="task.id" 
-                              :task="task"
-                              @edit="handleEdit"
-                              @delete="deleteTask" />
                 </div>
                 
                 <!-- Desktop Zoom Controls Overlay -->
@@ -190,6 +209,11 @@
 
             <!-- Управление (Справа: FAB + Avatar) -->
             <div class="flex items-center gap-2 relative">
+                <!-- Search Button (Mobile) -->
+                <button @click="toggleSearch" class="w-12 h-12 bg-[var(--bg-secondary)] text-[var(--color-text)] rounded-xl flex items-center justify-center active:scale-90 transition-transform shrink-0 border border-[var(--color-border)]">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </button>
+
                 <button @click="openAdvancedAdd" class="w-12 h-12 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] rounded-xl shadow-lg flex items-center justify-center active:scale-90 transition-transform shrink-0 border border-[var(--color-border)]">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                 </button>
@@ -221,6 +245,21 @@
         </div>
 
         <!-- Модальные окна -->
+        <!-- Mobile Search Overlay -->
+        <div v-if="isHandheld && isSearchVisible" class="fixed inset-x-2 bottom-20 z-[70] transition-all duration-300 transform animate-[slide-up_0.3s_ease-out]">
+            <div class="bg-[var(--bg-card)] border border-[var(--color-border)] rounded-2xl shadow-2xl p-2 flex items-center gap-2">
+                <svg class="w-5 h-5 ml-2 text-[var(--color-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input ref="searchInputMobile"
+                       v-model="store.searchQuery" 
+                       type="text" 
+                       :placeholder="$t('app.search_placeholder')"
+                       class="flex-1 bg-transparent border-none outline-none text-[15px] p-2 text-[var(--color-text)]">
+                <button @click="toggleSearch" class="p-2 text-[var(--color-secondary)]">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+        </div>
+
         <EditTaskModal v-if="editingTask" :task="editingTask" :isNew="editingTask.isNew" @close="editingTask = null" />
         <SettingsModal v-if="showSettingsModal" @close="showSettingsModal = false" />
 
@@ -306,7 +345,23 @@ const scrollToList = () => {
 const showTaskList = ref(false);
 const showSettingsModal = ref(false);
 const isMenuOpen = ref(false);
+const isSearchVisible = ref(false);
+const searchInput = ref(null);
+const searchInputMobile = ref(null);
 const editingTask = ref(null);
+
+const toggleSearch = () => {
+    isSearchVisible.value = !isSearchVisible.value;
+    if (isSearchVisible.value) {
+        nextTick(() => {
+            const el = isHandheld.value ? searchInputMobile.value : searchInput.value;
+            el?.focus();
+        });
+    } else {
+        store.searchQuery = '';
+    }
+};
+
 const isInitializing = ref(true);
 const isRefreshing = ref(false);
 const currentMobileScreen = ref(0);

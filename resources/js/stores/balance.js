@@ -14,6 +14,7 @@ export const useBalanceStore = defineStore('balance', {
         locale: localStorage.getItem('locale') || 'ru',
         pulseInterval: parseInt(localStorage.getItem('pulse_interval')) || 1,
         notificationsEnabled: localStorage.getItem('notifications_enabled') === 'true',
+        searchQuery: '',
         lastSync: localStorage.getItem('last_sync') || null,
         lastPulse: new Date().toDateString(),
         pulseTimer: null,
@@ -68,6 +69,14 @@ export const useBalanceStore = defineStore('balance', {
             
             if (state.filterCat !== 'all') {
                 tasks = tasks.filter(t => t.category_slug === state.filterCat);
+            }
+
+            if (state.searchQuery) {
+                const q = state.searchQuery.toLowerCase();
+                tasks = tasks.filter(t => 
+                    (t.title && t.title.toLowerCase().includes(q)) || 
+                    (t.notes && t.notes.toLowerCase().includes(q))
+                );
             }
 
             return tasks.sort((a, b) => b.calculatedPriority - a.calculatedPriority);
