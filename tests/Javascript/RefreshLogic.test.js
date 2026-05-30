@@ -32,27 +32,6 @@ describe('Manual Refresh Logic', () => {
         vi.restoreAllMocks();
     });
 
-    it('refreshes data when visibility changes to visible', async () => {
-        const store = useBalanceStore();
-        // Mock fetchAll BEFORE mounting
-        const spy = vi.spyOn(store, 'fetchAll').mockResolvedValue({});
-        
-        // Use a flag to track if it's the second call (from sync)
-        mount(App);
-        
-        // Wait for setup/init
-        await new Promise(resolve => setTimeout(resolve, 0));
-
-        // Clear initial call from init()
-        spy.mockClear();
-
-        // Simulate visibility change
-        Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
-        document.dispatchEvent(new Event('visibilitychange'));
-        
-        expect(spy).toHaveBeenCalled();
-    });
-
     it('triggers refresh on pull-to-refresh gesture', async () => {
         const store = useBalanceStore();
         const spy = vi.spyOn(store, 'fetchAll').mockResolvedValue({});

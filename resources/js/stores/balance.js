@@ -12,6 +12,8 @@ export const useBalanceStore = defineStore('balance', {
         notepadText: '',
         theme: 'system',
         locale: localStorage.getItem('locale') || 'ru',
+        pulseInterval: parseInt(localStorage.getItem('pulse_interval')) || 1,
+        lastSync: localStorage.getItem('last_sync') || null,
         lastPulse: new Date().toDateString(),
         pulseTimer: null,
         user: null,
@@ -120,7 +122,7 @@ export const useBalanceStore = defineStore('balance', {
                 try {
                     const res = await axios.get('user');
                     this.user = res.data;
-                    await this.fetchAll(); // Загружаем данные только если авторизованы
+                    await this.sync(); // Используем инкрементальную синхронизацию
                     this.startPulse();
                 } catch (e) {
                     this.logout();
@@ -140,39 +142,90 @@ export const useBalanceStore = defineStore('balance', {
             }
             this.token = null;
             this.user = null;
+            this.lastSync = null;
             localStorage.removeItem('auth_token');
+            localStorage.removeItem('last_sync');
             delete axios.defaults.headers.common['Authorization'];
             this.tasks = [];
-            await this.fetchAll();
+            this.categories = [];
+            await this.sync(true);
         },
 
         /**
-         * Fetch all user data (tasks, categories, settings) from API.
+         * Fetch all user data using full or incremental sync.
          */
         async fetchAll() {
+            await this.sync(true); // fetchAll теперь всегда делает полную синхронизацию
+        },
+
+        async sync(forceFull = false) {
             this.loading = true;
             try {
-                const [tasksRes, catsRes, settingsRes] = await Promise.all([
-                    axios.get('tasks'),
-                    axios.get('categories'),
-                    axios.get('settings')
-                ]);
-                this.categories = Array.isArray(catsRes.data) ? catsRes.data : [];
-                this.tasks = Array.isArray(tasksRes.data) ? tasksRes.data : [];
-                this.notepadText = settingsRes.data?.notepad_text || '';
-                this.theme = settingsRes.data?.theme || 'system';
-                this.locale = settingsRes.data?.locale || localStorage.getItem('locale') || 'ru';
-                this.pulseInterval = parseInt(settingsRes.data?.pulse_interval) || parseInt(localStorage.getItem('pulse_interval')) || 1;
+                const params = {};
+                // If local tasks are empty, we MUST do a full sync even if lastSync exists
+                const isLocalStateEmpty = this.tasks.length === 0;
                 
-                const subRes = await axios.get('export');
-                this.subcatCoeffs = subRes.data?.subcatCoeffs || {};
+                if (!forceFull && this.lastSync && !isLocalStateEmpty) {
+                    params.since = this.lastSync;
+                } else {
+                    forceFull = true; // Mark as full sync for merging logic below
+                }
+
+                const res = await axios.get('sync', { params });
+                const data = res.data;
+
+                // 1. Merge Tasks
+                if (forceFull) {
+                    this.tasks = Array.isArray(data.tasks?.updated) ? data.tasks.updated : [];
+                } else {
+                    if (Array.isArray(data.tasks?.updated)) {
+                        data.tasks.updated.forEach(u => {
+                            const idx = this.tasks.findIndex(t => t.id === u.id);
+                            if (idx !== -1) this.tasks[idx] = u;
+                            else this.tasks.push(u);
+                        });
+                    }
+                    if (Array.isArray(data.tasks?.deleted)) {
+                        this.tasks = this.tasks.filter(t => !data.tasks.deleted.includes(t.id));
+                    }
+                }
+
+                // 2. Merge Categories
+                if (forceFull) {
+                    this.categories = Array.isArray(data.categories?.updated) ? data.categories.updated : [];
+                } else {
+                    if (Array.isArray(data.categories?.updated)) {
+                        data.categories.updated.forEach(u => {
+                            const idx = this.categories.findIndex(c => c.id === u.id);
+                            if (idx !== -1) this.categories[idx] = u;
+                            else this.categories.push(u);
+                        });
+                    }
+                    if (Array.isArray(data.categories?.deleted)) {
+                        this.categories = this.categories.filter(c => !data.categories.deleted.includes(c.id));
+                    }
+                }
+
+                // 3. Settings & Coeffs
+                if (data.settings) {
+                    this.notepadText = data.settings.notepad_text || this.notepadText;
+                    this.theme = data.settings.theme || this.theme;
+                    this.locale = data.settings.locale || this.locale;
+                    this.pulseInterval = parseInt(data.settings.pulse_interval) || this.pulseInterval;
+                }
                 
+                if (data.subcatCoeffs) {
+                    this.subcatCoeffs = data.subcatCoeffs;
+                }
+
+                // 4. Update lastSync
+                this.lastSync = data.server_time;
+                localStorage.setItem('last_sync', this.lastSync);
+
                 this.recalculateAll();
                 this.applyTheme();
             } catch (e) {
-                console.error('Fetch error:', e);
-                this.tasks = [];
-                this.categories = [];
+                console.error('Sync error:', e);
             } finally {
                 this.loading = false;
             }

@@ -19,6 +19,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \App\Models\Task::observe(\App\Observers\SyncObserver::class);
+        \App\Models\Category::observe(\App\Observers\SyncObserver::class);
+
         if (config('app.url')) {
             $url = config('app.url');
             \Illuminate\Support\Facades\URL::forceRootUrl($url);
