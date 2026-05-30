@@ -70,6 +70,19 @@
                             </option>
                         </select>
                     </div>
+
+                    <div class="p-4 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-2xl flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-xs font-bold text-[var(--color-text)]">{{ $t('settings.general.notifications') }}</p>
+                            <p class="text-[10px] text-[var(--color-secondary)] mt-0.5">{{ $t('settings.general.notifications_desc') }}</p>
+                        </div>
+                        <button @click="store.toggleNotifications()" 
+                                :class="['w-12 h-6 rounded-full relative transition-all duration-300 border-none shadow-inner', 
+                                         store.notificationsEnabled ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-border)]']">
+                            <div :class="['absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm', 
+                                         store.notificationsEnabled ? 'translate-x-6' : 'translate-x-0']"></div>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Tab: Categories -->

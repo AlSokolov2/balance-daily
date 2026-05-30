@@ -13,6 +13,7 @@ export const useBalanceStore = defineStore('balance', {
         theme: 'system',
         locale: localStorage.getItem('locale') || 'ru',
         pulseInterval: parseInt(localStorage.getItem('pulse_interval')) || 1,
+        notificationsEnabled: localStorage.getItem('notifications_enabled') === 'true',
         lastSync: localStorage.getItem('last_sync') || null,
         lastPulse: new Date().toDateString(),
         pulseTimer: null,
@@ -249,6 +250,70 @@ export const useBalanceStore = defineStore('balance', {
             localStorage.setItem('pulse_interval', minutes);
             this.startPulse(); // Restart with new interval
             await axios.post('settings', { settings: { pulse_interval: minutes } });
+        },
+
+        async toggleNotifications() {
+            if (this.notificationsEnabled) {
+                await this.unsubscribeFromPush();
+            } else {
+                await this.subscribeToPush();
+            }
+        },
+
+        async subscribeToPush() {
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                
+                // Get VAPID public key from meta or config
+                const publicKey = __VAPID_PUBLIC_KEY__;
+                if (!publicKey) throw new Error('VAPID public key not found');
+
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: this.urlBase64ToUint8Array(publicKey)
+                });
+
+                const p = JSON.parse(JSON.stringify(subscription));
+                await axios.post('push-subscriptions', {
+                    endpoint: p.endpoint,
+                    public_key: p.keys.p256dh,
+                    auth_token: p.keys.auth
+                });
+
+                this.notificationsEnabled = true;
+                localStorage.setItem('notifications_enabled', 'true');
+            } catch (e) {
+                console.error('Push subscription failed:', e);
+                alert('Не удалось включить уведомления. Проверьте разрешения в браузере.');
+            }
+        },
+
+        async unsubscribeFromPush() {
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                const subscription = await registration.pushManager.getSubscription();
+                if (subscription) {
+                    await axios.delete('push-subscriptions', {
+                        data: { endpoint: subscription.endpoint }
+                    });
+                    await subscription.unsubscribe();
+                }
+                this.notificationsEnabled = false;
+                localStorage.setItem('notifications_enabled', 'false');
+            } catch (e) {
+                console.error('Push unsubscription failed:', e);
+            }
+        },
+
+        urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
         },
 
         startPulse() {

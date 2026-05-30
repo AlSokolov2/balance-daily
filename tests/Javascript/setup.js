@@ -1,6 +1,10 @@
 import { vi } from 'vitest';
 import { config } from '@vue/test-utils';
 
+// Global defines
+global.__APP_VERSION__ = '2.0.9';
+global.__VAPID_PUBLIC_KEY__ = 'fake-vapid-key';
+
 // Mock virtual:pwa-register/vue
 vi.mock('virtual:pwa-register/vue', () => ({
     useRegisterSW: () => ({

@@ -17,6 +17,8 @@
             },
             "language": "Interface Language",
             "pulse_frequency": "Update Frequency",
+            "notifications": "Push Notifications",
+            "notifications_desc": "Get reminders about deadlines and important tasks.",
             "pulse_intervals": {
                 "1": "Maximum (1 min)",
                 "5": "Balanced (5 min)",

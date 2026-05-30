@@ -11,15 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('sync_deletes')) {
-            Schema::create('sync_deletes', function (Blueprint $table) {
+        if (!Schema::hasTable('push_subscriptions')) {
+            Schema::create('push_subscriptions', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('user_id')->constrained()->onDelete('cascade');
-                $table->string('model_type'); // 'task' or 'category'
-                $table->unsignedBigInteger('model_id');
-                $table->timestamp('deleted_at');
+                $table->string('endpoint', 500);
+                $table->string('public_key')->nullable();
+                $table->string('auth_token')->nullable();
+                $table->timestamps();
                 
-                $table->index(['user_id', 'deleted_at']);
+                $table->index(['user_id']);
             });
         }
     }
@@ -29,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('sync_deletes');
+        Schema::dropIfExists('push_subscriptions');
     }
 };
