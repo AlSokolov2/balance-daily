@@ -66,6 +66,11 @@ class User extends Authenticatable
         return $this->hasMany(Task::class);
     }
 
+    public function pushSubscriptions()
+    {
+        return $this->hasMany(PushSubscription::class);
+    }
+
     public function subcatCoeffs()
     {
         return $this->hasMany(SubcatCoeff::class);

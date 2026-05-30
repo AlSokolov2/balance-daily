@@ -11,6 +11,11 @@ export const useBalanceStore = defineStore('balance', {
         bubbleZoom: 1,
         notepadText: '',
         theme: 'system',
+        locale: localStorage.getItem('locale') || 'ru',
+        pulseInterval: parseInt(localStorage.getItem('pulse_interval')) || 1,
+        notificationsEnabled: localStorage.getItem('notifications_enabled') === 'true',
+        searchQuery: '',
+        lastSync: localStorage.getItem('last_sync') || null,
         lastPulse: new Date().toDateString(),
         pulseTimer: null,
         user: null,
@@ -66,7 +71,45 @@ export const useBalanceStore = defineStore('balance', {
                 tasks = tasks.filter(t => t.category_slug === state.filterCat);
             }
 
+            if (state.searchQuery) {
+                const q = state.searchQuery.toLowerCase();
+                tasks = tasks.filter(t => 
+                    (t.title && t.title.toLowerCase().includes(q)) || 
+                    (t.notes && t.notes.toLowerCase().includes(q))
+                );
+            }
+
             return tasks.sort((a, b) => b.calculatedPriority - a.calculatedPriority);
+        },
+
+        counts: (state) => {
+            const now = new Date();
+            const res = {
+                all: 0,
+                hidden: 0,
+                archive: 0,
+                byCat: {}
+            };
+
+            if (!Array.isArray(state.tasks)) return res;
+
+            state.tasks.forEach(t => {
+                if (t.completed) {
+                    res.archive++;
+                } else {
+                    const isHidden = t.hidden_until && new Date(t.hidden_until) > now;
+                    if (isHidden) {
+                        res.hidden++;
+                    } else {
+                        res.all++;
+                        if (t.category_slug) {
+                            res.byCat[t.category_slug] = (res.byCat[t.category_slug] || 0) + 1;
+                        }
+                    }
+                }
+            });
+
+            return res;
         }
     },
 
@@ -89,7 +132,7 @@ export const useBalanceStore = defineStore('balance', {
                 try {
                     const res = await axios.get('user');
                     this.user = res.data;
-                    await this.fetchAll(); // Загружаем данные только если авторизованы
+                    await this.sync(); // Используем инкрементальную синхронизацию
                     this.startPulse();
                 } catch (e) {
                     this.logout();
@@ -109,37 +152,90 @@ export const useBalanceStore = defineStore('balance', {
             }
             this.token = null;
             this.user = null;
+            this.lastSync = null;
             localStorage.removeItem('auth_token');
+            localStorage.removeItem('last_sync');
             delete axios.defaults.headers.common['Authorization'];
             this.tasks = [];
-            await this.fetchAll();
+            this.categories = [];
+            await this.sync(true);
         },
 
         /**
-         * Fetch all user data (tasks, categories, settings) from API.
+         * Fetch all user data using full or incremental sync.
          */
         async fetchAll() {
+            await this.sync(true); // fetchAll теперь всегда делает полную синхронизацию
+        },
+
+        async sync(forceFull = false) {
             this.loading = true;
             try {
-                const [tasksRes, catsRes, settingsRes] = await Promise.all([
-                    axios.get('tasks'),
-                    axios.get('categories'),
-                    axios.get('settings')
-                ]);
-                this.categories = Array.isArray(catsRes.data) ? catsRes.data : [];
-                this.tasks = Array.isArray(tasksRes.data) ? tasksRes.data : [];
-                this.notepadText = settingsRes.data?.notepad_text || '';
-                this.theme = settingsRes.data?.theme || 'system';
+                const params = {};
+                // If local tasks are empty, we MUST do a full sync even if lastSync exists
+                const isLocalStateEmpty = this.tasks.length === 0;
                 
-                const subRes = await axios.get('export');
-                this.subcatCoeffs = subRes.data?.subcatCoeffs || {};
+                if (!forceFull && this.lastSync && !isLocalStateEmpty) {
+                    params.since = this.lastSync;
+                } else {
+                    forceFull = true; // Mark as full sync for merging logic below
+                }
+
+                const res = await axios.get('sync', { params });
+                const data = res.data;
+
+                // 1. Merge Tasks
+                if (forceFull) {
+                    this.tasks = Array.isArray(data.tasks?.updated) ? data.tasks.updated : [];
+                } else {
+                    if (Array.isArray(data.tasks?.updated)) {
+                        data.tasks.updated.forEach(u => {
+                            const idx = this.tasks.findIndex(t => t.id === u.id);
+                            if (idx !== -1) this.tasks[idx] = u;
+                            else this.tasks.push(u);
+                        });
+                    }
+                    if (Array.isArray(data.tasks?.deleted)) {
+                        this.tasks = this.tasks.filter(t => !data.tasks.deleted.includes(t.id));
+                    }
+                }
+
+                // 2. Merge Categories
+                if (forceFull) {
+                    this.categories = Array.isArray(data.categories?.updated) ? data.categories.updated : [];
+                } else {
+                    if (Array.isArray(data.categories?.updated)) {
+                        data.categories.updated.forEach(u => {
+                            const idx = this.categories.findIndex(c => c.id === u.id);
+                            if (idx !== -1) this.categories[idx] = u;
+                            else this.categories.push(u);
+                        });
+                    }
+                    if (Array.isArray(data.categories?.deleted)) {
+                        this.categories = this.categories.filter(c => !data.categories.deleted.includes(c.id));
+                    }
+                }
+
+                // 3. Settings & Coeffs
+                if (data.settings) {
+                    this.notepadText = data.settings.notepad_text || this.notepadText;
+                    this.theme = data.settings.theme || this.theme;
+                    this.locale = data.settings.locale || this.locale;
+                    this.pulseInterval = parseInt(data.settings.pulse_interval) || this.pulseInterval;
+                }
                 
+                if (data.subcatCoeffs) {
+                    this.subcatCoeffs = data.subcatCoeffs;
+                }
+
+                // 4. Update lastSync
+                this.lastSync = data.server_time;
+                localStorage.setItem('last_sync', this.lastSync);
+
                 this.recalculateAll();
                 this.applyTheme();
             } catch (e) {
-                console.error('Fetch error:', e);
-                this.tasks = [];
-                this.categories = [];
+                console.error('Sync error:', e);
             } finally {
                 this.loading = false;
             }
@@ -151,8 +247,88 @@ export const useBalanceStore = defineStore('balance', {
             await axios.post('settings', { settings: { theme: newTheme } });
         },
 
+        async setLocale(newLocale) {
+            this.locale = newLocale;
+            localStorage.setItem('locale', newLocale);
+            // We'll update the i18n instance from the component or here if we import it
+            await axios.post('settings', { settings: { locale: newLocale } });
+        },
+
+        async setPulseInterval(minutes) {
+            this.pulseInterval = parseInt(minutes);
+            localStorage.setItem('pulse_interval', minutes);
+            this.startPulse(); // Restart with new interval
+            await axios.post('settings', { settings: { pulse_interval: minutes } });
+        },
+
+        async toggleNotifications() {
+            if (this.notificationsEnabled) {
+                await this.unsubscribeFromPush();
+            } else {
+                await this.subscribeToPush();
+            }
+        },
+
+        async subscribeToPush() {
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                
+                // Get VAPID public key from meta or config
+                const publicKey = __VAPID_PUBLIC_KEY__;
+                if (!publicKey) throw new Error('VAPID public key not found');
+
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: this.urlBase64ToUint8Array(publicKey)
+                });
+
+                const p = JSON.parse(JSON.stringify(subscription));
+                await axios.post('push-subscriptions', {
+                    endpoint: p.endpoint,
+                    public_key: p.keys.p256dh,
+                    auth_token: p.keys.auth
+                });
+
+                this.notificationsEnabled = true;
+                localStorage.setItem('notifications_enabled', 'true');
+            } catch (e) {
+                console.error('Push subscription failed:', e);
+                alert('Не удалось включить уведомления. Проверьте разрешения в браузере.');
+            }
+        },
+
+        async unsubscribeFromPush() {
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                const subscription = await registration.pushManager.getSubscription();
+                if (subscription) {
+                    await axios.delete('push-subscriptions', {
+                        data: { endpoint: subscription.endpoint }
+                    });
+                    await subscription.unsubscribe();
+                }
+                this.notificationsEnabled = false;
+                localStorage.setItem('notifications_enabled', 'false');
+            } catch (e) {
+                console.error('Push unsubscription failed:', e);
+            }
+        },
+
+        urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        },
+
         startPulse() {
             this.stopPulse();
+            if (this.pulseInterval <= 0) return; // Manual mode
+
             this.pulseTimer = setInterval(() => {
                 const today = new Date().toDateString();
                 if (today !== this.lastPulse) {
@@ -161,7 +337,7 @@ export const useBalanceStore = defineStore('balance', {
                 } else {
                     this.recalculateAll();
                 }
-            }, 60000); // Pulse every minute
+            }, this.pulseInterval * 60000);
         },
 
         stopPulse() {
@@ -329,7 +505,8 @@ export const useBalanceStore = defineStore('balance', {
                 t.missed_count = 0;
             } else {
                 const now = new Date();
-                const dateStr = now.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                const dateLocale = this.locale === 'ru' ? 'ru-RU' : 'en-US';
+                const dateStr = now.toLocaleString(dateLocale, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
                 const newNotes = (t.notes ? t.notes + '\n' : '') + '✔ ' + dateStr;
                 
                 let nextDate = new Date();

@@ -1,91 +1,143 @@
 <template>
-    <div class="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4" @click.self="$emit('close')">
-        <div class="bg-[var(--bg-card)] rounded-2xl p-4 sm:p-5 w-full max-w-md shadow-2xl relative max-h-[90vh] overflow-y-auto overflow-x-hidden border border-[var(--color-border)]">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-[var(--color-text)]">{{ isNew ? 'Новая задача' : 'Редактировать' }}</h2>
-                <div v-if="!isNew" class="flex items-center gap-2 mr-auto ml-2 sm:ml-5">
-                    <span class="text-sm font-semibold text-[var(--color-text)]">Выполнено</span>
-                    <input type="checkbox" v-model="editData.completed" class="w-5 h-5 rounded-lg accent-[var(--color-text)]">
+    <div class="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-2 sm:p-4" @click.self="$emit('close')">
+        <div class="bg-[var(--bg-card)] rounded-[24px] sm:rounded-[32px] w-full max-w-md shadow-2xl relative h-[80vh] landscape:h-[95vh] flex flex-col overflow-hidden border border-[var(--color-border)]">
+            <!-- Header (Fixed) -->
+            <div class="p-4 sm:p-5 pb-3 shrink-0 landscape:p-3 landscape:pb-1 flex items-center gap-2 sm:gap-4">
+                <input v-model="editData.title" type="text" 
+                       class="flex-1 min-w-0 p-0 bg-transparent border-none text-xl sm:text-2xl font-black text-[var(--color-text)] outline-none placeholder:opacity-30 landscape:text-base" 
+                       :placeholder="$t('edit_task.title')">
+                <div @click="$emit('close')" class="shrink-0 w-8 h-8 flex items-center justify-center cursor-pointer text-2xl text-[var(--color-secondary)] hover:text-[var(--color-text)] transition-colors" title="Close">
+                    &times;
                 </div>
-                <span @click="$emit('close')" class="cursor-pointer text-2xl text-[var(--color-secondary)] hover:text-[var(--color-text)] transition-colors">&times;</span>
             </div>
 
-            <div class="space-y-3">
-                <div>
-                    <label class="text-[10px] text-[var(--color-secondary)] uppercase font-bold px-1 tracking-wider">Заголовок</label>
-                    <input v-model="editData.title" type="text" class="w-full p-2.5 border border-[var(--color-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--color-border)] outline-none transition-all bg-[var(--bg-secondary)] text-[var(--color-text)]">
+            <!-- Tabs Nav (Fixed) -->
+            <div class="px-5 mb-2 shrink-0 landscape:px-3 landscape:mb-1">
+                <div class="flex gap-1 bg-[var(--bg-secondary)]/50 p-1 rounded-xl border border-[var(--color-border)] landscape:rounded-lg">
+                    <button v-for="t in ['notes', 'setup', 'schedule']" :key="t"
+                            @click="activeTab = t"
+                            :class="['flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border-none shadow-none relative landscape:py-1 landscape:text-[8px]', 
+                                     activeTab === t ? 'bg-[var(--bg-card)] text-[var(--color-primary)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)] hover:text-[var(--color-text)]']">
+                        {{ $t(`edit_task.tabs.${t}`) }}
+                        <div v-if="activeTab === t" class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-[var(--color-primary)] rounded-full"></div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content (Scrollable) -->
+            <div class="flex-1 overflow-y-auto p-5 pt-2 custom-scrollbar min-h-0 landscape:p-3 landscape:pt-1"
+                 @touchstart="handleTouchStart"
+                 @touchend="handleTouchEnd">
+                <!-- Tab: Notes (Log) -->
+                <div v-if="activeTab === 'notes'" class="h-full flex flex-col">
+                    <textarea v-model="editData.notes" 
+                              ref="notesTextarea" 
+                              class="flex-1 w-full p-0 bg-transparent border-none text-sm resize-none outline-none text-[var(--color-text)] placeholder:text-[var(--color-secondary)]/50 leading-relaxed custom-scrollbar" 
+                              :placeholder="$t('edit_task.notes_placeholder')"></textarea>
                 </div>
 
-                <div>
-                    <label class="text-[10px] text-[var(--color-secondary)] uppercase font-bold px-1 tracking-wider">Заметка</label>
-                    <textarea v-model="editData.notes" @input="autoResize" ref="notesTextarea" class="w-full p-2.5 border border-[var(--color-border)] rounded-xl text-sm h-20 resize-none focus:ring-2 focus:ring-[var(--color-border)] outline-none transition-all bg-[var(--bg-secondary)]/50 text-[var(--color-text)]" placeholder="Заметка к задаче"></textarea>
-                </div>
-
-                <div class="flex flex-col sm:grid sm:grid-cols-2 gap-2">
-                    <div class="min-w-0">
-                        <label class="text-[10px] text-[var(--color-secondary)] uppercase font-bold px-1 tracking-wider">Категория</label>
-                        <select v-model="editData.category_slug" class="w-full p-2.5 border border-[var(--color-border)] rounded-xl text-sm bg-[var(--bg-secondary)] text-[var(--color-text)]">
-                            <option v-for="cat in store.categories.filter(c => c.slug !== '__archive__')" :key="cat.slug" :value="cat.slug">{{ cat.name }}</option>
-                        </select>
+                <!-- Tab: Setup (Params) -->
+                <div v-if="activeTab === 'setup'" class="space-y-5">
+                    <div class="flex gap-4 p-4 bg-[var(--bg-secondary)]/50 rounded-2xl border border-[var(--color-border)]">
+                        <label class="flex-1 flex items-center justify-between cursor-pointer group">
+                            <span class="text-xs font-bold text-[var(--color-text)] group-hover:text-[var(--color-primary)] transition-colors">{{ $t('edit_task.done') }}</span>
+                            <input type="checkbox" v-model="editData.completed" class="w-5 h-5 rounded-lg accent-[var(--color-text)]">
+                        </label>
+                        <div v-if="!editData.completed" class="w-px bg-[var(--color-border)]"></div>
+                        <label v-if="!editData.completed" class="flex-1 flex items-center justify-between cursor-pointer group">
+                            <span class="text-xs font-bold text-[var(--color-text)] group-hover:text-[var(--color-primary)] transition-colors">HA</span>
+                            <input type="checkbox" v-model="editData.ha" class="w-5 h-5 rounded-lg accent-[var(--color-text)]">
+                        </label>
                     </div>
-                    <div class="min-w-0">
-                        <label class="text-[10px] text-[var(--color-secondary)] uppercase font-bold px-1 tracking-wider">Важность</label>
-                        <select v-model="editData.importance" class="w-full p-2.5 border border-[var(--color-border)] rounded-xl text-sm bg-[var(--bg-secondary)] text-[var(--color-text)]">
-                            <option value="4">Очень высокая</option>
-                            <option value="3">Высокая</option>
-                            <option value="2">Средняя</option>
-                            <option value="1">Низкая</option>
-                            <option value="0.5">Очень низкая</option>
-                        </select>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-2">{{ $t('edit_task.category') }}</label>
+                            <select v-model="editData.category_slug" class="w-full p-3 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-2xl text-sm text-[var(--color-text)] outline-none focus:ring-2 focus:ring-[var(--color-border)]">
+                                <option v-for="cat in store.categories.filter(c => c.slug !== '__archive__')" :key="cat.slug" :value="cat.slug">{{ cat.name }}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-2">{{ $t('edit_task.importance') }}</label>
+                            <select v-model="editData.importance" class="w-full p-3 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-2xl text-sm text-[var(--color-text)] outline-none focus:ring-2 focus:ring-[var(--color-border)]">
+                                <option value="4">{{ $t('edit_task.importance_levels.very_high') }}</option>
+                                <option value="3">{{ $t('edit_task.importance_levels.high') }}</option>
+                                <option value="2">{{ $t('edit_task.importance_levels.medium') }}</option>
+                                <option value="1">{{ $t('edit_task.importance_levels.low') }}</option>
+                                <option value="0.5">{{ $t('edit_task.importance_levels.very_low') }}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-2">{{ $t('edit_task.subcategory') }}</label>
+                        <input v-model="editData.subcategory" list="subcat-list-edit" class="w-full p-3 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-2xl text-sm text-[var(--color-text)] outline-none focus:ring-2 focus:ring-[var(--color-border)]">
+                        <datalist id="subcat-list-edit"><option v-for="s in store.allSubcats" :key="s" :value="s"></option></datalist>
+                    </div>
+
+                    <div class="p-4 bg-[var(--bg-secondary)]/30 rounded-2xl border border-[var(--color-border)]">
+                        <label class="flex items-center justify-between cursor-pointer group">
+                            <span class="text-xs font-bold text-[var(--color-text)] group-hover:text-[var(--color-primary)] transition-colors">{{ $t('edit_task.force_active') }}</span>
+                            <input type="checkbox" v-model="editData.force_active" class="w-5 h-5 rounded-lg accent-[var(--color-text)]">
+                        </label>
                     </div>
                 </div>
 
-                <div class="min-w-0">
-                    <label class="text-[10px] text-[var(--color-secondary)] uppercase font-bold px-1 tracking-wider">Подкатегория</label>
-                    <input v-model="editData.subcategory" list="subcat-list-edit" class="w-full p-2.5 border border-[var(--color-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--color-border)] outline-none transition-all bg-[var(--bg-secondary)] text-[var(--color-text)]">
-                    <datalist id="subcat-list-edit"><option v-for="s in store.allSubcats" :key="s" :value="s"></option></datalist>
-                </div>
-
-                <div class="flex flex-col sm:grid sm:grid-cols-2 gap-2">
-                    <div class="min-w-0">
-                        <label class="text-[10px] text-[var(--color-secondary)] uppercase font-bold px-1 tracking-wider">Дедлайн</label>
-                        <input v-model="editData.deadline" type="datetime-local" class="w-full p-2 border border-[var(--color-border)] rounded-xl text-xs bg-[var(--bg-secondary)] text-[var(--color-text)]">
+                <!-- Tab: Schedule (Time) -->
+                <div v-if="activeTab === 'schedule'" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[9px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-1.5">{{ $t('edit_task.deadline') }}</label>
+                            <input v-model="editData.deadline" type="datetime-local" class="w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-[11px] text-[var(--color-text)] outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[9px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-1.5">{{ $t('edit_task.postpone_until') }}</label>
+                            <input v-model="editData.postpone_until" type="datetime-local" class="w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-[11px] text-[var(--color-text)] outline-none">
+                        </div>
                     </div>
-                    <div class="min-w-0">
-                        <label class="text-[10px] text-[var(--color-secondary)] uppercase font-bold px-1 tracking-wider">Отложить до</label>
-                        <input v-model="editData.postpone_until" type="datetime-local" class="w-full p-2 border border-[var(--color-border)] rounded-xl text-xs bg-[var(--bg-secondary)] text-[var(--color-text)]">
+
+                    <div class="space-y-3 pt-3 border-t border-[var(--color-border)]">
+                        <div>
+                            <label class="text-[9px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-1.5">{{ $t('edit_task.repeat.type') }}</label>
+                            <select v-model="editData.repeat_type" class="w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-xs text-[var(--color-text)] outline-none">
+                                <option value="none">{{ $t('edit_task.repeat.none') }}</option>
+                                <option value="interval">{{ $t('edit_task.repeat.interval') }}</option>
+                                <option value="weekly">{{ $t('edit_task.repeat.weekly') }}</option>
+                            </select>
+                        </div>
+
+                        <div v-if="editData.repeat_type === 'interval'" class="flex items-center gap-3 p-3 bg-[var(--bg-secondary)]/50 rounded-xl border border-[var(--color-border)]">
+                            <span class="text-[11px] font-bold text-[var(--color-text)]">{{ $t('edit_task.repeat.every') }}</span>
+                            <input v-model.number="editData.repeat_interval" type="number" min="1" class="w-16 p-1.5 bg-[var(--bg-card)] border border-[var(--color-border)] rounded-lg text-center font-bold text-xs text-[var(--color-text)]">
+                            <span class="text-[11px] font-bold text-[var(--color-text)]">{{ $t('edit_task.repeat.days') }}</span>
+                        </div>
+
+                        <div v-if="editData.repeat_type === 'weekly'" class="flex gap-1.5 flex-wrap justify-between">
+                            <label v-for="(day, idx) in $tm('edit_task.weekdays')" :key="idx" 
+                                   :class="['w-8 h-8 flex-1 min-w-[32px] flex items-center justify-center rounded-lg text-[9px] font-black cursor-pointer transition-all border shadow-sm', 
+                                            editData.repeat_days.includes(idx) ? 'bg-[var(--color-text)] text-[var(--bg-card)] border-[var(--color-text)]' : 'bg-[var(--bg-secondary)] text-[var(--color-secondary)] border-[var(--color-border)]']">
+                                <input type="checkbox" :value="idx" v-model="editData.repeat_days" class="hidden">
+                                {{ day }}
+                            </label>
+                        </div>
+
+                        <div v-if="editData.completed" class="pt-2">
+                            <label class="text-[9px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-1.5">{{ $t('edit_task.completed_at') }}</label>
+                            <input v-model="editData.completed_at" type="datetime-local" class="w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-[11px] text-[var(--color-text)] outline-none">
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 py-2 border-t border-b border-[var(--color-border)]">
-                    <select v-model="editData.repeat_type" class="flex-1 p-2 border border-[var(--color-border)] rounded-xl text-xs bg-[var(--bg-secondary)] text-[var(--color-text)]">
-                        <option value="none">Без повтора</option>
-                        <option value="interval">Каждые N дней</option>
-                        <option value="weekly">По дням недели</option>
-                    </select>
-                    <label class="flex items-center gap-1 text-[11px] font-bold text-[var(--color-secondary)]">HA <input type="checkbox" v-model="editData.ha" class="accent-[var(--color-text)]"></label>
-                    <label class="flex items-center gap-1 text-[11px] font-bold text-[var(--color-secondary)]">Актуально <input type="checkbox" v-model="editData.force_active" class="accent-[var(--color-text)]"></label>
-                </div>
-
-                <div v-if="editData.repeat_type === 'interval'" class="flex items-center gap-2 text-xs">
-                    <label class="text-[var(--color-secondary)]">Каждые</label>
-                    <input v-model.number="editData.repeat_interval" type="number" min="1" class="w-16 p-2 border border-[var(--color-border)] rounded-xl text-center bg-[var(--bg-secondary)] text-[var(--color-text)]">
-                    <label class="text-[var(--color-secondary)]">дней</label>
-                </div>
-
-                <div v-if="editData.repeat_type === 'weekly'" class="flex gap-1.5 flex-wrap">
-                    <label v-for="(day, idx) in weekdays" :key="idx" :class="['px-2.5 py-1.5 border rounded-xl text-[10px] font-bold cursor-pointer transition-all', editData.repeat_days.includes(idx) ? 'bg-[var(--color-text)] text-[var(--bg-card)] border-[var(--color-text)]' : 'bg-[var(--bg-secondary)] text-[var(--color-secondary)] border-[var(--color-border)] hover:border-[var(--color-secondary)]']">
-                        <input type="checkbox" :value="idx" v-model="editData.repeat_days" class="hidden">
-                        {{ day }}
-                    </label>
-                </div>
-
-                <div v-if="editData.completed">
-                    <label class="text-[10px] text-[var(--color-secondary)] uppercase font-bold px-1 tracking-wider">Дата выполнения</label>
-                    <input v-model="editData.completed_at" type="datetime-local" class="w-full p-2 border border-[var(--color-border)] rounded-xl text-xs bg-[var(--bg-secondary)] text-[var(--color-text)]">
-                </div>
-
-                <button @click="handleSave" class="w-full py-3.5 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] border border-[var(--color-border)] rounded-2xl font-bold text-sm shadow-sm hover:opacity-80 active:scale-[0.98] transition-all mt-4">Сохранить</button>
+            <!-- Footer (Fixed) -->
+            <div class="p-5 border-t border-[var(--color-border)] bg-[var(--bg-card)] shrink-0 flex gap-2 landscape:p-2">
+                <button v-if="!isNew" @click="handleDelete" 
+                        class="w-14 py-4 landscape:py-2 bg-[var(--bg-secondary)] text-red-500 rounded-2xl landscape:rounded-xl flex items-center justify-center hover:bg-red-500/10 transition-colors border border-[var(--color-border)] shadow-none">
+                    <svg class="w-6 h-6 landscape:w-5 landscape:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+                <button @click="handleSave" class="flex-1 py-4 landscape:py-2 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] border border-[var(--color-border)] rounded-2xl landscape:rounded-xl font-black text-sm landscape:text-xs shadow-lg hover:opacity-90 active:scale-[0.98] transition-all uppercase tracking-widest">
+                    {{ $t('common.save') }}
+                </button>
             </div>
         </div>
     </div>
@@ -95,6 +147,7 @@
 import { ref, onMounted, reactive } from 'vue';
 import { useBalanceStore } from '../stores/balance';
 import axios from 'axios';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps({
     task: Object,
@@ -105,8 +158,40 @@ const props = defineProps({
 });
 const emit = defineEmits(['close', 'saved']);
 const store = useBalanceStore();
-const weekdays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+const { t } = useI18n();
 const notesTextarea = ref(null);
+const activeTab = ref('notes');
+const tabs = ['notes', 'setup', 'schedule'];
+
+// Swipe logic
+const touchStart = ref({ x: 0, y: 0 });
+const handleTouchStart = (e) => {
+    touchStart.value = { 
+        x: e.touches[0].clientX, 
+        y: e.touches[0].clientY 
+    };
+};
+const handleTouchEnd = (e) => {
+    const touchEnd = { 
+        x: e.changedTouches[0].clientX, 
+        y: e.changedTouches[0].clientY 
+    };
+    const dx = touchStart.value.x - touchEnd.x;
+    const dy = touchStart.value.y - touchEnd.y;
+    const threshold = 60; // minimum horizontal distance
+    const verticalThreshold = 40; // maximum vertical distance allowed for horizontal swipe
+
+    if (Math.abs(dx) > threshold && Math.abs(dy) < verticalThreshold) {
+        const currentIndex = tabs.indexOf(activeTab.value);
+        if (dx > 0 && currentIndex < tabs.length - 1) {
+            // Swipe Left -> Next Tab
+            activeTab.value = tabs[currentIndex + 1];
+        } else if (dx < 0 && currentIndex > 0) {
+            // Swipe Right -> Prev Tab
+            activeTab.value = tabs[currentIndex - 1];
+        }
+    }
+};
 
 const editData = reactive({
     ...props.task,
@@ -119,7 +204,7 @@ const editData = reactive({
 
 const autoResize = () => {
     const el = notesTextarea.value;
-    if (el) {
+    if (el && activeTab.value === 'notes') {
         el.style.height = 'auto';
         el.style.height = el.scrollHeight + 'px';
     }
@@ -146,7 +231,18 @@ const handleSave = async () => {
         emit('saved');
         emit('close');
     } catch (e) {
-        alert('Ошибка при сохранении задачи');
+        alert(t('edit_task.save_error'));
+    }
+};
+
+const handleDelete = async () => {
+    if (confirm(t('app.alerts.delete_confirm'))) {
+        try {
+            await store.deleteTask(props.task.id);
+            emit('close');
+        } catch (e) {
+            alert(t('app.alerts.delete_error'));
+        }
     }
 };
 
@@ -154,3 +250,16 @@ onMounted(() => {
     setTimeout(autoResize, 50);
 });
 </script>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 10px;
+}
+</style>

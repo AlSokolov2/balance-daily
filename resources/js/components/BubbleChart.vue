@@ -23,8 +23,16 @@
                 </span>
             </div>
             
-            <div v-if="!store.bubbleTasks.length" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[#8e8e93] text-sm">
-                Нет задач
+            <div v-if="!store.bubbleTasks.length" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[var(--color-secondary)] text-sm text-center px-6">
+                <template v-if="store.filterCat === 'archive'">
+                    {{ $t('app.archive_info') }}
+                </template>
+                <template v-else-if="store.filterCat === 'hidden'">
+                    {{ $t('app.hidden_info') }}
+                </template>
+                <template v-else>
+                    {{ $t('app.no_tasks') }}
+                </template>
             </div>
 
             <div v-if="tooltip.visible" 
@@ -74,21 +82,47 @@ const getBubbleStyle = (task) => {
     const color = category?.color || '#8e8e93';
     const postponed = store.isEffectivelyPostponed(task) && !task.force_active;
     
+    // Search match logic
+    const isSearching = !!store.searchQuery;
+    const matchesSearch = isSearching && (
+        (task.title && task.title.toLowerCase().includes(store.searchQuery.toLowerCase())) ||
+        (task.notes && task.notes.toLowerCase().includes(store.searchQuery.toLowerCase()))
+    );
+
     const s = pos.size;
     let fontSize = s < 50 ? Math.max(6, s / 12) : Math.max(8, s / 9);
     const borderWidth = (task.missed_count > 0) ? '3px' : '2px';
 
-    return {
+    const style = {
         width: s + 'px',
         height: s + 'px',
         left: (pos.x - s / 2) + 'px',
         top: (pos.y - s / 2) + 'px',
         background: hexToRgba(color, 0.25),
         border: `${borderWidth} solid ${color}`,
-        opacity: postponed ? 0.4 : 1,
         fontSize: fontSize + 'px',
-        color: 'var(--color-text)'
+        color: 'var(--color-text)',
+        transition: 'all 0.4s ease-out'
     };
+
+    if (isSearching) {
+        if (matchesSearch) {
+            style.opacity = 1;
+            style.zIndex = 20;
+            style.filter = 'none';
+            style.boxShadow = `0 0 15px ${hexToRgba(color, 0.4)}`;
+        } else {
+            style.opacity = 0.15;
+            style.zIndex = 0;
+            style.filter = 'grayscale(0.8) blur(0.5px)';
+        }
+    } else {
+        style.opacity = postponed ? 0.4 : 1;
+        style.zIndex = 10;
+        style.filter = 'none';
+    }
+
+    return style;
 };
 
 function hexToRgba(hex, alpha) {

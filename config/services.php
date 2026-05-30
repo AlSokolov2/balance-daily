@@ -41,4 +41,9 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URL'),
     ],
 
+    'webpush' => [
+        'public_key' => env('VAPID_PUBLIC_KEY'),
+        'private_key' => env('VAPID_PRIVATE_KEY'),
+    ],
+
 ];
