@@ -110,6 +110,10 @@ describe('SettingsModal Component', () => {
 
     it('displays the correct application version', () => {
         const wrapper = mount(SettingsModal);
+<<<<<<< HEAD
         expect(wrapper.text()).toContain('v2.1.1');
+=======
+        expect(wrapper.text()).toContain('v2.1.4');
+>>>>>>> v2.1.2
     });
 });

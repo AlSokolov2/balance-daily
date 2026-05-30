@@ -1,6 +1,10 @@
 {
     "$schema": "https://www.schemastore.org/package.json",
+<<<<<<< HEAD
     "version": "2.1.1",
+=======
+    "version": "2.1.4",
+>>>>>>> v2.1.2
     "private": true,
     "type": "module",
     "scripts": {
