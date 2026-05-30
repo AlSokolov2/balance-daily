@@ -27,7 +27,7 @@ describe('TaskItem Component', () => {
         expect(wrapper.text()).toContain('Test Task');
         const badge = wrapper.find('.badge');
         expect(badge.exists()).toBe(true);
-        expect(badge.text()).toContain('проср. 1д');
+        expect(badge.text()).toContain('task.status.missed');
     });
 
     it('emits edit event when edit button is clicked', async () => {

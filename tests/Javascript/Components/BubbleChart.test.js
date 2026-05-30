@@ -21,7 +21,7 @@ describe('BubbleChart Component', () => {
 
     it('renders and shows "Нет задач" when empty', () => {
         const wrapper = mount(BubbleChart);
-        expect(wrapper.text()).toContain('Нет задач');
+        expect(wrapper.text()).toContain('app.no_tasks');
     });
 
     it('emits "edit" when handleBubbleClick is called on desktop', async () => {

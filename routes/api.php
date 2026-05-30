@@ -23,8 +23,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('tasks/{id}', [TaskController::class, 'update']);
     Route::delete('tasks/{id}', [TaskController::class, 'destroy']);
 
+    Route::get('sync', [\App\Http\Controllers\Api\SyncController::class, 'index']);
+
     Route::get('settings', [SettingsController::class, 'index']);
     Route::post('settings', [SettingsController::class, 'update']);
+
+    Route::post('push-subscriptions', [\App\Http\Controllers\Api\PushSubscriptionController::class, 'store']);
+    Route::delete('push-subscriptions', [\App\Http\Controllers\Api\PushSubscriptionController::class, 'destroy']);
 
     Route::get('export', [ImportExportController::class, 'export']);
     Route::post('import', [ImportExportController::class, 'import']);

@@ -131,6 +131,7 @@ describe('Balance Store - Prioritization Engine', () => {
 
         it('recalculates priorities every minute', () => {
             const store = useBalanceStore();
+            store.pulseInterval = 1; // Explicitly set to 1 minute
             const spy = vi.spyOn(store, 'recalculateAll');
             
             store.startPulse();
@@ -144,6 +145,7 @@ describe('Balance Store - Prioritization Engine', () => {
 
         it('triggers fetchAll when date changes during pulse', async () => {
             const store = useBalanceStore();
+            store.pulseInterval = 1; // Explicitly set to 1 minute
             const spyFetch = vi.spyOn(store, 'fetchAll');
             const spyRecalc = vi.spyOn(store, 'recalculateAll');
             
