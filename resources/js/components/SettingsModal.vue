@@ -218,7 +218,7 @@ const handleTouchEnd = (e) => {
 const editableCats = reactive({});
 const localNotepad = ref('');
 const editingCategory = ref(null);
-const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.0.9';
+const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.1.4';
 
 const changeLanguage = (l) => {
     store.setLocale(l);

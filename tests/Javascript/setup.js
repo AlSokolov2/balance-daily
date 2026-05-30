@@ -2,7 +2,7 @@ import { vi } from 'vitest';
 import { config } from '@vue/test-utils';
 
 // Global defines
-global.__APP_VERSION__ = '2.0.9';
+global.__APP_VERSION__ = '2.1.4';
 global.__VAPID_PUBLIC_KEY__ = 'fake-vapid-key';
 
 // Mock virtual:pwa-register/vue
