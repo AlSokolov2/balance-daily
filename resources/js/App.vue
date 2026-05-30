@@ -280,12 +280,12 @@
                 </div>
             </div>
             <div class="flex gap-2">
-                <button v-if="needRefresh" @click="updateServiceWorker(true)" 
+                <button v-if="needRefresh" @click="handleUpdateNow" 
                         class="flex-1 py-2.5 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] rounded-xl text-xs font-bold shadow-sm">
                     {{ $t('pwa.update_now') }}
                 </button>
                 <button @click="closePWA" 
-                        :class="['py-2.5 rounded-xl text-xs font-bold transition-all border border-[var(--color-border)]', needRefresh ? 'px-4 bg-[var(--bg-secondary)] text-[var(--color-text)]' : 'flex-1 bg-[var(--bg-secondary)] text-[var(--color-text)]']">
+                        :class="['py-2.5 rounded-xl text-xs font-bold transition-all border border-[var(--color-border)]', needRefresh ? 'px-4 bg-[var(--bg-card)] text-[var(--color-text)]' : 'flex-1 bg-[var(--bg-card)] text-[var(--color-text)]']">
                     {{ needRefresh ? $t('common.later') : $t('common.understand') }}
                 </button>
             </div>
@@ -314,6 +314,14 @@ const {
 const closePWA = () => {
     offlineReady.value = false;
     needRefresh.value = false;
+};
+
+const handleUpdateNow = () => {
+    updateServiceWorker(true);
+    // Fallback: force reload after a short delay if SW doesn't trigger it
+    setTimeout(() => {
+        window.location.reload();
+    }, 1500);
 };
 
 const store = useBalanceStore();
