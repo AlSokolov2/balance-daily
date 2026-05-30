@@ -44,6 +44,10 @@ export default defineConfig(({ mode }) => {
                 registerType: 'prompt',
                 injectRegister: 'auto',
                 includeAssets: ['favicon.svg', 'robots.txt'],
+                devOptions: {
+                    enabled: true,
+                    type: 'module',
+                },
                 manifest: {
                     name: 'Баланс.Дейли',
                     short_name: 'Баланс',
@@ -51,8 +55,8 @@ export default defineConfig(({ mode }) => {
                     theme_color: '#f5f5f7',
                     background_color: '#f5f5f7',
                     display: 'standalone',
-                    start_url: '/',
-                    scope: '/',
+                    start_url: '../',
+                    scope: '../',
                     icons: [
                         {
                             src: '../favicon.svg',
