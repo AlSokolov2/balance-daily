@@ -68,25 +68,10 @@ jobs:
       - name: Build Frontend (Production)
         run: |
           npm ci
-          # Извлекаем путь из APP_URL (например, из https://site.com/daily получим /daily/)
-          VITE_BASE_URL=$(echo ${{ secrets.APP_URL }} | grep -oP 'https?://[^/]+\K/.*' || echo "/")
-          if [[ "$VITE_BASE_URL" != */ ]]; then VITE_BASE_URL="$VITE_BASE_URL/"; fi
-
-          export VITE_BASE_URL=$VITE_BASE_URL
           npm run build
         env:
           VITE_APP_ENV: production
-
-      - name: Prepare Deployment Directory
-        run: |
-          # Создаем универсальный .htaccess для любого подкаталога
-          cat > .htaccess <<EOF
-          <IfModule mod_rewrite.c>
-              RewriteEngine on
-              RewriteCond %{REQUEST_URI} !^/public/
-              RewriteRule ^(.*)$ public/\$1 [L,QSA]
-          </IfModule>
-          EOF
+          VITE_BASE_URL: /
 
       - name: Deploy to Server via SSH
         uses: easingthemes/ssh-deploy@main

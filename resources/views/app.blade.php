@@ -9,7 +9,6 @@
     <meta name="theme-color" content="#f5f5f7">
     <script>
         window.apiBaseUrl = '{{ config('app.url') }}';
-        window.assetBaseUrl = '{{ asset('build') }}/';
         
         // V2.0.7 Cache Busting: Force unregister old Service Workers to fix MIME type errors
         if (!localStorage.getItem('v2_0_7_cache_busted')) {
