@@ -53,6 +53,17 @@
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useBalanceStore } from '../stores/balance';
 
+const props = defineProps({
+    tasks: {
+        type: Array,
+        default: null
+    },
+    mode: {
+        type: String,
+        default: 'combined' // 'combined' (desktop) or 'single' (mobile screen)
+    }
+});
+
 const emit = defineEmits(['edit']);
 const store = useBalanceStore();
 const container = ref(null);
@@ -232,7 +243,7 @@ const handleBubbleClick = (task) => {
 };
 
 const calcBubbles = () => {
-    const T = store.bubbleTasks;
+    const T = props.tasks || store.bubbleTasks;
     if (!T.length) { bubblePositions.value = []; return; }
     if (!container.value || !worker) return;
 
@@ -247,12 +258,21 @@ const calcBubbles = () => {
     const baseSizes = T.map(t => 25 + ((t.calculatedPriority - minP) / rng) * 50);
 
     const central = [], side = [];
-    T.forEach((t, i) => {
-        const isSide = t.ha || (store.isEffectivelyPostponed(t) && !t.force_active);
-        const data = { id: t.id, r: baseSizes[i] / 2, pri: t.calculatedPriority };
-        if (isSide) side.push(data);
-        else central.push(data);
-    });
+    
+    if (props.mode === 'single') {
+        // In single mode, all tasks are central
+        T.forEach((t, i) => {
+            central.push({ id: t.id, r: baseSizes[i] / 2, pri: t.calculatedPriority });
+        });
+    } else {
+        // Original logic for desktop/combined view
+        T.forEach((t, i) => {
+            const isSide = t.ha || (store.isEffectivelyPostponed(t) && !t.force_active);
+            const data = { id: t.id, r: baseSizes[i] / 2, pri: t.calculatedPriority };
+            if (isSide) side.push(data);
+            else central.push(data);
+        });
+    }
 
     isCalculating.value = true;
     if (worker) {
@@ -262,7 +282,8 @@ const calcBubbles = () => {
             W,
             H,
             isMobile: W < 600,
-            padding
+            padding,
+            mode: props.mode
         });
     } else {
         isCalculating.value = false;
@@ -271,7 +292,7 @@ const calcBubbles = () => {
 
 defineExpose({ calcBubbles, bubblePositions, handlePointerDown, handlePointerUp, handleBubbleClick, handleTouchStart, handleTouchMove, handleTouchEnd, tooltip, isTouchDevice, container, isCalculating });
 
-watch(() => store.bubbleTasks, calcBubbles, { deep: true });
+watch(() => (props.tasks || store.bubbleTasks), calcBubbles, { deep: true });
 watch(() => store.bubbleZoom, calcBubbles);
 window.addEventListener('resize', calcBubbles);
 onMounted(() => {

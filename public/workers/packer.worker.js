@@ -5,7 +5,7 @@
  */
 
 self.onmessage = function(e) {
-    const { central, side, W, H, isMobile, padding } = e.data;
+    const { central, side, W, H, isMobile, padding, mode } = e.data;
     const minGap = 15; // Minimum gap between groups
     
     const isOverlap = (x, y, r, placed) => {
@@ -88,6 +88,26 @@ self.onmessage = function(e) {
 
     // 1. Independent Packing
     const scale = 1.0;
+    
+    if (mode === 'single') {
+        let placed = packGroup(central, W / 2, H / 2, scale);
+        if (placed.length) {
+            const b = getBounds(placed);
+            const cx = (b.left + b.right) / 2, cy = (b.top + b.bottom) / 2;
+            const availW = W - padding * 2, availH = H - padding * 2;
+            const autoScale = Math.min(availW / b.width, availH / b.height);
+            
+            placed = placed.map(p => {
+                const nx = W / 2 + (p.x - cx) * autoScale;
+                const ny = H / 2 + (p.y - cy) * autoScale;
+                const nr = p.r * autoScale;
+                return { x: nx, y: ny, r: nr, id: p.id, size: nr * 2 };
+            });
+        }
+        self.postMessage({ bubblePositions: placed });
+        return;
+    }
+
     const isPortrait = H > W;
     const centralTasks = central;
     const side1Tasks = [], side2Tasks = [];

@@ -50,6 +50,18 @@ export const useBalanceStore = defineStore('balance', {
             return active.filter(t => t.category_slug === state.filterCat);
         },
 
+        focusTasks: (state) => {
+            return useBalanceStore().bubbleTasks.filter(t => !t.ha && !useBalanceStore().isEffectivelyPostponed(t));
+        },
+
+        plansTasks: (state) => {
+            return useBalanceStore().bubbleTasks.filter(t => useBalanceStore().isEffectivelyPostponed(t));
+        },
+
+        routineTasks: (state) => {
+            return useBalanceStore().bubbleTasks.filter(t => t.ha && !useBalanceStore().isEffectivelyPostponed(t));
+        },
+
         filteredTasks: (state) => {
             const now = new Date();
             if (!Array.isArray(state.tasks)) return [];

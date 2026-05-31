@@ -42,7 +42,7 @@ describe('Manual Refresh Logic', () => {
         await wrapper.vm.$nextTick();
 
         // Get the scrollable container
-        const container = wrapper.find('.overflow-y-auto');
+        const container = wrapper.find('.task-list-container');
         
         // Simulate Pull Down
         await container.trigger('touchstart', {

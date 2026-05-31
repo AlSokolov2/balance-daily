@@ -61,6 +61,11 @@
             "hidden": "Скрытые",
             "archive": "Архив"
         },
+        "sections": {
+            "focus": "Фокус",
+            "plans": "Планы",
+            "routine": "HA"
+        },
         "alerts": {
             "add_error": "Ошибка при добавлении задачи.",
             "delete_confirm": "Удалить задачу?",

@@ -110,10 +110,36 @@
         <div class="flex-1 min-h-0 flex flex-col overflow-hidden pt-1 handheld:pt-0">
             <!-- Mobile/Handheld Swipe View -->
             <div v-if="isHandheld" ref="mobileScrollContainer" class="mobile-scroll-container flex-1 flex overflow-x-auto snap-x snap-mandatory scrollbar-hide scroll-smooth" @scroll="handleMobileScroll">
-                <!-- Screen 1: Bubble Chart -->
+                <!-- Screen 1: Bubble Chart Stack -->
                 <div class="min-w-full h-full snap-start p-1 flex flex-col">
                     <div class="flex-1 bg-[var(--bg-card)] rounded-3xl shadow-sm border border-[var(--color-border)] relative overflow-hidden flex flex-col min-h-0 min-w-0">
-                        <BubbleChart @edit="handleEdit" class="flex-1 w-full h-full" />
+                        <!-- Vertical Stack for Mobile -->
+                        <div class="flex-1 overflow-y-auto snap-y snap-mandatory scrollbar-hide scroll-smooth h-full" ref="verticalChartContainer">
+                            <!-- Top: Plans -->
+                            <div class="h-full w-full snap-start relative">
+                                <BubbleChart :tasks="store.plansTasks" mode="single" @edit="handleEdit" class="w-full h-full" />
+                                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none opacity-40 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-secondary)]">
+                                    {{ $t('app.sections.plans') || 'Plans' }} ↓
+                                </div>
+                            </div>
+                            <!-- Center: Focus -->
+                            <div class="h-full w-full snap-start relative" id="mobile-focus-chart">
+                                <BubbleChart :tasks="store.focusTasks" mode="single" @edit="handleEdit" class="w-full h-full" />
+                                <div class="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none opacity-40 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-secondary)]">
+                                    ↑ {{ $t('app.sections.plans') || 'Plans' }}
+                                </div>
+                                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none opacity-40 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-secondary)]">
+                                    {{ $t('app.sections.routine') || 'Routine' }} ↓
+                                </div>
+                            </div>
+                            <!-- Bottom: Routine -->
+                            <div class="h-full w-full snap-start relative">
+                                <BubbleChart :tasks="store.routineTasks" mode="single" @edit="handleEdit" class="w-full h-full" />
+                                <div class="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none opacity-40 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-secondary)]">
+                                    ↑ {{ $t('app.sections.routine') || 'Routine' }}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
         <!-- Screen 2: Task List -->
@@ -130,7 +156,7 @@
                         </div>
                     </div>
 
-                    <div class="flex-1 bg-[var(--bg-card)] rounded-3xl shadow-sm border border-[var(--color-border)] flex flex-col overflow-hidden transition-transform duration-200 ease-out"
+                    <div class="flex-1 bg-[var(--bg-card)] rounded-3xl shadow-sm border border-[var(--color-border)] flex flex-col overflow-hidden transition-transform duration-200 ease-out task-list-container"
                          :style="{ transform: `translateY(${pullDistance}px)` }"
                          @touchstart="handleTouchStartPull"
                          @touchmove="handleTouchMovePull"
@@ -299,11 +325,11 @@ const {
 
 const isActuallyOfflineReady = ref(false);
 
-watch(offlineReady, (val) => {
+watch(() => offlineReady.value, (val) => {
     if (val) isActuallyOfflineReady.value = true;
 }, { immediate: true });
 
-watch(needRefresh, (val) => {
+watch(() => needRefresh.value, (val) => {
 }, { immediate: true });
 
 const closePWA = () => {
@@ -313,6 +339,7 @@ const closePWA = () => {
 
 const store = useBalanceStore();
 const mobileScrollContainer = ref(null);
+const verticalChartContainer = ref(null);
 
 // Sync i18n locale with store locale
 watch(() => store.locale, (newLocale) => {
@@ -448,6 +475,13 @@ onMounted(async () => {
     // After init, store.locale might have changed from server settings
     locale.value = store.locale;
     isInitializing.value = false;
+
+    // Scroll mobile vertical chart to focus (center) screen
+    nextTick(() => {
+        if (verticalChartContainer.value) {
+            verticalChartContainer.value.scrollTop = verticalChartContainer.value.clientHeight;
+        }
+    });
 });
 
 onUnmounted(() => {
