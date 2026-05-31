@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useBalanceStore } from '../../../resources/js/stores/balance';
+import { calcPriority } from '../../../resources/js/utils/priority-engine';
 import axios from 'axios';
 
 vi.mock('axios');
@@ -18,11 +19,10 @@ describe('Balance Store - Prioritization Engine', () => {
     });
 
     it('calculates base priority correctly', () => {
-        const store = useBalanceStore();
         const catsMap = { 'work': { slug: 'work', currentWeight: 0.5 } };
         const task = { category_slug: 'work', importance: 2.0 };
         
-        const priority = store.calcPriority(task, catsMap);
+        const priority = calcPriority(task, catsMap);
         expect(priority).toBe(1.0); // 0.5 * 2.0
     });
 
@@ -36,18 +36,15 @@ describe('Balance Store - Prioritization Engine', () => {
         
         // work (0.5 * 1.5 = 0.75) + life (0.5 * 1.5 = 0.75) = 1.5 total
         // normalized: 0.75 / 1.5 = 0.5 each.
-        // Wait, if BOTH are 0, they both get 1.5. 
         expect(store.categories.find(c => c.slug === 'work').currentWeight).toBeCloseTo(0.5);
     });
 
     it('correctly handles missed counts for interval repeat tasks', () => {
         const store = useBalanceStore();
         
-        // Mocking current time to a fixed value
         const now = new Date('2026-05-26T12:00:00Z');
         vi.setSystemTime(now);
         
-        // Last completed 2 days before 'now'
         const lastCompleted = new Date('2026-05-24T12:00:00Z');
         
         const task = { 
@@ -64,25 +61,21 @@ describe('Balance Store - Prioritization Engine', () => {
         store.tasks = [task];
         store.recalculateAll();
         
-        // Due date = 2026-05-24 + 1 day = 2026-05-25.
-        // Today is 2026-05-26. Missed count = 1.
         expect(store.tasks[0].missed_count).toBe(1);
         
         vi.useRealTimers();
     });
 
     it('applies exponential boost for missed tasks', () => {
-        const store = useBalanceStore();
         const catsMap = { 'work': { slug: 'work', currentWeight: 1.0 } };
         
         const taskWithNoMiss = { category_slug: 'work', importance: 1.0, missed_count: 0 };
         const taskWith1Miss = { category_slug: 'work', importance: 1.0, missed_count: 1 };
         const taskWith2Miss = { category_slug: 'work', importance: 1.0, missed_count: 2 };
 
-        // Formula: s *= (1 + missed_count * 0.5)
-        expect(store.calcPriority(taskWithNoMiss, catsMap)).toBe(1.0);
-        expect(store.calcPriority(taskWith1Miss, catsMap)).toBe(1.5);
-        expect(store.calcPriority(taskWith2Miss, catsMap)).toBe(2.0);
+        expect(calcPriority(taskWithNoMiss, catsMap)).toBe(1.0);
+        expect(calcPriority(taskWith1Miss, catsMap)).toBe(1.5);
+        expect(calcPriority(taskWith2Miss, catsMap)).toBe(2.0);
     });
 
     it('adds bonus points for deadlines', () => {

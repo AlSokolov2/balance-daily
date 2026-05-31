@@ -1,4 +1,5 @@
 import axios from 'axios';
+
 window.axios = axios;
 
 // Глобальная настройка Axios
@@ -8,7 +9,6 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 // Добавляем перехватчик для отладки и установки локали
 window.axios.interceptors.request.use(config => {
-    const locale = localStorage.getItem('locale') || 'ru';
-    config.headers['X-Locale'] = locale;
+    config.headers['X-Locale'] = localStorage.getItem('locale') || 'ru';
     return config;
 });

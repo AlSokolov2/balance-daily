@@ -52,16 +52,11 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useBalanceStore } from '../stores/balance';
+import { hexToRgba } from '../utils/colors';
 
 const props = defineProps({
-    tasks: {
-        type: Array,
-        default: null
-    },
-    mode: {
-        type: String,
-        default: 'combined' // 'combined' (desktop) or 'single' (mobile screen)
-    }
+    tasks: { type: Array, default: null },
+    mode: { type: String, default: 'combined' }
 });
 
 const emit = defineEmits(['edit']);
@@ -85,65 +80,67 @@ const bubbleContainerStyle = computed(() => {
     return {};
 });
 
-const getBubbleStyle = (task) => {
-    const pos = bubblePositions.value.find(p => p.id === task.id);
-    if (!pos) return { display: 'none' };
-    
-    const category = store.categories.find(c => c.slug === task.category_slug);
-    const color = category?.color || '#8e8e93';
-    const postponed = store.isEffectivelyPostponed(task) && !task.force_active;
-    
-    // Search match logic
+// Cache styles to avoid heavy re-calculations in the template
+const bubbleStyles = computed(() => {
+    const T = props.tasks || store.bubbleTasks;
+    const styles = {};
     const isSearching = !!store.searchQuery;
-    const matchesSearch = isSearching && (
-        (task.title && task.title.toLowerCase().includes(store.searchQuery.toLowerCase())) ||
-        (task.notes && task.notes.toLowerCase().includes(store.searchQuery.toLowerCase()))
-    );
+    const query = store.searchQuery.toLowerCase();
 
-    const s = pos.size;
-    let fontSize = s < 50 ? Math.max(6, s / 12) : Math.max(8, s / 9);
-    const borderWidth = (task.missed_count > 0) ? '3px' : '2px';
-
-    const style = {
-        width: s + 'px',
-        height: s + 'px',
-        left: (pos.x - s / 2) + 'px',
-        top: (pos.y - s / 2) + 'px',
-        background: hexToRgba(color, 0.25),
-        border: `${borderWidth} solid ${color}`,
-        fontSize: fontSize + 'px',
-        color: 'var(--color-text)',
-        transition: 'all 0.4s ease-out'
-    };
-
-    if (isSearching) {
-        if (matchesSearch) {
-            style.opacity = 1;
-            style.zIndex = 20;
-            style.filter = 'none';
-            style.boxShadow = `0 0 15px ${hexToRgba(color, 0.4)}`;
-        } else {
-            style.opacity = 0.15;
-            style.zIndex = 0;
-            style.filter = 'grayscale(0.8) blur(0.5px)';
+    T.forEach(task => {
+        const pos = bubblePositions.value.find(p => p.id === task.id);
+        if (!pos) {
+            styles[task.id] = { display: 'none' };
+            return;
         }
-    } else {
-        style.opacity = postponed ? 0.4 : 1;
-        style.zIndex = 10;
-        style.filter = 'none';
-    }
 
-    return style;
-};
+        const category = store.categories.find(c => c.slug === task.category_slug);
+        const color = category?.color || '#8e8e93';
+        const postponed = store.isEffectivelyPostponed(task) && !task.force_active;
+        
+        const matchesSearch = isSearching && (
+            (task.title && task.title.toLowerCase().includes(query)) ||
+            (task.notes && task.notes.toLowerCase().includes(query))
+        );
 
-function hexToRgba(hex, alpha) {
-    if (!hex) return 'rgba(150,150,150,' + alpha + ')';
-    hex = hex.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    return `rgba(${r},${g},${b},${alpha})`;
-}
+        const s = pos.size;
+        const fontSize = s < 50 ? Math.max(6, s / 12) : Math.max(8, s / 9);
+        const borderWidth = (task.missed_count > 0) ? '3px' : '2px';
+
+        const style = {
+            width: s + 'px',
+            height: s + 'px',
+            left: (pos.x - s / 2) + 'px',
+            top: (pos.y - s / 2) + 'px',
+            background: hexToRgba(color, 0.25),
+            border: `${borderWidth} solid ${color}`,
+            fontSize: fontSize + 'px',
+            color: 'var(--color-text)',
+            transition: 'all 0.4s ease-out'
+        };
+
+        if (isSearching) {
+            if (matchesSearch) {
+                style.opacity = 1;
+                style.zIndex = 20;
+                style.boxShadow = `0 0 15px ${hexToRgba(color, 0.4)}`;
+            } else {
+                style.opacity = 0.15;
+                style.zIndex = 0;
+                style.filter = 'grayscale(0.8) blur(0.5px)';
+            }
+        } else {
+            style.opacity = postponed ? 0.4 : 1;
+            style.zIndex = 10;
+        }
+
+        styles[task.id] = style;
+    });
+
+    return styles;
+});
+
+const getBubbleStyle = (task) => bubbleStyles.value[task.id] || { display: 'none' };
 
 const showTooltip = (event, task) => {
     if (!task.notes) return;
