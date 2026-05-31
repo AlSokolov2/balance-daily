@@ -156,7 +156,13 @@
 
             <!-- Footer (Fixed) -->
             <div class="p-4 sm:p-5 border-t border-[var(--color-border)] flex justify-between items-center opacity-40 landscape:p-2">
-                <span class="text-[9px] font-black uppercase tracking-widest text-[var(--color-secondary)]">Balance.Daily</span>
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-[9px] font-black uppercase tracking-widest text-[var(--color-secondary)]">Balance.Daily</span>
+                    <span v-if="offlineReady" class="text-[8px] font-bold text-green-500 uppercase tracking-tighter flex items-center gap-1">
+                        <svg class="w-2 h-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        Ready for offline
+                    </span>
+                </div>
                 <span class="text-[9px] font-bold font-mono text-[var(--color-secondary)]">v{{ version }}</span>
             </div>
         </div>
@@ -180,6 +186,13 @@ import { useBalanceStore } from '../stores/balance';
 import EditCategoryModal from './EditCategoryModal.vue';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
+
+const props = defineProps({
+    offlineReady: {
+        type: Boolean,
+        default: false
+    }
+});
 
 const { locale, t } = useI18n();
 const emit = defineEmits(['close']);

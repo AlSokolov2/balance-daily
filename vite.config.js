@@ -94,6 +94,10 @@ export default defineConfig(({ mode }) => {
                     globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
                     navigateFallback: null,
                     navigateFallbackDenylist: [/^\/api/],
+                },
+                devOptions: {
+                    enabled: true,
+                    type: 'module',
                 }
             })
         ],
