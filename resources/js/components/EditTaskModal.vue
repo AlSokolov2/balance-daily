@@ -220,14 +220,11 @@ const handleSave = async () => {
         };
         
         if (props.isNew) {
-            await axios.post('tasks', payload);
+            await store.addTask(payload);
         } else {
-            // Method Spoofing: Use POST to bypass Apache PUT blocking
-            payload._method = 'PUT';
-            await axios.post(`tasks/${props.task.id}`, payload);
+            await store.updateTask(props.task.id, payload);
         }
         
-        await store.fetchAll();
         emit('saved');
         emit('close');
     } catch (e) {
