@@ -27,8 +27,14 @@ All endpoints require authentication via the `Authorization: Bearer <token>` hea
 
 *   `GET /api/settings` — Get settings dictionary. **Note:** This request triggers the automatic "New Day" logic on the server.
 *   `POST /api/settings` — Batch update settings.
+*   `GET /api/sync` — Incremental data synchronization. Returns only items changed since the provided `last_sync` timestamp.
 *   `GET /api/export` — Export all user data in JSON format.
 *   `POST /api/import` — Full replacement of user data with JSON data.
+
+## Notifications
+
+*   `POST /api/push-subscription` — Register or update a Web Push subscription.
+*   `DELETE /api/push-subscription` — Remove a Web Push subscription.
 
 ---
 
@@ -54,6 +60,9 @@ Encryption is transparent — the API returns decrypted values to authenticated 
   "importance": 2.0,
   "repeat_type": "weekly",
   "repeat_days": [1, 3, 5],
+  "deadline": "2026-06-01",
+  "postpone_until": "2026-06-05",
+  "force_active": false,
   "notes": "Monday, Wednesday, Friday"
 }
 ```
