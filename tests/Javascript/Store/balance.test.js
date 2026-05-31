@@ -97,6 +97,39 @@ describe('Balance Store - Prioritization Engine', () => {
         expect(axios.defaults.headers.common['Authorization']).toBe('Bearer fake-token');
     });
 
+    it('moves recurring task to hidden instead of archive on completion with start-of-day time', async () => {
+        const store = useBalanceStore();
+        const now = new Date('2026-05-31T12:00:00'); // Local time noon
+        vi.setSystemTime(now);
+
+        const task = { 
+            id: 1, 
+            title: 'Recurring', 
+            repeat_type: 'interval', 
+            repeat_interval: 1, 
+            completed: false 
+        };
+        store.tasks = [task];
+        
+        axios.put.mockImplementation((url, data) => Promise.resolve({ data }));
+
+        await store.updateTask(1, { completed: true });
+
+        // Verify it sent completed: false and hidden_until with 00:00:00 local time
+        const payload = axios.put.mock.calls[0][1];
+        
+        expect(payload.completed).toBe(false);
+        
+        // Check if it's June 1st (since today is May 31) and time is 00:00 local
+        const hiddenUntil = new Date(payload.hidden_until);
+        expect(hiddenUntil.getHours()).toBe(0);
+        expect(hiddenUntil.getMinutes()).toBe(0);
+        expect(hiddenUntil.getDate()).toBe(1);
+        expect(hiddenUntil.getMonth()).toBe(5); // June
+        
+        vi.useRealTimers();
+    });
+
     it('clears state on logout', async () => {
         const store = useBalanceStore();
         store.token = 'fake-token';

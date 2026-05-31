@@ -334,68 +334,80 @@ export const useBalanceStore = defineStore('balance', {
             this.recalculateAll();
         },
 
+        async updateTask(id, payload) {
+            const t = this.tasks.find(x => x.id === id);
+            if (!t) return;
+
+            // Logic: Recurring tasks should go to 'hidden' instead of 'archive' on completion
+            const isRecurring = (payload.repeat_type && payload.repeat_type !== 'none') || 
+                              (!payload.repeat_type && t.repeat_type && t.repeat_type !== 'none');
+
+            if (payload.completed && isRecurring) {
+                payload.completed = false;
+                payload.completed_at = null;
+                
+                const nextData = this.calculateNextOccurrence(t, payload);
+                payload.hidden_until = nextData.hidden_until;
+                payload.last_completed_date = nextData.last_completed_date;
+                payload.notes = (payload.notes !== undefined ? payload.notes : t.notes || '');
+                payload.notes = (payload.notes ? payload.notes + '\n' : '') + '✔ ' + new Date().toLocaleString();
+                payload.missed_count = 0;
+            }
+
+            const res = await axios.put(`tasks/${id}`, payload);
+            const idx = this.tasks.findIndex(x => x.id === id);
+            if (idx !== -1) this.tasks[idx] = res.data;
+            
+            this.recalculateAll();
+        },
+
+        calculateNextOccurrence(t, payload = {}) {
+            const repeat_type = payload.repeat_type || t.repeat_type;
+            const repeat_interval = payload.repeat_interval || t.repeat_interval;
+            const repeat_days = payload.repeat_days || t.repeat_days;
+            
+            const now = new Date();
+            let nextDate = new Date();
+            
+            if (repeat_type === 'interval') {
+                nextDate.setDate(nextDate.getDate() + (parseInt(repeat_interval) || 1));
+            } else if (repeat_type === 'weekly' && repeat_days?.length) {
+                nextDate.setDate(nextDate.getDate() + 1);
+                while (!repeat_days.includes(nextDate.getDay())) { 
+                    nextDate.setDate(nextDate.getDate() + 1); 
+                }
+            }
+
+            // Ensure task activates at the very start of the target day (00:00:00)
+            nextDate.setHours(0, 0, 0, 0);
+
+            return {
+                hidden_until: nextDate.toISOString(),
+                last_completed_date: now.toISOString()
+            };
+        },
+
         async completeTask(id) {
             const t = this.tasks.find(x => x.id === id);
             if (!t || t.completed) return;
 
             if (t.repeat_type === 'none') {
-                const completedAt = new Date().toISOString();
-                await axios.put(`tasks/${id}`, { completed: true, completed_at: completedAt });
-                t.completed = true;
-                t.completed_at = completedAt;
-                t.missed_count = 0;
-            } else {
-                const now = new Date();
-                const newNotes = (t.notes ? t.notes + '\n' : '') + '✔ ' + now.toLocaleString();
-                
-                let nextDate = new Date();
-                if (t.repeat_type === 'interval') {
-                    nextDate.setDate(nextDate.getDate() + (parseInt(t.repeat_interval) || 1));
-                } else if (t.repeat_type === 'weekly' && t.repeat_days?.length) {
-                    nextDate.setDate(nextDate.getDate() + 1);
-                    while (!t.repeat_days.includes(nextDate.getDay())) { nextDate.setDate(nextDate.getDate() + 1); }
-                }
-
-                const hiddenUntil = nextDate.toISOString();
-                const lastCompletedDate = now.toISOString();
-
-                await axios.put(`tasks/${id}`, {
-                    notes: newNotes,
-                    hidden_until: hiddenUntil,
-                    last_completed_date: lastCompletedDate,
-                    missed_count: 0
+                await this.updateTask(id, { 
+                    completed: true, 
+                    completed_at: new Date().toISOString(),
+                    missed_count: 0 
                 });
-
-                t.notes = newNotes;
-                t.hidden_until = hiddenUntil;
-                t.last_completed_date = lastCompletedDate;
-                t.missed_count = 0;
+            } else {
+                await this.updateTask(id, { completed: true }); // updateTask will handle the rest
             }
-            this.recalculateAll();
-        },
-
-        async deleteTask(id) {
-            await axios.delete(`tasks/${id}`);
-            this.tasks = this.tasks.filter(t => t.id !== id);
-            this.recalculateAll();
         },
 
         async restoreTask(id) {
-            const t = this.tasks.find(x => x.id === id);
-            if (!t) return;
-            await axios.put(`tasks/${id}`, { completed: false, completed_at: null, hidden_until: null });
-            t.completed = false;
-            t.completed_at = null;
-            t.hidden_until = null;
-            this.recalculateAll();
+            await this.updateTask(id, { completed: false, completed_at: null, hidden_until: null });
         },
 
         async returnNow(id) {
-            const t = this.tasks.find(x => x.id === id);
-            if (!t) return;
-            await axios.put(`tasks/${id}`, { hidden_until: null });
-            t.hidden_until = null;
-            this.recalculateAll();
-        }
+            await this.updateTask(id, { hidden_until: null });
+        },
     }
 });
