@@ -261,33 +261,19 @@
         </div>
 
         <EditTaskModal v-if="editingTask" :task="editingTask" :isNew="editingTask.isNew" @close="editingTask = null" />
-        <SettingsModal v-if="showSettingsModal" @close="showSettingsModal = false" />
+        <SettingsModal v-if="showSettingsModal" :offlineReady="isActuallyOfflineReady" @close="showSettingsModal = false" />
 
-        <!-- PWA Уведомления -->
-        <div v-if="offlineReady || needRefresh" 
-             class="fixed top-4 left-1/2 -translate-x-1/2 z-[1000] w-[calc(100%-2rem)] max-w-sm bg-[var(--bg-card)] border border-[var(--color-border)] rounded-2xl shadow-2xl p-4 flex flex-col gap-3 backdrop-blur-xl">
-            <div class="flex items-start gap-3">
-                <div class="w-10 h-10 rounded-xl bg-[var(--bg-secondary)] flex items-center justify-center text-xl shrink-0">
-                    {{ needRefresh ? '🚀' : '📱' }}
+        <!-- PWA Update Notification (Compact Pill) -->
+        <div v-if="needRefresh" 
+             @click="updateServiceWorker(true)"
+             class="fixed bottom-20 left-1/2 -translate-x-1/2 z-[100] cursor-pointer group">
+            <div class="bg-[var(--bg-card)]/80 backdrop-blur-xl border border-[var(--color-border)] rounded-full px-4 py-2 shadow-2xl flex items-center gap-3 animate-[slide-up_0.3s_ease-out] hover:scale-105 transition-all active:scale-95">
+                <div class="w-6 h-6 rounded-full bg-[var(--btn-primary-bg)] flex items-center justify-center text-[10px] shrink-0 shadow-sm">
+                    🚀
                 </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm font-bold text-[var(--color-text)]">
-                        {{ needRefresh ? $t('pwa.update_available') : $t('pwa.offline_ready') }}
-                    </p>
-                    <p class="text-[12px] text-[var(--color-secondary)] leading-snug mt-0.5">
-                        {{ needRefresh ? $t('pwa.update_ready_text') : $t('pwa.offline_ready_text') }}
-                    </p>
-                </div>
-            </div>
-            <div class="flex gap-2">
-                <button v-if="needRefresh" @click="handleUpdateNow" 
-                        class="flex-1 py-2.5 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] rounded-xl text-xs font-bold shadow-sm">
-                    {{ $t('pwa.update_now') }}
-                </button>
-                <button @click="closePWA" 
-                        :class="['py-2.5 rounded-xl text-xs font-bold transition-all border border-[var(--color-border)]', needRefresh ? 'px-4 bg-[var(--bg-card)] text-[var(--color-text)]' : 'flex-1 bg-[var(--bg-card)] text-[var(--color-text)]']">
-                    {{ needRefresh ? $t('common.later') : $t('common.understand') }}
-                </button>
+                <span class="text-xs font-bold text-[var(--color-text)] pr-1">
+                    {{ $t('pwa.update_available') }}
+                </span>
             </div>
         </div>
     </div>
@@ -310,6 +296,15 @@ const {
     needRefresh,
     updateServiceWorker,
 } = useRegisterSW();
+
+const isActuallyOfflineReady = ref(false);
+
+watch(offlineReady, (val) => {
+    if (val) isActuallyOfflineReady.value = true;
+}, { immediate: true });
+
+watch(needRefresh, (val) => {
+}, { immediate: true });
 
 const closePWA = () => {
     offlineReady.value = false;
@@ -444,6 +439,11 @@ const updateDimensions = () => {
 onMounted(async () => {
     updateDimensions();
     window.addEventListener('resize', updateDimensions);
+    
+    // Check if the page is already controlled by a service worker
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        isActuallyOfflineReady.value = true;
+    }
     
     // Theme listener for system changes
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
