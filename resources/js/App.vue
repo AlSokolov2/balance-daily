@@ -311,6 +311,14 @@ const closePWA = () => {
     needRefresh.value = false;
 };
 
+const handleUpdateNow = () => {
+    updateServiceWorker(true);
+    // Fallback: force reload after a short delay if SW doesn't trigger it
+    setTimeout(() => {
+        window.location.reload();
+    }, 1500);
+};
+
 const store = useBalanceStore();
 const mobileScrollContainer = ref(null);
 

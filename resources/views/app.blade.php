@@ -10,18 +10,18 @@
     <script>
         window.apiBaseUrl = '{{ config('app.url') }}';
         
-        // V2.0.7 Cache Busting: Force unregister old Service Workers to fix MIME type errors
-        if (!localStorage.getItem('v2_0_7_cache_busted')) {
+        // V2.1.3 PWA Fix: Force unregister old Service Workers to resolve scope conflicts
+        if (!localStorage.getItem('v2_1_3_pwa_fix')) {
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.getRegistrations().then(function(registrations) {
                     for(let registration of registrations) {
                         registration.unregister();
                     }
-                    localStorage.setItem('v2_0_7_cache_busted', 'true');
+                    localStorage.setItem('v2_1_3_pwa_fix', 'true');
                     window.location.reload(true);
                 });
             } else {
-                localStorage.setItem('v2_0_7_cache_busted', 'true');
+                localStorage.setItem('v2_1_3_pwa_fix', 'true');
             }
         }
     </script>
