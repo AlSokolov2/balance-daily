@@ -61,6 +61,11 @@
             "hidden": "Hidden",
             "archive": "Archive"
         },
+        "sections": {
+            "focus": "Focus",
+            "plans": "Plans",
+            "routine": "HA"
+        },
         "alerts": {
             "add_error": "Error adding task.",
             "delete_confirm": "Delete task?",
