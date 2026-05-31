@@ -11,11 +11,14 @@
 
 ## 🚀 Key Features
 
+*   **Smart Sync:** Incremental data synchronization (deltas) for 90% faster networking.
+*   **Push Notifications:** Native browser reminders for task deadlines (Web Push API).
+*   **Global Search:** Instant task lookup with unique visual bubble focusing.
 *   **Smart Prioritization:** Automatically calculates task weight based on category, importance, deadlines, and overdue days.
 *   **Dynamic Balance:** The system automatically increases the priority of life spheres that haven't received enough attention.
 *   **Interactive Visualization:** A custom-built bubble chart powered by **Web Workers** for 60fps performance even with many tasks.
 *   **Dark Mode:** Full support for dark themes with automatic system preference detection.
-*   **PWA (Progressive Web App):** Installable on mobile and desktop. Loads instantly via Service Worker caching.
+*   **PWA (Progressive Web App):** Installable on mobile and desktop. Loads instantly with offline support and instant update notifications.
 *   **Real-time Sync:** Automatic priority updates every minute and automatic "New Day" reset at midnight.
 *   **Data Security (SSE):** Server-Side Encryption (AES-256) for all personal user data in the database.
 *   **Handheld-First Design:** Optimized for one-handed use with advanced gestures (pinch-to-zoom, horizontal swipes).
@@ -23,7 +26,7 @@
 ## 🛠 Technology Stack
 
 *   **Backend:** PHP 8.4+, Laravel 13, Sanctum (API Auth), Socialite (OAuth).
-*   **Frontend:** Vue 3 (Composition API), Pinia (State Management), Vite 6, Tailwind CSS 4.
+*   **Frontend:** Vue 3 (Composition API), Pinia (State Management), Vite 8, Tailwind CSS 4.
 *   **Infrastructure:** Service Workers (PWA), Web Workers (Offloaded calculations).
 *   **DevOps:** Docker, GitHub Actions (CI/CD), SSH Deployment.
 

@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
     
     return {
-        base: './',
+        base: '/',
         define: {
             __APP_VERSION__: JSON.stringify(packageJson.version),
             __VAPID_PUBLIC_KEY__: JSON.stringify(env.VAPID_PUBLIC_KEY || ''),
@@ -59,19 +59,19 @@ export default defineConfig(({ mode }) => {
                     scope: '../',
                     icons: [
                         {
-                            src: '../favicon.svg',
+                            src: '/favicon.svg',
                             sizes: 'any',
                             type: 'image/svg+xml',
                             purpose: 'any'
                         },
                         {
-                            src: '../favicon.svg',
+                            src: '/favicon.svg',
                             sizes: '192x192',
                             type: 'image/svg+xml',
                             purpose: 'any'
                         },
                         {
-                            src: '../favicon.svg',
+                            src: '/favicon.svg',
                             sizes: '512x512',
                             type: 'image/svg+xml',
                             purpose: 'maskable'
@@ -79,14 +79,14 @@ export default defineConfig(({ mode }) => {
                     ],
                     screenshots: [
                         {
-                            src: '../favicon.svg',
+                            src: '/favicon.svg',
                             sizes: '512x512',
                             type: 'image/svg+xml',
                             form_factor: 'wide',
                             label: 'Application Desktop'
                         },
                         {
-                            src: '../favicon.svg',
+                            src: '/favicon.svg',
                             sizes: '512x512',
                             type: 'image/svg+xml',
                             form_factor: 'narrow',
@@ -98,6 +98,10 @@ export default defineConfig(({ mode }) => {
                     globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
                     navigateFallback: null,
                     navigateFallbackDenylist: [/^\/api/],
+                },
+                devOptions: {
+                    enabled: true,
+                    type: 'module',
                 }
             })
         ],
