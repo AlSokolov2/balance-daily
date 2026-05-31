@@ -40,6 +40,9 @@ class TaskController extends Controller
             'ha' => 'nullable|boolean',
             'force_active' => 'nullable|boolean',
             'notes' => 'nullable|string',
+            'hidden_until' => 'nullable|date',
+            'last_completed_date' => 'nullable|date',
+            'missed_count' => 'nullable|integer',
         ]);
 
         return $request->user()->tasks()->create($validated);
@@ -83,6 +86,9 @@ class TaskController extends Controller
             'notes' => 'nullable|string',
             'completed' => 'sometimes|required|boolean',
             'completed_at' => 'nullable|date',
+            'hidden_until' => 'nullable|date',
+            'last_completed_date' => 'nullable|date',
+            'missed_count' => 'nullable|integer',
         ]);
 
         $task->update($validated);
