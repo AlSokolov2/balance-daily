@@ -87,7 +87,8 @@
             "appears": "появится",
             "missed": "проср. {n}д",
             "repeat": "повтор",
-            "completed": "вып."
+            "completed": "вып.",
+            "last_completed": "завершено"
         },
         "meta": {
             "importance": "Важн",

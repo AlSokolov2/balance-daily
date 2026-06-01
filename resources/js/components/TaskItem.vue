@@ -18,6 +18,9 @@
                 <span v-if="task.completed" class="badge-text">
                     {{ t('task.status.completed') }} {{ formatDate(task.completed_at) }}
                 </span>
+                <span v-else-if="task.latest_completion" class="badge-text !text-[10px] opacity-60">
+                     ({{ t('task.status.last_completed') }}: {{ formatDate(task.latest_completion.completed_at) }})
+                </span>
             </div>
 
             <div class="task-meta text-[11px] text-[var(--color-secondary)]">
@@ -103,15 +106,19 @@ const activeBadges = computed(() => {
 // --- Helpers ---
 const getCoeff = (s) => store.subcatCoeffs[s] || 1;
 
-const formatDate = (d) => {
+const formatDate = (d, includeTime = false) => {
     if (!d) return '';
     const dateLocale = store.locale === 'ru' ? 'ru-RU' : 'en-US';
-    return new Date(d).toLocaleString(dateLocale, { 
-        day: '2-digit', 
-        month: '2-digit', 
-        hour: '2-digit', 
-        minute: '2-digit' 
-    });
+    const options = {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    };
+    if (includeTime) {
+        options.hour = '2-digit';
+        options.minute = '2-digit';
+    }
+    return new Date(d).toLocaleString(dateLocale, options);
 };
 </script>
 

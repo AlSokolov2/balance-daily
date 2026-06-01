@@ -16,7 +16,10 @@ class TaskController extends Controller
      */
     public function index(Request $request)
     {
-        return $request->user()->tasks()->orderBy('completed')->get();
+        return $request->user()->tasks()
+            ->with('latestCompletion')
+            ->orderBy('completed')
+            ->get();
     }
 
     /**
@@ -45,7 +48,7 @@ class TaskController extends Controller
             'missed_count' => 'nullable|integer',
         ]);
 
-        return $request->user()->tasks()->create($validated);
+        return $request->user()->tasks()->create($validated)->load('latestCompletion');
     }
 
     /**
@@ -57,7 +60,7 @@ class TaskController extends Controller
      */
     public function show(Request $request, $id)
     {
-        return $request->user()->tasks()->findOrFail($id);
+        return $request->user()->tasks()->with('latestCompletion')->findOrFail($id);
     }
 
     /**
@@ -91,9 +94,18 @@ class TaskController extends Controller
             'missed_count' => 'nullable|integer',
         ]);
 
+        $wasCompleted = $task->completed;
         $task->update($validated);
 
-        return $task;
+        // If task was just marked as completed, record it in history
+        if (!$wasCompleted && $task->completed) {
+            $task->completions()->create([
+                'user_id' => $request->user()->id,
+                'completed_at' => $task->completed_at ?? now(),
+            ]);
+        }
+
+        return $task->load('latestCompletion');
     }
 
     /**

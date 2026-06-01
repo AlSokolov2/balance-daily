@@ -87,7 +87,8 @@
             "appears": "appears",
             "missed": "missed {n}d",
             "repeat": "repeat",
-            "completed": "done"
+            "completed": "done",
+            "last_completed": "last completed"
         },
         "meta": {
             "importance": "Imp",
