@@ -50,6 +50,7 @@
         "show_list": "Список задач",
         "logout": "Выйти",
         "settings": "Настройки",
+        "stats": "Статистика",
         "placeholder": "Что нужно сделать?",
         "search_placeholder": "Поиск задач...",
         "no_tasks": "Нет задач",
@@ -87,7 +88,8 @@
             "appears": "появится",
             "missed": "проср. {n}д",
             "repeat": "повтор",
-            "completed": "вып."
+            "completed": "вып.",
+            "last_completed": "завершено"
         },
         "meta": {
             "importance": "Важн",
@@ -101,7 +103,8 @@
         "tabs": {
             "notes": "Заметки",
             "setup": "Параметры",
-            "schedule": "Время"
+            "schedule": "Время",
+            "history": "История"
         },
         "title": "Заголовок",
         "notes": "Заметка",
@@ -165,6 +168,24 @@
             "export_button": "Экспорт (JSON)",
             "import_button": "Импорт (JSON)",
             "import_error": "Ошибка при импорте: {msg}"
+        }
+    },
+    "stats": {
+        "title": "Статистика и аналитика",
+        "counters": {
+            "today": "Сегодня",
+            "total": "Всего",
+            "current_streak": "Серия",
+            "longest_streak": "Рекорд"
+        },
+        "heatmap": {
+            "title": "Активность",
+            "subtitle": "Последние 90 дней",
+            "completions": "выполнений"
+        },
+        "balance": {
+            "title": "Баланс категорий (30 дней)",
+            "no_data": "Недостаточно данных для анализа баланса"
         }
     }
 }

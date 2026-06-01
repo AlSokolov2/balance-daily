@@ -5,7 +5,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\ImportExportController;
-
+use App\Http\Controllers\Api\StatsController;
 use App\Http\Controllers\Api\AuthController;
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -33,6 +33,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('export', [ImportExportController::class, 'export']);
     Route::post('import', [ImportExportController::class, 'import']);
+
+    Route::get('stats', [StatsController::class, 'index']);
 
     Route::get('/user', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);

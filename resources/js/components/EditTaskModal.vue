@@ -14,7 +14,7 @@
             <!-- Tabs Nav (Fixed) -->
             <div class="px-5 mb-2 shrink-0 landscape:px-3 landscape:mb-1">
                 <div class="flex gap-1 bg-[var(--bg-secondary)]/50 p-1 rounded-xl border border-[var(--color-border)] landscape:rounded-lg">
-                    <button v-for="t in ['notes', 'setup', 'schedule']" :key="t"
+                    <button v-for="t in ['notes', 'setup', 'schedule', 'history']" :key="t"
                             @click="activeTab = t"
                             :class="['flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border-none shadow-none relative landscape:py-1 landscape:text-[8px]', 
                                      activeTab === t ? 'bg-[var(--bg-card)] text-[var(--color-primary)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)] hover:text-[var(--color-text)]']">
@@ -34,6 +34,34 @@
                               ref="notesTextarea" 
                               class="flex-1 w-full p-0 bg-transparent border-none text-sm resize-none outline-none text-[var(--color-text)] placeholder:text-[var(--color-secondary)]/50 leading-relaxed custom-scrollbar" 
                               :placeholder="$t('edit_task.notes_placeholder')"></textarea>
+                </div>
+
+                <!-- Tab: History -->
+                <div v-if="activeTab === 'history'" class="space-y-4">
+                    <div v-if="loadingHistory" class="flex justify-center py-10">
+                        <div class="w-6 h-6 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                    <div v-else-if="!fullTaskDetails?.completions?.length" class="text-center py-10 text-[var(--color-secondary)] text-xs italic">
+                        {{ $t('app.no_tasks_in_category') }}
+                    </div>
+                    <div v-else class="space-y-3">
+                        <div class="flex items-center justify-between px-1">
+                            <span class="text-[10px] font-black text-[var(--color-secondary)] uppercase tracking-widest">{{ $t('stats.counters.total') }}</span>
+                            <span class="text-sm font-black text-[var(--color-text)]">{{ fullTaskDetails.completions.length }}</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div v-for="comp in fullTaskDetails.completions" :key="comp.id" 
+                                 class="bg-[var(--bg-secondary)]/50 p-3 rounded-2xl border border-[var(--color-border)] flex items-center justify-between">
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-bold text-[var(--color-text)]">{{ formatDate(comp.completed_at) }}</span>
+                                    <span class="text-[10px] text-[var(--color-secondary)]">{{ formatTime(comp.completed_at) }}</span>
+                                </div>
+                                <div class="w-6 h-6 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Tab: Setup (Params) -->
@@ -161,7 +189,23 @@ const store = useBalanceStore();
 const { t } = useI18n();
 const notesTextarea = ref(null);
 const activeTab = ref('notes');
-const tabs = ['notes', 'setup', 'schedule'];
+const tabs = ['notes', 'setup', 'schedule', 'history'];
+
+const fullTaskDetails = ref(null);
+const loadingHistory = ref(false);
+
+const fetchFullDetails = async () => {
+    if (props.isNew) return;
+    loadingHistory.value = true;
+    try {
+        const res = await axios.get(`tasks/${props.task.id}`);
+        fullTaskDetails.value = res.data;
+    } catch (e) {
+        console.error('Failed to fetch task history', e);
+    } finally {
+        loadingHistory.value = false;
+    }
+};
 
 // Swipe logic
 const touchStart = ref({ x: 0, y: 0 });
@@ -210,6 +254,25 @@ const autoResize = () => {
     }
 };
 
+const formatDate = (d) => {
+    if (!d) return '';
+    const dateLocale = store.locale === 'ru' ? 'ru-RU' : 'en-US';
+    return new Date(d).toLocaleDateString(dateLocale, { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric'
+    });
+};
+
+const formatTime = (d) => {
+    if (!d) return '';
+    const dateLocale = store.locale === 'ru' ? 'ru-RU' : 'en-US';
+    return new Date(d).toLocaleTimeString(dateLocale, { 
+        hour: '2-digit', 
+        minute: '2-digit'
+    });
+};
+
 const handleSave = async () => {
     try {
         const payload = {
@@ -244,6 +307,7 @@ const handleDelete = async () => {
 };
 
 onMounted(() => {
+    fetchFullDetails();
     setTimeout(autoResize, 50);
 });
 </script>

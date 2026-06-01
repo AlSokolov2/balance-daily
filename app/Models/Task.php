@@ -49,4 +49,20 @@ class Task extends Model
     {
         return $this->belongsTo(Category::class, 'category_slug', 'slug');
     }
+
+    /**
+     * Get the completion history for the task.
+     */
+    public function completions()
+    {
+        return $this->hasMany(TaskCompletion::class);
+    }
+
+    /**
+     * Get the latest completion record.
+     */
+    public function latestCompletion()
+    {
+        return $this->hasOne(TaskCompletion::class)->latestOfMany('completed_at');
+    }
 }

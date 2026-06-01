@@ -25,10 +25,6 @@ export function calcPriority(task, catsMap, subcatCoeffs = {}) {
         s *= 0.7;
     }
 
-    if (task.missed_count > 0) {
-        s *= (1 + task.missed_count * 0.5);
-    }
-
     if (task.deadline) {
         const n = new Date();
         const d = new Date(task.deadline);

@@ -21,6 +21,7 @@ export const useBalanceStore = defineStore('balance', {
         pulseTimer: null,
         user: null,
         token: localStorage.getItem('auth_token') || null,
+        stats: null,
     }),
 
     getters: {
@@ -154,6 +155,14 @@ export const useBalanceStore = defineStore('balance', {
 
         async fetchAll() {
             await this.sync(true);
+        },
+
+        async fetchStats() {
+            if (!this.token) return;
+            try {
+                const res = await axios.get('stats');
+                this.stats = res.data;
+            } catch (e) {}
         },
 
         async sync(forceFull = false) {
@@ -349,9 +358,8 @@ export const useBalanceStore = defineStore('balance', {
                 const nextData = this.calculateNextOccurrence(t, payload);
                 payload.hidden_until = nextData.hidden_until;
                 payload.last_completed_date = nextData.last_completed_date;
-                payload.notes = (payload.notes !== undefined ? payload.notes : t.notes || '');
-                payload.notes = (payload.notes ? payload.notes + '\n' : '') + '✔ ' + new Date().toLocaleString();
                 payload.missed_count = 0;
+                // No longer injecting date into notes here
             }
 
             const res = await axios.put(`tasks/${id}`, payload);
