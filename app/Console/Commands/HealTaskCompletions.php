@@ -41,10 +41,9 @@ class HealTaskCompletions extends Command
             $notes = $task->notes;
             if (empty($notes)) continue;
 
-            // Pattern for completion marks: ✔ 01.06.2026, 15:41:04 or similar
-            // It uses .toLocaleString() on frontend which depends on locale, 
-            // but usually follows [Symbol][Space][Date/Time]
-            $pattern = '/✔\s?(\d{1,2}[\.\/]\d{1,2}[\.\/]\d{2,4}.*?)(?:\n|$)/u';
+            // Pattern for completion marks: supports full and short formats
+            // ✔ 01.06.2026, 15:41:04 OR ✔ 15.05, 18:20 OR ✔ 15.05.2026
+            $pattern = '/✔\s*(\d{1,2}[\.\/]\d{1,2}(?:[\.\/]\d{2,4})?.*)(?:\n|$)/u';
             
             if (preg_match_all($pattern, $notes, $matches)) {
                 $foundCompletions = $matches[1];
@@ -55,8 +54,21 @@ class HealTaskCompletions extends Command
 
                 foreach ($foundCompletions as $dateStr) {
                     try {
-                        // Clean up common artifacts from toLocaleString()
-                        $cleanDateStr = trim(str_replace(['at', 'в', 'г.'], '', $dateStr));
+                        $cleanDateStr = trim($dateStr);
+                        $cleanDateStr = str_replace(['at', 'в', 'г.'], '', $cleanDateStr);
+                        
+                        // Handle "DD.MM, HH:mm" or "DD.MM HH:mm"
+                        // If year is missing, Carbon might see "18.05" as time (18:05).
+                        // We check if the first part is "digits.digits" and append current year.
+                        if (preg_match('/^(\d{1,2})[\.\/](\d{1,2})(?![\.\/]\d{2,4})/', $cleanDateStr, $dateMatches)) {
+                            $day = $dateMatches[1];
+                            $month = $dateMatches[2];
+                            $year = date('Y');
+                            $rest = substr($cleanDateStr, strlen($dateMatches[0]));
+                            $cleanDateStr = "{$day}.{$month}.{$year}{$rest}";
+                        }
+
+                        $cleanDateStr = str_replace(',', ' ', $cleanDateStr);
                         $completedAt = Carbon::parse($cleanDateStr);
                         
                         if (!$dryRun) {
