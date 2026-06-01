@@ -21,6 +21,7 @@ export const useBalanceStore = defineStore('balance', {
         pulseTimer: null,
         user: null,
         token: localStorage.getItem('auth_token') || null,
+        stats: null,
     }),
 
     getters: {
@@ -154,6 +155,14 @@ export const useBalanceStore = defineStore('balance', {
 
         async fetchAll() {
             await this.sync(true);
+        },
+
+        async fetchStats() {
+            if (!this.token) return;
+            try {
+                const res = await axios.get('stats');
+                this.stats = res.data;
+            } catch (e) {}
         },
 
         async sync(forceFull = false) {

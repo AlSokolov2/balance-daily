@@ -50,6 +50,7 @@
         "show_list": "Task list",
         "logout": "Logout",
         "settings": "Settings",
+        "stats": "Statistics",
         "placeholder": "What needs to be done?",
         "search_placeholder": "Search tasks...",
         "no_tasks": "No tasks",
@@ -102,7 +103,8 @@
         "tabs": {
             "notes": "Notes",
             "setup": "Setup",
-            "schedule": "Schedule"
+            "schedule": "Schedule",
+            "history": "History"
         },
         "title": "Title",
         "notes": "Notes",
@@ -166,6 +168,24 @@
             "export_button": "Export (JSON)",
             "import_button": "Import (JSON)",
             "import_error": "Import error: {msg}"
+        }
+    },
+    "stats": {
+        "title": "Statistics & Analytics",
+        "counters": {
+            "today": "Today",
+            "total": "Total",
+            "current_streak": "Streak",
+            "longest_streak": "Record"
+        },
+        "heatmap": {
+            "title": "Activity",
+            "subtitle": "Last 90 days",
+            "completions": "completions"
+        },
+        "balance": {
+            "title": "Category Balance (30 days)",
+            "no_data": "Not enough data for balance analysis"
         }
     }
 }

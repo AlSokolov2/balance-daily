@@ -24,6 +24,7 @@
                 @toggle-menu="isMenuOpen = !isMenuOpen"
                 @logout="handleLogout"
                 @open-settings="openSettings"
+                @open-stats="openStats"
             />
             <DesktopAddForm @open-advanced="openAdvancedAdd" />
             <DesktopFilterBar />
@@ -137,6 +138,7 @@
             @toggle-menu="isMenuOpen = !isMenuOpen"
             @logout="handleLogout"
             @open-settings="openSettings"
+            @open-stats="openStats"
         />
 
         <!-- Overlays & Modals -->
@@ -155,6 +157,7 @@
 
         <EditTaskModal v-if="editingTask" :task="editingTask" :isNew="editingTask.isNew" @close="editingTask = null" />
         <SettingsModal v-if="showSettingsModal" :offlineReady="isActuallyOfflineReady" @close="showSettingsModal = false" />
+        <StatsModal v-if="showStatsModal" @close="showStatsModal = false" />
 
         <!-- PWA Update Notification -->
         <div v-if="needRefresh" @click="updateServiceWorker(true)" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-[100] cursor-pointer group">
@@ -182,6 +185,7 @@ import AppHeader from './components/AppHeader.vue';
 import DesktopFilterBar from './components/DesktopFilterBar.vue';
 import DesktopAddForm from './components/DesktopAddForm.vue';
 import MobileBottomNav from './components/MobileBottomNav.vue';
+import StatsModal from './components/StatsModal.vue';
 
 const { locale, t } = useI18n();
 const { offlineReady, needRefresh, updateServiceWorker } = useRegisterSW();
@@ -192,6 +196,7 @@ const isActuallyOfflineReady = ref(false);
 const isRefreshing = ref(false);
 const showTaskList = ref(false);
 const showSettingsModal = ref(false);
+const showStatsModal = ref(false);
 const isMenuOpen = ref(false);
 const isSearchVisible = ref(false);
 const currentMobileScreen = ref(0);
@@ -224,6 +229,7 @@ const updateDimensions = () => {
 // Handlers
 const handleLogout = () => { isMenuOpen.value = false; store.logout(); };
 const openSettings = () => { isMenuOpen.value = false; showSettingsModal.value = true; };
+const openStats = () => { isMenuOpen.value = false; showStatsModal.value = true; };
 const toggleSearch = () => {
     isSearchVisible.value = !isSearchVisible.value;
     if (isSearchVisible.value) {

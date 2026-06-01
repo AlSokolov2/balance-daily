@@ -60,7 +60,11 @@ class TaskController extends Controller
      */
     public function show(Request $request, $id)
     {
-        return $request->user()->tasks()->with('latestCompletion')->findOrFail($id);
+        return $request->user()->tasks()
+            ->with(['latestCompletion', 'completions' => function($query) {
+                $query->orderBy('completed_at', 'DESC');
+            }])
+            ->findOrFail($id);
     }
 
     /**
