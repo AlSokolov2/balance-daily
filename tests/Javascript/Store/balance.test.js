@@ -66,16 +66,17 @@ describe('Balance Store - Prioritization Engine', () => {
         vi.useRealTimers();
     });
 
-    it('applies exponential boost for missed tasks', () => {
+    it('does not apply boost for missed tasks anymore', () => {
         const catsMap = { 'work': { slug: 'work', currentWeight: 1.0 } };
         
         const taskWithNoMiss = { category_slug: 'work', importance: 1.0, missed_count: 0 };
         const taskWith1Miss = { category_slug: 'work', importance: 1.0, missed_count: 1 };
         const taskWith2Miss = { category_slug: 'work', importance: 1.0, missed_count: 2 };
 
+        // Priority should stay 1.0 regardless of missed_count
         expect(calcPriority(taskWithNoMiss, catsMap)).toBe(1.0);
-        expect(calcPriority(taskWith1Miss, catsMap)).toBe(1.5);
-        expect(calcPriority(taskWith2Miss, catsMap)).toBe(2.0);
+        expect(calcPriority(taskWith1Miss, catsMap)).toBe(1.0);
+        expect(calcPriority(taskWith2Miss, catsMap)).toBe(1.0);
     });
 
     it('adds bonus points for deadlines', () => {
