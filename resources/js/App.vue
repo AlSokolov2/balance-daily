@@ -33,8 +33,8 @@
         <div class="flex-1 min-h-0 flex flex-col overflow-hidden pt-1 handheld:pt-0">
             <!-- Mobile/Handheld Swipe View -->
             <div v-if="isHandheld" ref="mobileScrollContainer" class="mobile-scroll-container flex-1 flex overflow-x-auto snap-x snap-mandatory scrollbar-hide scroll-smooth" @scroll="handleMobileScroll">
-                <!-- Screen 1: Bubble Chart Stack -->
-                <div class="min-w-full h-full snap-start p-1 flex flex-col">
+                <!-- Screen 1: Bubble Chart Stack (скрывается для архива/скрытых) -->
+                <div v-if="store.filterCat !== 'archive' && store.filterCat !== 'hidden'" class="min-w-full h-full snap-start p-1 flex flex-col">
                     <div class="flex-1 bg-[var(--bg-card)] rounded-3xl shadow-sm border border-[var(--color-border)] relative overflow-hidden flex flex-col min-h-0 min-w-0">
                         <div class="flex-1 overflow-y-auto snap-y snap-mandatory scrollbar-hide scroll-smooth h-full" ref="verticalChartContainer">
                             <!-- Plans -->
@@ -98,11 +98,16 @@
 
             <!-- Desktop Content -->
             <div v-else class="flex-1 flex flex-col h-full gap-3">
-                <div class="flex-1 bg-[var(--bg-card)] rounded-3xl shadow-sm border border-[var(--color-border)] relative overflow-hidden flex flex-col min-h-0 min-w-0">
+                <!-- Диаграмма (скрывается для архива/скрытых) -->
+                <div v-if="store.filterCat !== 'archive' && store.filterCat !== 'hidden'" 
+                     class="flex-1 bg-[var(--bg-card)] rounded-3xl shadow-sm border border-[var(--color-border)] relative overflow-hidden flex flex-col min-h-0 min-w-0">
                     <BubbleChart @edit="handleEdit" class="flex-1 w-full h-full" />
                 </div>
 
-                <div v-if="showTaskList" class="card bg-[var(--bg-card)] rounded-[16px] flex flex-col shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[var(--color-border)] min-h-[100px] shrink-0 max-h-[40vh] overflow-hidden">
+                <!-- Список задач (разворачивается на весь экран для архива/скрытых) -->
+                <div v-if="showTaskList" 
+                     :class="{ 'flex-1 max-h-none': store.filterCat === 'archive' || store.filterCat === 'hidden' }"
+                     class="card bg-[var(--bg-card)] rounded-[16px] flex flex-col shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[var(--color-border)] min-h-[100px] shrink-0 max-h-[40vh] overflow-hidden">
                     <div class="flex-1 overflow-y-auto p-4">
                         <div v-if="!store.filteredTasks.length" class="text-center py-8 text-[var(--color-secondary)] text-sm">
                             {{ $t('app.no_tasks') }}
@@ -205,6 +210,8 @@ watch(() => store.filterCat, (newCat) => {
     if (newCat === 'archive' || newCat === 'hidden') {
         showTaskList.value = true;
         scrollToList();
+    } else {
+        showTaskList.value = false;
     }
 });
 

@@ -30,10 +30,9 @@ The project uses a unified command to start all necessary services for local dev
 
 ## Development Conventions
 
-### Coding Standards
-- **PHP:** Adheres to Laravel coding standards. Uses **Pint** for code style.
-- **WordPress Standards:** Note that while this is a Laravel project, some parts of the team's global instructions mention WordPress standards. However, for this project, **Laravel idioms take precedence**.
-- **Conventional Commits:** All git commits must follow the [Conventional Commits](https://www.conventionalcommits.org/) specification.
+### Documentation & Issue Tracking
+- **Conventional Commits:** All git commits must follow the [Conventional Commits](https://www.conventionalcommits.org/) specification (English).
+- **Tickets & Issues:** All project tickets, GitHub issues, and internal task documentation must be written in **Russian**.
 - **Documentation:** Use JSDoc for JavaScript and PHPDoc for PHP. Maintain the documentation in the `docs/` directory.
 
 ### Project Structure
