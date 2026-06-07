@@ -1,0 +1,20 @@
+# .geminiignore
+# This file defines which files and directories should be ignored by the Gemini CLI.
+# Rules here have HIGHER priority than .gitignore.
+
+# 1. Unblock critical AI context files (even if they are in .gitignore)
+!.gemini/
+!GEMINI.md
+
+# 2. Add any AI-specific ignores here if needed
+# (By default, it still respects .gitignore unless configured otherwise,
+# but we can explicitly exclude high-volume/low-signal data)
+.local/
+.reference/
+node_modules/
+vendor/
+storage/logs/
+public/build/
+public/hot/
+public/storage/
+*.log

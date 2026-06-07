@@ -1,17 +1,24 @@
 <template>
-    <div class="task-item flex items-center py-2.5 border-b border-[var(--color-border)] gap-2.5 last:border-0 transition-opacity" 
-         :class="{ 'opacity-50': isDimmed }">
-        
-        <div class="task-color w-3.5 h-3.5 rounded-full shrink-0" 
-             :style="{ background: categoryColor }"
-             :class="{ 'opacity-50': isDimmed }"></div>
+    <div
+        class="task-item flex items-center py-2.5 border-b border-[var(--color-border)] gap-2.5 last:border-0 transition-opacity" 
+        :class="{ 'opacity-50': isDimmed }"
+    >
+        <div
+            class="task-color w-3.5 h-3.5 rounded-full shrink-0" 
+            :style="{ background: categoryColor }"
+            :class="{ 'opacity-50': isDimmed }"
+        />
         
         <div class="task-info flex-[3] min-w-0">
             <div class="task-title font-bold text-[15px] mb-0.5 text-[var(--color-text)]">
                 {{ task.title }}
                 
-                <span v-for="badge in activeBadges" :key="badge.text"
-                      class="badge" :class="badge.classes">
+                <span
+                    v-for="badge in activeBadges"
+                    :key="badge.text"
+                    class="badge"
+                    :class="badge.classes"
+                >
                     {{ badge.text }}
                 </span>
 
@@ -19,7 +26,7 @@
                     {{ t('task.status.completed') }} {{ formatDate(task.completed_at) }}
                 </span>
                 <span v-else-if="task.latest_completion" class="badge-text !text-[10px] opacity-60">
-                     ({{ t('task.status.last_completed') }}: {{ formatDate(task.latest_completion.completed_at) }})
+                    ({{ t('task.status.last_completed') }}: {{ formatDate(task.latest_completion.completed_at) }})
                 </span>
             </div>
 
@@ -39,12 +46,22 @@
         </div>
 
         <div class="task-actions flex gap-1 shrink-0">
-            <button v-if="canComplete" @click="store.completeTask(task.id)" class="action-btn">✓</button>
-            <button v-if="canRestore" @click="store.restoreTask(task.id)" class="action-btn">↩</button>
-            <button v-if="canReturnNow" @click="store.returnNow(task.id)" class="action-btn">↩</button>
+            <button v-if="canComplete" class="action-btn" @click="store.completeTask(task.id)">
+                ✓
+            </button>
+            <button v-if="canRestore" class="action-btn" @click="store.restoreTask(task.id)">
+                ↩
+            </button>
+            <button v-if="canReturnNow" class="action-btn" @click="store.returnNow(task.id)">
+                ↩
+            </button>
             
-            <button @click="$emit('edit', task)" class="action-btn">✎</button>
-            <button @click="$emit('delete', task.id)" class="action-btn">🗑</button>
+            <button class="action-btn" @click="$emit('edit', task)">
+                ✎
+            </button>
+            <button class="action-btn" @click="$emit('delete', task.id)">
+                🗑
+            </button>
         </div>
     </div>
 </template>
@@ -58,6 +75,8 @@ const { t } = useI18n();
 const props = defineProps({
     task: { type: Object, required: true }
 });
+
+defineEmits(['toggle', 'edit', 'delete']);
 
 const store = useBalanceStore();
 

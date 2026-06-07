@@ -17,8 +17,8 @@ class SetLocale
     {
         $locale = $request->header('X-Locale');
 
-        if (!$locale) {
-            $locale = $request->getPreferredLanguage(['en', 'ru']);
+        if (! is_string($locale) || ! $locale) {
+            $locale = (string) $request->getPreferredLanguage(['en', 'ru']);
         }
 
         if (in_array($locale, ['en', 'ru'])) {

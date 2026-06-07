@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\TaskCompletion;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -12,24 +13,22 @@ class StatsController extends Controller
 {
     /**
      * Get aggregated statistics for the authenticated user.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $user = $this->user();
         $now = Carbon::now();
 
         // Fetch completions once
+        /** @var \Illuminate\Database\Eloquent\Collection<int, TaskCompletion> $completions */
         $completions = TaskCompletion::where('user_id', $user->id)
             ->where('completed_at', '>=', $now->copy()->subDays(90)->startOfDay())
-            ->orderBy('completed_at', 'ASC')
+            ->orderBy('completed_at', 'asc')
             ->get();
 
         // 1. Heatmap
-        $heatmap = $completions->groupBy(fn($c) => $c->completed_at->toDateString())
-            ->map(fn($group) => $group->count());
+        $heatmap = $completions->groupBy(fn ($c) => $c->completed_at->toDateString())
+            ->map(fn ($group) => $group->count());
 
         // 2. Category Balance
         $categoryBalance = DB::table('task_completions')
@@ -41,11 +40,11 @@ class StatsController extends Controller
             ->get();
 
         // 3. Basic Counters
-        $todayCount = $completions->filter(fn($c) => $c->completed_at->isToday())->count();
+        $todayCount = $completions->filter(fn ($c) => $c->completed_at->isToday())->count();
         $totalCount = TaskCompletion::where('user_id', $user->id)->count();
 
         // 4. General Activity Streak
-        $streakData = $this->calculateGeneralStreak($user->id);
+        $streakData = $this->calculateGeneralStreak((int) $user->id);
 
         return response()->json([
             'heatmap' => $heatmap,
@@ -61,16 +60,16 @@ class StatsController extends Controller
 
     /**
      * Calculate the user's general activity streak using string-based date comparison for robustness.
-     * 
-     * @param int $userId
-     * @return array
+     *
+     * @return array{current: int, longest: int}
      */
-    private function calculateGeneralStreak($userId)
+    private function calculateGeneralStreak(int $userId): array
     {
+        /** @var list<string> $allDates */
         $allDates = TaskCompletion::where('user_id', $userId)
-            ->orderBy('completed_at', 'DESC')
+            ->orderBy('completed_at', 'desc')
             ->get()
-            ->map(fn($c) => $c->completed_at->toDateString())
+            ->map(fn ($c) => $c->completed_at->toDateString())
             ->unique()
             ->values()
             ->toArray();
@@ -81,7 +80,7 @@ class StatsController extends Controller
 
         $today = Carbon::today()->toDateString();
         $yesterday = Carbon::yesterday()->toDateString();
-        
+
         $currentStreak = 0;
         if ($allDates[0] === $today || $allDates[0] === $yesterday) {
             $checkDate = Carbon::parse($allDates[0]);

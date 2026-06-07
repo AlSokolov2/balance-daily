@@ -94,6 +94,13 @@ export default defineConfig(({ mode }) => {
                         }
                     ]
                 },
+                injectManifest: {
+                    rollupOptions: {
+                        output: {
+                            codeSplitting: false,
+                        },
+                    },
+                },
                 workbox: {
                     globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
                     navigateFallback: null,
@@ -115,6 +122,17 @@ export default defineConfig(({ mode }) => {
             environment: 'jsdom',
             setupFiles: ['./tests/Javascript/setup.js'],
             exclude: ['**/node_modules/**', '**/dist/**', '**/.local/**'],
+            coverage: {
+                provider: 'v8',
+                include: ['resources/js/stores/**', 'resources/js/utils/**'],
+                reporter: ['text', 'json', 'html'],
+                thresholds: {
+                    lines: 95,
+                    functions: 85,
+                    branches: 80,
+                    statements: 90
+                }
+            }
         },
     };
 });

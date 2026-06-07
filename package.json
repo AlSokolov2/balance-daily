@@ -6,13 +6,22 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "test": "LARAVEL_BYPASS_ENV_CHECK=1 vitest run"
+        "test": "LARAVEL_BYPASS_ENV_CHECK=1 vitest run --coverage",
+        "lint": "eslint resources/js",
+        "lint:fix": "eslint resources/js --fix",
+        "format": "docker-compose exec app ./vendor/bin/pint",
+        "phpstan": "docker-compose exec app ./vendor/bin/phpstan analyze app --level=8 --memory-limit=-1"
     },
     "devDependencies": {
+        "@eslint/js": "^10.0.1",
         "@tailwindcss/vite": "^4.0.0",
         "@vitejs/plugin-vue": "^6.0.7",
+        "@vitest/coverage-v8": "^4.1.8",
         "@vue/test-utils": "^2.4.10",
         "concurrently": "^9.0.1",
+        "eslint": "^10.4.1",
+        "eslint-plugin-vue": "^10.9.2",
+        "globals": "^17.6.0",
         "jsdom": "^29.1.1",
         "laravel-vite-plugin": "^3.1",
         "tailwindcss": "^4.0.0",

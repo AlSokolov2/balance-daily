@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\Category;
 use App\Models\Task;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -30,26 +31,26 @@ class SyncTest extends TestCase
     {
         $user = User::factory()->create();
         $cat = Category::factory()->create(['user_id' => $user->id, 'slug' => 'cat1']);
-        
+
         $since = now()->subMinute();
-        
+
         // Old task (not in sync)
         $oldTask = Task::factory()->create([
-            'user_id' => $user->id, 
+            'user_id' => $user->id,
             'category_slug' => 'cat1',
             'created_at' => now()->subMinutes(5),
-            'updated_at' => now()->subMinutes(5)
+            'updated_at' => now()->subMinutes(5),
         ]);
 
         // New task
         $newTask = Task::factory()->create([
-            'user_id' => $user->id, 
+            'user_id' => $user->id,
             'category_slug' => 'cat1',
             'created_at' => now(),
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
 
-        $response = $this->actingAs($user)->getJson('/api/sync?since=' . $since->toISOString());
+        $response = $this->actingAs($user)->getJson('/api/sync?since='.$since->toISOString());
 
         $response->assertStatus(200);
         $response->assertJsonCount(1, 'tasks.updated');
@@ -61,20 +62,20 @@ class SyncTest extends TestCase
         $user = User::factory()->create();
         $cat = Category::factory()->create(['user_id' => $user->id, 'slug' => 'cat1']);
         $task = Task::factory()->create(['user_id' => $user->id, 'category_slug' => 'cat1']);
-        
+
         $since = now();
-        
+
         // Ensure time moves forward for deletion log
-        \Carbon\Carbon::setTestNow(now()->addMinute());
+        Carbon::setTestNow(now()->addMinute());
 
         // Delete the task
         $task->delete();
 
-        $response = $this->actingAs($user)->getJson('/api/sync?since=' . $since->toISOString());
+        $response = $this->actingAs($user)->getJson('/api/sync?since='.$since->toISOString());
 
         $response->assertStatus(200);
         $this->assertContains($task->id, $response->json('tasks.deleted'));
-        
-        \Carbon\Carbon::setTestNow(); // Reset time
+
+        Carbon::setTestNow(); // Reset time
     }
 }

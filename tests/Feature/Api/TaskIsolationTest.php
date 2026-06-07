@@ -26,8 +26,8 @@ class TaskIsolationTest extends TestCase
         $response = $this->actingAs($userA)->getJson('/api/tasks');
 
         $response->assertStatus(200)
-                 ->assertJsonCount(1)
-                 ->assertJsonPath('0.title', 'Task A');
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.title', 'Task A');
     }
 
     public function test_user_cannot_access_other_users_task_by_id(): void
@@ -38,7 +38,7 @@ class TaskIsolationTest extends TestCase
         Category::create(['slug' => 'chor', 'name' => 'CHOR', 'weight' => 0.1, 'user_id' => $userB->id]);
         $taskB = Task::create(['title' => 'Task B', 'category_slug' => 'chor', 'importance' => 2, 'user_id' => $userB->id]);
 
-        $response = $this->actingAs($userA)->getJson('/api/tasks/' . $taskB->id);
+        $response = $this->actingAs($userA)->getJson('/api/tasks/'.$taskB->id);
 
         $response->assertStatus(404);
     }
@@ -51,7 +51,7 @@ class TaskIsolationTest extends TestCase
         Category::create(['slug' => 'chor', 'name' => 'CHOR', 'weight' => 0.1, 'user_id' => $userB->id]);
         $taskB = Task::create(['title' => 'Task B', 'category_slug' => 'chor', 'importance' => 2, 'user_id' => $userB->id]);
 
-        $response = $this->actingAs($userA)->deleteJson('/api/tasks/' . $taskB->id);
+        $response = $this->actingAs($userA)->deleteJson('/api/tasks/'.$taskB->id);
 
         $response->assertStatus(404);
         $this->assertDatabaseHas('tasks', ['id' => $taskB->id]);
@@ -68,17 +68,17 @@ class TaskIsolationTest extends TestCase
         $response = $this->actingAs($userA)->postJson('/api/tasks', [
             'title' => 'My Task',
             'category_slug' => 'work',
-            'importance' => 3
+            'importance' => 3,
         ]);
 
         $response->assertStatus(201);
-        
+
         $task = Task::where('user_id', $userA->id)->where('category_slug', 'work')->first();
         $this->assertEquals('My Task', $task->title);
         $this->assertDatabaseHas('tasks', [
             'id' => $task->id,
             'user_id' => $userA->id,
-            'category_slug' => 'work'
+            'category_slug' => 'work',
         ]);
     }
 }

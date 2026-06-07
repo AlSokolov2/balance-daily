@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\User;
 use App\Models\PushSubscription;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -13,39 +13,44 @@ class PushSubscriptionTest extends TestCase
 
     public function test_user_can_store_push_subscription(): void
     {
+        /** @var User $user */
         $user = User::factory()->create();
-        
+
         $data = [
             'endpoint' => 'https://fcm.googleapis.com/fcm/send/fake-token',
             'public_key' => 'BMA8A-fake-key',
-            'auth_token' => 'fake-auth-secret'
+            'auth_token' => 'fake-auth-secret',
         ];
 
         $response = $this->actingAs($user)->postJson('/api/push-subscriptions', $data);
 
         $response->assertStatus(200);
         $this->assertDatabaseHas('push_subscriptions', [
-            'user_id' => $user->id
+            'user_id' => $user->id,
         ]);
-        
+
         // Check that it's retrievable (decrypted)
-        $sub = PushSubscription::where('user_id', $user->id)->get()->first();
+        /** @var PushSubscription $sub */
+        $sub = PushSubscription::where('user_id', $user->id)->firstOrFail();
         $this->assertEquals($data['endpoint'], $sub->endpoint);
     }
 
     public function test_user_can_remove_push_subscription(): void
     {
+        /** @var User $user */
         $user = User::factory()->create();
-        $sub = $user->pushSubscriptions()->create([
+        
+        // Use direct creation to avoid encryption mismatch in raw query if any
+        $user->pushSubscriptions()->create([
             'endpoint' => 'https://example.com/endpoint',
             'public_key' => 'key',
-            'auth_token' => 'auth'
+            'auth_token' => 'auth',
         ]);
 
         $this->assertDatabaseCount('push_subscriptions', 1);
 
         $response = $this->actingAs($user)->deleteJson('/api/push-subscriptions', [
-            'endpoint' => 'https://example.com/endpoint'
+            'endpoint' => 'https://example.com/endpoint',
         ]);
 
         $response->assertStatus(204);

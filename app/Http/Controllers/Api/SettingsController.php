@@ -5,27 +5,31 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class SettingsController extends Controller
 {
-    public function index()
+    /**
+     * Get user settings.
+     * @return Collection<string, mixed>
+     */
+    public function index(): Collection
     {
-        $user = auth()->user();
+        $user = $this->user();
         $today = now()->toDateString();
 
         if ($user->last_reset_date !== $today) {
-            // It's a new day! Perform auto-reset logic.
-            // 1. Mark completed tasks as part of history (no action needed if we just filter by date)
-            // 2. We could archive them if needed, but current logic relies on completed_at.
-            
-            // Just update the reset date for now to signify we've synchronized.
             $user->update(['last_reset_date' => $today]);
         }
 
         return Setting::where('user_id', $user->id)->pluck('value', 'key');
     }
 
-    public function update(Request $request)
+    /**
+     * Update user settings.
+     * @return Collection<string, mixed>
+     */
+    public function update(Request $request): Collection
     {
         $validated = $request->validate([
             'settings' => 'required|array',
@@ -33,11 +37,11 @@ class SettingsController extends Controller
 
         foreach ($validated['settings'] as $key => $value) {
             Setting::updateOrCreate(
-                ['key' => $key, 'user_id' => auth()->id()],
+                ['key' => $key, 'user_id' => $this->user()->id],
                 ['value' => $value]
             );
         }
 
-        return Setting::where('user_id', auth()->id())->pluck('value', 'key');
+        return Setting::where('user_id', $this->user()->id)->pluck('value', 'key');
     }
 }

@@ -22,10 +22,10 @@ class AuthenticationTest extends TestCase
     public function test_google_callback_creates_user_and_token(): void
     {
         $abstractUser = Mockery::mock('Laravel\Socialite\Two\User');
-        $abstractUser->id = '123456789';
-        $abstractUser->name = 'Test User';
-        $abstractUser->email = 'test@example.com';
-        $abstractUser->avatar = 'https://avatar.com/123';
+        $abstractUser->shouldReceive('getId')->andReturn('123456789');
+        $abstractUser->shouldReceive('getName')->andReturn('Test User');
+        $abstractUser->shouldReceive('getEmail')->andReturn('test@example.com');
+        $abstractUser->shouldReceive('getAvatar')->andReturn('https://avatar.com/123');
         $abstractUser->token = 'fake-token';
         $abstractUser->refreshToken = 'fake-refresh-token';
 
@@ -38,17 +38,18 @@ class AuthenticationTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'email' => 'test@example.com',
-            'google_id' => '123456789'
+            'google_id' => '123456789',
         ]);
 
+        /** @var User $user */
         $user = User::where('email', 'test@example.com')->first();
-        
+
         $response->assertRedirect();
         $this->assertStringContainsString('token=', $response->getTargetUrl());
-        
+
         $this->assertDatabaseHas('categories', [
             'user_id' => $user->id,
-            'slug' => 'chor'
+            'slug' => 'chor',
         ]);
     }
 
@@ -57,26 +58,28 @@ class AuthenticationTest extends TestCase
         $response = $this->get('/auth/dev-login');
 
         $this->assertDatabaseHas('users', [
-            'email' => 'alsokolov2@gmail.com'
+            'email' => 'alsokolov2@gmail.com',
         ]);
 
         $response->assertRedirect();
         $this->assertStringContainsString('token=', $response->getTargetUrl());
 
+        /** @var User $user */
         $user = User::where('email', 'alsokolov2@gmail.com')->first();
         $this->assertDatabaseHas('categories', [
             'user_id' => $user->id,
-            'slug' => 'chor'
+            'slug' => 'chor',
         ]);
     }
 
     public function test_user_can_get_profile_when_authenticated(): void
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $response = $this->actingAs($user)->getJson('/api/user');
 
         $response->assertStatus(200)
-                 ->assertJson(['email' => $user->email]);
+            ->assertJson(['email' => $user->email]);
     }
 
     public function test_unauthenticated_user_cannot_access_protected_routes(): void
