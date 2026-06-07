@@ -13,6 +13,7 @@ class PushSubscriptionTest extends TestCase
 
     public function test_user_can_store_push_subscription(): void
     {
+        /** @var User $user */
         $user = User::factory()->create();
 
         $data = [
@@ -29,14 +30,18 @@ class PushSubscriptionTest extends TestCase
         ]);
 
         // Check that it's retrievable (decrypted)
-        $sub = PushSubscription::where('user_id', $user->id)->get()->first();
+        /** @var PushSubscription $sub */
+        $sub = PushSubscription::where('user_id', $user->id)->firstOrFail();
         $this->assertEquals($data['endpoint'], $sub->endpoint);
     }
 
     public function test_user_can_remove_push_subscription(): void
     {
+        /** @var User $user */
         $user = User::factory()->create();
-        $sub = $user->pushSubscriptions()->create([
+        
+        // Use direct creation to avoid encryption mismatch in raw query if any
+        $user->pushSubscriptions()->create([
             'endpoint' => 'https://example.com/endpoint',
             'public_key' => 'key',
             'auth_token' => 'auth',

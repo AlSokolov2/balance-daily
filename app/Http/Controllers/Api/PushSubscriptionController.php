@@ -46,9 +46,12 @@ class PushSubscriptionController extends Controller
             'endpoint' => 'required|string',
         ]);
 
+        $endpoint = (string) $request->input('endpoint');
+
+        /** @var PushSubscription|null $sub */
         $sub = $this->user()->pushSubscriptions()
-            ->where('endpoint', (string) $request->input('endpoint'))
-            ->first();
+            ->get()
+            ->first(fn ($s) => (string) $s->endpoint === $endpoint);
 
         if ($sub) {
             $sub->delete();

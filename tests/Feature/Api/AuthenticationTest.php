@@ -22,10 +22,10 @@ class AuthenticationTest extends TestCase
     public function test_google_callback_creates_user_and_token(): void
     {
         $abstractUser = Mockery::mock('Laravel\Socialite\Two\User');
-        $abstractUser->id = '123456789';
-        $abstractUser->name = 'Test User';
-        $abstractUser->email = 'test@example.com';
-        $abstractUser->avatar = 'https://avatar.com/123';
+        $abstractUser->shouldReceive('getId')->andReturn('123456789');
+        $abstractUser->shouldReceive('getName')->andReturn('Test User');
+        $abstractUser->shouldReceive('getEmail')->andReturn('test@example.com');
+        $abstractUser->shouldReceive('getAvatar')->andReturn('https://avatar.com/123');
         $abstractUser->token = 'fake-token';
         $abstractUser->refreshToken = 'fake-refresh-token';
 
@@ -41,6 +41,7 @@ class AuthenticationTest extends TestCase
             'google_id' => '123456789',
         ]);
 
+        /** @var User $user */
         $user = User::where('email', 'test@example.com')->first();
 
         $response->assertRedirect();
@@ -63,6 +64,7 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect();
         $this->assertStringContainsString('token=', $response->getTargetUrl());
 
+        /** @var User $user */
         $user = User::where('email', 'alsokolov2@gmail.com')->first();
         $this->assertDatabaseHas('categories', [
             'user_id' => $user->id,
@@ -72,6 +74,7 @@ class AuthenticationTest extends TestCase
 
     public function test_user_can_get_profile_when_authenticated(): void
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $response = $this->actingAs($user)->getJson('/api/user');
 
