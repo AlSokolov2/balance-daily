@@ -150,6 +150,17 @@
                             {{ $t('settings_modal.data.import_button') }}
                         </button>
                     </div>
+
+                    <div class="grid grid-cols-2 gap-2 pt-2 border-t border-[var(--color-border)]">
+                        <a href="https://github.com/AlSokolov2/balance-daily/issues/new?template=bug-report.yml" target="_blank" class="flex-1 py-3 bg-[var(--bg-secondary)] text-red-500 rounded-2xl font-bold text-[10px] uppercase tracking-wider hover:opacity-80 transition-all flex items-center justify-center gap-2 border border-[var(--color-border)]">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            {{ $t('settings_modal.data.bug_report') }}
+                        </a>
+                        <a href="https://github.com/AlSokolov2/balance-daily/issues/new?template=feature-request.yml" target="_blank" class="flex-1 py-3 bg-[var(--bg-secondary)] text-[var(--color-primary)] rounded-2xl font-bold text-[10px] uppercase tracking-wider hover:opacity-80 transition-all flex items-center justify-center gap-2 border border-[var(--color-border)]">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.364-6.364l-.707-.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M12 7a5 5 0 015 5 5 5 0 01-5 5 5 5 0 01-5-5 5 5 0 015-5z"></path></svg>
+                            {{ $t('settings_modal.data.suggest_feature') }}
+                        </a>
+                    </div>
                     <input type="file" ref="fileInput" @change="handleImport" accept=".json" class="hidden">
                 </div>
             </div>

@@ -167,6 +167,8 @@
             "sync_button": "Принудительная синхронизация",
             "export_button": "Экспорт (JSON)",
             "import_button": "Импорт (JSON)",
+            "bug_report": "Сообщить об ошибке",
+            "suggest_feature": "Предложить идею",
             "import_error": "Ошибка при импорте: {msg}"
         }
     },
