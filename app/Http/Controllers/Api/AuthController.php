@@ -4,29 +4,40 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
-    public function redirectToGoogle()
+    /**
+     * Redirect the user to the Google authentication page.
+     */
+    public function redirectToGoogle(): RedirectResponse
     {
-        \Log::info('Redirecting to Google OAuth...');
-        return Socialite::driver('google')->redirect();
+        /** @var RedirectResponse $response */
+        $response = Socialite::driver('google')->redirect();
+
+        return $response;
     }
 
-    public function handleGoogleCallback()
+    /**
+     * Obtain the user information from Google.
+     */
+    public function handleGoogleCallback(): RedirectResponse
     {
         try {
+            /** @var \Laravel\Socialite\Two\User $googleUser */
             $googleUser = Socialite::driver('google')->user();
-            
+
             $user = User::updateOrCreate([
-                'google_id' => $googleUser->id,
+                'google_id' => $googleUser->getId(),
             ], [
-                'name' => $googleUser->name,
-                'email' => $googleUser->email,
-                'avatar' => $googleUser->avatar,
+                'name' => $googleUser->getName(),
+                'email' => $googleUser->getEmail(),
+                'avatar' => $googleUser->getAvatar(),
                 'google_token' => $googleUser->token,
                 'google_refresh_token' => $googleUser->refreshToken,
             ]);
@@ -39,18 +50,22 @@ class AuthController extends Controller
 
             // Redirect back to frontend
             $frontendUrl = url('/');
-            
-            return redirect($frontendUrl . '?token=' . $token);
-            
+
+            return redirect($frontendUrl.'?token='.$token);
+
         } catch (\Exception $e) {
-            \Log::error('Google Auth Error: ' . $e->getMessage());
+            \Log::error('Google Auth Error: '.$e->getMessage());
+
             return redirect('/?error=auth_failed');
         }
     }
 
-    public function devLogin()
+    /**
+     * Fast login for development environments.
+     */
+    public function devLogin(): RedirectResponse
     {
-        if (!app()->environment(['local', 'testing'])) {
+        if (! app()->environment(['local', 'testing'])) {
             abort(404);
         }
 
@@ -59,17 +74,21 @@ class AuthController extends Controller
             [
                 'name' => 'AlSokolov',
                 'google_id' => 'dev_id_alsokolov',
-                'avatar' => 'https://www.gravatar.com/avatar/' . md5('alsokolov2@gmail.com') . '?s=200&d=identicon',
+                'avatar' => 'https://www.gravatar.com/avatar/'.md5('alsokolov2@gmail.com').'?s=200&d=identicon',
             ]
         );
 
         $this->seedDefaultCategories($user);
 
         $token = $user->createToken('auth_token')->plainTextToken;
-        return redirect(url('/') . '?token=' . $token);
+
+        return redirect(url('/').'?token='.$token);
     }
 
-    private function seedDefaultCategories(User $user)
+    /**
+     * Seed initial categories for a new user.
+     */
+    private function seedDefaultCategories(User $user): void
     {
         if ($user->categories()->count() === 0) {
             $defaults = [
@@ -85,14 +104,23 @@ class AuthController extends Controller
         }
     }
 
-    public function me(Request $request)
+    /**
+     * Get the authenticated user.
+     */
+    public function me(Request $request): User
     {
-        return $request->user();
+        return $this->user();
     }
 
-    public function logout(Request $request)
+    /**
+     * Log the user out (revoke token).
+     */
+    public function logout(Request $request): Response
     {
-        $request->user()->currentAccessToken()->delete();
+        /** @var \Laravel\Sanctum\PersonalAccessToken $token */
+        $token = $this->user()->currentAccessToken();
+        $token->delete();
+
         return response()->noContent();
     }
 }

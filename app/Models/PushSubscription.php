@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PushSubscription extends Model
 {
@@ -19,7 +20,11 @@ class PushSubscription extends Model
         'auth_token' => 'encrypted',
     ];
 
-    public function user()
+    /**
+     * Get the user associated with this subscription.
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }

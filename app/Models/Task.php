@@ -2,13 +2,18 @@
 
 namespace App\Models;
 
+use Database\Factories\TaskFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Task extends Model
 {
+    /** @use HasFactory<TaskFactory> */
     use HasFactory;
+
     protected $fillable = [
         'user_id',
         'title',
@@ -45,6 +50,7 @@ class Task extends Model
         'completed_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<Category, $this> */
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class, 'category_slug', 'slug');
@@ -52,16 +58,18 @@ class Task extends Model
 
     /**
      * Get the completion history for the task.
+     * @return HasMany<TaskCompletion, $this>
      */
-    public function completions()
+    public function completions(): HasMany
     {
         return $this->hasMany(TaskCompletion::class);
     }
 
     /**
      * Get the latest completion record.
+     * @return HasOne<TaskCompletion, $this>
      */
-    public function latestCompletion()
+    public function latestCompletion(): HasOne
     {
         return $this->hasOne(TaskCompletion::class)->latestOfMany('completed_at');
     }

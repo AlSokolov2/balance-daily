@@ -66,12 +66,12 @@ export const useBalanceStore = defineStore('balance', {
             
             if (state.filterCat === 'hidden') {
                 return tasks.filter(t => t.hidden_until && new Date(t.hidden_until) > now && !t.completed)
-                            .sort((a, b) => new Date(a.hidden_until) - new Date(b.hidden_until));
+                    .sort((a, b) => new Date(a.hidden_until) - new Date(b.hidden_until));
             }
             
             if (state.filterCat === 'archive') {
                 return tasks.filter(t => t.completed)
-                            .sort((a, b) => new Date(b.completed_at || 0) - new Date(a.completed_at || 0));
+                    .sort((a, b) => new Date(b.completed_at || 0) - new Date(a.completed_at || 0));
             }
 
             // Regular filter
@@ -116,7 +116,7 @@ export const useBalanceStore = defineStore('balance', {
 
     actions: {
         async init() {
-            const urlParams = new URLSearchParams(window.location.search);
+            const urlParams = new window.URLSearchParams(window.location.search);
             const tokenFromUrl = urlParams.get('token');
             if (tokenFromUrl) {
                 this.token = tokenFromUrl;
@@ -132,6 +132,7 @@ export const useBalanceStore = defineStore('balance', {
                     await this.sync();
                     this.startPulse();
                 } catch (e) {
+                    console.error('Init error:', e);
                     this.logout();
                 }
             }
@@ -140,7 +141,7 @@ export const useBalanceStore = defineStore('balance', {
         async logout() {
             this.stopPulse();
             if (this.token) {
-                try { await axios.post('logout'); } catch (e) {}
+                try { await axios.post('logout'); } catch (e) { console.error('Logout error:', e); }
             }
             this.token = null;
             this.user = null;
@@ -162,7 +163,9 @@ export const useBalanceStore = defineStore('balance', {
             try {
                 const res = await axios.get('stats');
                 this.stats = res.data;
-            } catch (e) {}
+            } catch (e) {
+                console.error('Fetch stats error:', e);
+            }
         },
 
         async sync(forceFull = false) {
@@ -266,7 +269,7 @@ export const useBalanceStore = defineStore('balance', {
                 localStorage.setItem('notifications_enabled', 'true');
             } catch (e) {
                 console.error('Push subscription failed:', e);
-                alert('Не удалось включить уведомления.');
+                window.alert('Не удалось включить уведомления.');
             }
         },
 
@@ -298,7 +301,7 @@ export const useBalanceStore = defineStore('balance', {
             this.stopPulse();
             if (this.pulseInterval <= 0) return;
 
-            this.pulseTimer = setInterval(() => {
+            this.pulseTimer = window.setInterval(() => {
                 const today = new Date().toDateString();
                 if (today !== this.lastPulse) {
                     this.lastPulse = today;
@@ -310,7 +313,7 @@ export const useBalanceStore = defineStore('balance', {
         },
 
         stopPulse() {
-            if (this.pulseTimer) { clearInterval(this.pulseTimer); this.pulseTimer = null; }
+            if (this.pulseTimer) { window.clearInterval(this.pulseTimer); this.pulseTimer = null; }
         },
 
         applyTheme() {
@@ -359,7 +362,6 @@ export const useBalanceStore = defineStore('balance', {
                 payload.hidden_until = nextData.hidden_until;
                 payload.last_completed_date = nextData.last_completed_date;
                 payload.missed_count = 0;
-                // No longer injecting date into notes here
             }
 
             const res = await axios.put(`tasks/${id}`, payload);

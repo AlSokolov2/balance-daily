@@ -4,28 +4,26 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class CategoryController extends Controller
 {
     /**
      * Get all categories for the authenticated user.
      *
-     * @param Request $request
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection<int, Category>
      */
-    public function index(Request $request)
+    public function index(Request $request): Collection
     {
-        return $request->user()->categories;
+        return $this->user()->categories;
     }
 
     /**
      * Create or update a category for the authenticated user.
-     *
-     * @param Request $request
-     * @return \App\Models\Category
      */
-    public function store(Request $request)
+    public function store(Request $request): Category
     {
         $validated = $request->validate([
             'slug' => 'required|string',
@@ -35,35 +33,34 @@ class CategoryController extends Controller
             'hide_until' => 'nullable|string',
         ]);
 
-        return $request->user()->categories()->updateOrCreate(
+        /** @var Category $category */
+        $category = $this->user()->categories()->updateOrCreate(
             ['slug' => $validated['slug']],
             $validated
         );
+
+        return $category;
     }
 
     /**
      * Get a specific category.
-     *
-     * @param Request $request
-     * @param mixed $id
-     * @return \App\Models\Category
      */
-    public function show(Request $request, $id)
+    public function show(Request $request, string $id): Category
     {
-        return $request->user()->categories()->findOrFail($id);
+        /** @var Category $category */
+        $category = $this->user()->categories()->findOrFail($id);
+
+        return $category;
     }
 
     /**
      * Update a category.
-     *
-     * @param Request $request
-     * @param mixed $id
-     * @return \App\Models\Category
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, string $id): Category
     {
-        $category = $request->user()->categories()->findOrFail($id);
-        
+        /** @var Category $category */
+        $category = $this->user()->categories()->findOrFail($id);
+
         $validated = $request->validate([
             'name' => 'sometimes|required|string',
             'weight' => 'sometimes|required|numeric',
@@ -78,14 +75,11 @@ class CategoryController extends Controller
 
     /**
      * Delete a category.
-     *
-     * @param Request $request
-     * @param mixed $id
-     * @return \Illuminate\Http\Response
      */
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, string $id): Response
     {
-        $category = $request->user()->categories()->findOrFail($id);
+        /** @var Category $category */
+        $category = $this->user()->categories()->findOrFail($id);
         $category->delete();
 
         return response()->noContent();

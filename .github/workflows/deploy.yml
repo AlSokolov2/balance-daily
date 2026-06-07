@@ -5,7 +5,7 @@ on:
     branches: [ master, main, develop ]
     tags: [ 'v*' ]
   pull_request:
-    branches: [ master, main ]
+    branches: [ master, main, develop ]
 
 jobs:
   ci-testing:
@@ -36,6 +36,12 @@ jobs:
 
       - name: Build Frontend for Tests
         run: npm run build
+
+      - name: Run JS Linting
+        run: npm run lint
+
+      - name: Run PHP Static Analysis
+        run: ./vendor/bin/phpstan analyze app --level=8 --no-progress
 
       - name: Run PHPUnit Tests
         run: php artisan test

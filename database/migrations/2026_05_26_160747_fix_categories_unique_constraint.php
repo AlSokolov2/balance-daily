@@ -22,13 +22,13 @@ return new class extends Migration
         // 3. Создаем новый КОМПОЗИТНЫЙ внешний ключ в таблице задач
         // Это гарантирует, что задача ссылается на категорию ТОГО ЖЕ пользователя
         Schema::table('tasks', function (Blueprint $table) {
-            // В SQLite есть ограничения на изменение существующих колонок в FK, 
-            // но для MySQL это сработает. Для тестов в SQLite мы можем просто 
+            // В SQLite есть ограничения на изменение существующих колонок в FK,
+            // но для MySQL это сработает. Для тестов в SQLite мы можем просто
             // оставить связь без строгого FK если он мешает, либо настроить его правильно.
             $table->foreign(['category_slug', 'user_id'])
-                  ->references(['slug', 'user_id'])
-                  ->on('categories')
-                  ->onDelete('cascade');
+                ->references(['slug', 'user_id'])
+                ->on('categories')
+                ->onDelete('cascade');
         });
     }
 
