@@ -23,22 +23,22 @@ class RecurringTaskTest extends TestCase
             'importance' => 2,
             'user_id' => $user->id,
             'repeat_type' => 'interval',
-            'repeat_interval' => 2
+            'repeat_interval' => 2,
         ]);
 
         $nextDate = now()->addDays(2)->toDateTimeString();
 
-        $response = $this->actingAs($user)->putJson('/api/tasks/' . $task->id, [
+        $response = $this->actingAs($user)->putJson('/api/tasks/'.$task->id, [
             'hidden_until' => $nextDate,
             'last_completed_date' => now()->toDateTimeString(),
-            'notes' => 'Some notes'
+            'notes' => 'Some notes',
         ]);
 
         $response->assertStatus(200);
-        
+
         $this->assertDatabaseHas('tasks', [
             'id' => $task->id,
-            'hidden_until' => $nextDate
+            'hidden_until' => $nextDate,
         ]);
 
         $updatedTask = Task::find($task->id);
@@ -56,15 +56,15 @@ class RecurringTaskTest extends TestCase
             'title' => 'New Task',
             'category_slug' => 'chor',
             'importance' => 1,
-            'hidden_until' => $futureDate
+            'hidden_until' => $futureDate,
         ]);
 
         $response->assertStatus(201);
-        
+
         // Assert on non-encrypted fields
         $this->assertDatabaseHas('tasks', [
             'category_slug' => 'chor',
-            'hidden_until' => $futureDate
+            'hidden_until' => $futureDate,
         ]);
 
         // Verify title manually (it will be decrypted by the model)

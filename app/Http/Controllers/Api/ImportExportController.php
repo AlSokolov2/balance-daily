@@ -4,32 +4,40 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
-use App\Models\Task;
-use App\Models\SubcatCoeff;
 use App\Models\Setting;
+use App\Models\SubcatCoeff;
+use App\Models\Task;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class ImportExportController extends Controller
 {
-    public function export()
+    /**
+     * Export all user data.
+     */
+    public function export(): JsonResponse
     {
-        $userId = auth()->id();
+        $user = $this->user();
         $data = [
-            'tasks' => Task::where('user_id', $userId)->get(),
-            'categories' => Category::where('user_id', $userId)->get()->keyBy('slug'),
-            'subcatCoeffs' => SubcatCoeff::where('user_id', $userId)->pluck('coefficient', 'name'),
-            'notepad' => Setting::where('user_id', $userId)->where('key', 'notepad_text')->value('value') ?? '',
+            'tasks' => Task::where('user_id', $user->id)->get(),
+            'categories' => Category::where('user_id', $user->id)->get()->keyBy('slug'),
+            'subcatCoeffs' => SubcatCoeff::where('user_id', $user->id)->pluck('coefficient', 'name'),
+            'notepad' => Setting::where('user_id', $user->id)->where('key', 'notepad_text')->value('value') ?? '',
         ];
 
         return response()->json($data);
     }
 
-    public function import(Request $request)
+    /**
+     * Import user data (overwrites existing).
+     */
+    public function import(Request $request): JsonResponse
     {
         $data = $request->all();
-        $userId = auth()->id();
+        $user = $this->user();
+        $userId = $user->id;
 
         DB::transaction(function () use ($data, $userId) {
             Schema::disableForeignKeyConstraints();
@@ -40,7 +48,7 @@ class ImportExportController extends Controller
             SubcatCoeff::where('user_id', $userId)->delete();
 
             // Import Categories
-            if (isset($data['categories'])) {
+            if (isset($data['categories']) && is_iterable($data['categories'])) {
                 foreach ($data['categories'] as $slug => $cat) {
                     Category::create([
                         'user_id' => $userId,
@@ -54,7 +62,7 @@ class ImportExportController extends Controller
             }
 
             // Import Tasks
-            if (isset($data['tasks'])) {
+            if (isset($data['tasks']) && is_iterable($data['tasks'])) {
                 foreach ($data['tasks'] as $task) {
                     Task::create([
                         'user_id' => $userId,
@@ -80,12 +88,12 @@ class ImportExportController extends Controller
             }
 
             // Import SubcatCoeffs
-            if (!empty($data['subcatCoeffs'])) {
+            if (! empty($data['subcatCoeffs']) && is_iterable($data['subcatCoeffs'])) {
                 foreach ($data['subcatCoeffs'] as $name => $coeff) {
                     SubcatCoeff::create([
                         'user_id' => $userId,
                         'name' => $name,
-                        'coefficient' => (float)$coeff,
+                        'coefficient' => (float) $coeff,
                     ]);
                 }
             }
@@ -94,7 +102,7 @@ class ImportExportController extends Controller
             if (isset($data['notepad'])) {
                 Setting::updateOrCreate(
                     ['key' => 'notepad_text', 'user_id' => $userId],
-                    ['value' => $data['notepad']]
+                    ['value' => (string) $data['notepad']]
                 );
             }
 

@@ -10,7 +10,7 @@ class SubdirectoryRoutingTest extends TestCase
 {
     public function test_asset_helper_generates_correct_urls_with_subdirectory(): void
     {
-        // Use HTTP in test because URL::forceRootUrl doesn't automatically force HTTPS 
+        // Use HTTP in test because URL::forceRootUrl doesn't automatically force HTTPS
         // unless you also call URL::forceScheme('https')
         Config::set('app.url', 'http://alekzander.info/daily');
         URL::forceRootUrl('http://alekzander.info/daily');

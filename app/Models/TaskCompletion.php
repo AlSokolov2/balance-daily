@@ -19,6 +19,7 @@ class TaskCompletion extends Model
 
     /**
      * Get the task that owns the completion.
+     * @return BelongsTo<Task, $this>
      */
     public function task(): BelongsTo
     {
@@ -27,6 +28,7 @@ class TaskCompletion extends Model
 
     /**
      * Get the user that owns the completion.
+     * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo
     {

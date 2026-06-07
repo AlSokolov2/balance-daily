@@ -4,19 +4,20 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Task;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class TaskController extends Controller
 {
     /**
      * Get all tasks for the authenticated user.
      *
-     * @param Request $request
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection<int, Task>
      */
-    public function index(Request $request)
+    public function index(Request $request): Collection
     {
-        return $request->user()->tasks()
+        return $this->user()->tasks()
             ->with('latestCompletion')
             ->orderBy('completed')
             ->get();
@@ -24,11 +25,8 @@ class TaskController extends Controller
 
     /**
      * Create a new task for the authenticated user.
-     *
-     * @param Request $request
-     * @return \App\Models\Task
      */
-    public function store(Request $request)
+    public function store(Request $request): Task
     {
         $validated = $request->validate([
             'title' => 'required|string',
@@ -48,35 +46,34 @@ class TaskController extends Controller
             'missed_count' => 'nullable|integer',
         ]);
 
-        return $request->user()->tasks()->create($validated)->load('latestCompletion');
+        /** @var Task $task */
+        $task = $this->user()->tasks()->create($validated);
+        
+        return $task->load('latestCompletion');
     }
 
     /**
      * Get a specific task.
-     *
-     * @param Request $request
-     * @param mixed $id
-     * @return \App\Models\Task
      */
-    public function show(Request $request, $id)
+    public function show(Request $request, string $id): Task
     {
-        return $request->user()->tasks()
-            ->with(['latestCompletion', 'completions' => function($query) {
-                $query->orderBy('completed_at', 'DESC');
+        /** @var Task $task */
+        $task = $this->user()->tasks()
+            ->with(['latestCompletion', 'completions' => function ($query) {
+                $query->orderBy('completed_at', 'desc');
             }])
             ->findOrFail($id);
+
+        return $task;
     }
 
     /**
      * Update an existing task.
-     *
-     * @param Request $request
-     * @param mixed $id
-     * @return \App\Models\Task
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, string $id): Task
     {
-        $task = $request->user()->tasks()->findOrFail($id);
+        /** @var Task $task */
+        $task = $this->user()->tasks()->findOrFail($id);
 
         $validated = $request->validate([
             'title' => 'sometimes|required|string',
@@ -102,9 +99,10 @@ class TaskController extends Controller
         $task->update($validated);
 
         // If task was just marked as completed, record it in history
-        if (!$wasCompleted && $task->completed) {
+        /** @phpstan-ignore-next-line */
+        if (! $wasCompleted && $task->completed) {
             $task->completions()->create([
-                'user_id' => $request->user()->id,
+                'user_id' => $this->user()->id,
                 'completed_at' => $task->completed_at ?? now(),
             ]);
         }
@@ -114,14 +112,11 @@ class TaskController extends Controller
 
     /**
      * Delete a task.
-     *
-     * @param Request $request
-     * @param mixed $id
-     * @return \Illuminate\Http\Response
      */
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, string $id): Response
     {
-        $task = $request->user()->tasks()->findOrFail($id);
+        /** @var Task $task */
+        $task = $this->user()->tasks()->findOrFail($id);
         $task->delete();
 
         return response()->noContent();

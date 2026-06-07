@@ -1,12 +1,14 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\CategoryController;
-use App\Http\Controllers\Api\TaskController;
-use App\Http\Controllers\Api\SettingsController;
-use App\Http\Controllers\Api\ImportExportController;
-use App\Http\Controllers\Api\StatsController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\ImportExportController;
+use App\Http\Controllers\Api\PushSubscriptionController;
+use App\Http\Controllers\Api\SettingsController;
+use App\Http\Controllers\Api\StatsController;
+use App\Http\Controllers\Api\SyncController;
+use App\Http\Controllers\Api\TaskController;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->group(function () {
     // Explicit Category Routes
@@ -23,13 +25,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('tasks/{id}', [TaskController::class, 'update']);
     Route::delete('tasks/{id}', [TaskController::class, 'destroy']);
 
-    Route::get('sync', [\App\Http\Controllers\Api\SyncController::class, 'index']);
+    Route::get('sync', [SyncController::class, 'index']);
 
     Route::get('settings', [SettingsController::class, 'index']);
     Route::post('settings', [SettingsController::class, 'update']);
 
-    Route::post('push-subscriptions', [\App\Http\Controllers\Api\PushSubscriptionController::class, 'store']);
-    Route::delete('push-subscriptions', [\App\Http\Controllers\Api\PushSubscriptionController::class, 'destroy']);
+    Route::post('push-subscriptions', [PushSubscriptionController::class, 'store']);
+    Route::delete('push-subscriptions', [PushSubscriptionController::class, 'destroy']);
 
     Route::get('export', [ImportExportController::class, 'export']);
     Route::post('import', [ImportExportController::class, 'import']);

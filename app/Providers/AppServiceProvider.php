@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Category;
+use App\Models\Task;
+use App\Observers\SyncObserver;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,20 +23,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        \App\Models\Task::observe(\App\Observers\SyncObserver::class);
-        \App\Models\Category::observe(\App\Observers\SyncObserver::class);
+        Task::observe(SyncObserver::class);
+        Category::observe(SyncObserver::class);
 
         if (config('app.url')) {
             $url = config('app.url');
-            \Illuminate\Support\Facades\URL::forceRootUrl($url);
+            URL::forceRootUrl($url);
             if (str_starts_with($url, 'https')) {
-                \Illuminate\Support\Facades\URL::forceScheme('https');
+                URL::forceScheme('https');
             }
-            
+
             $root = parse_url($url, PHP_URL_PATH);
             if ($root && $root !== '/') {
                 // Всегда форсируем SCRIPT_NAME, если мы в подпапке
-                request()->server->set('SCRIPT_NAME', $root . '/index.php');
+                request()->server->set('SCRIPT_NAME', $root.'/index.php');
             }
         }
     }

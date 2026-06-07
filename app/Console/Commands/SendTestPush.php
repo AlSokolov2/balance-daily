@@ -4,8 +4,8 @@ namespace App\Console\Commands;
 
 use App\Models\User;
 use Illuminate\Console\Command;
-use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
+use Minishlink\WebPush\WebPush;
 
 class SendTestPush extends Command
 {
@@ -26,40 +26,43 @@ class SendTestPush extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(): int
     {
         $email = $this->argument('email');
         $query = User::query();
-        
+
         if ($email) {
-            $query->where('email', $email);
+            $query->where('email', (string) $email);
         }
 
+        /** @var \Illuminate\Database\Eloquent\Collection<int, User> $users */
         $users = $query->with('pushSubscriptions')->get();
 
         if ($users->isEmpty()) {
             $this->error('No users found.');
-            return;
+
+            return 1;
         }
 
-        $publicKey = config('services.webpush.public_key');
-        $privateKey = config('services.webpush.private_key');
+        $publicKey = (string) config('services.webpush.public_key');
+        $privateKey = (string) config('services.webpush.private_key');
 
-        if (!$publicKey || !$privateKey) {
+        if (! $publicKey || ! $privateKey) {
             $this->error('VAPID keys not configured in services.php / .env');
-            return;
+
+            return 1;
         }
 
         $auth = [
             'VAPID' => [
-                'subject' => config('app.url'),
+                'subject' => (string) config('app.url'),
                 'publicKey' => $publicKey,
                 'privateKey' => $privateKey,
             ],
         ];
 
         $webPush = new WebPush($auth);
-        $payload = json_encode([
+        $payload = (string) json_encode([
             'title' => 'Balance.Daily',
             'body' => 'Это тестовое уведомление! Система пушей работает.',
             'icon' => '/favicon.svg',
@@ -70,9 +73,9 @@ class SendTestPush extends Command
             foreach ($user->pushSubscriptions as $sub) {
                 $webPush->queueNotification(
                     Subscription::create([
-                        'endpoint' => $sub->endpoint,
-                        'publicKey' => $sub->public_key,
-                        'authToken' => $sub->auth_token,
+                        'endpoint' => (string) $sub->endpoint,
+                        'publicKey' => (string) $sub->public_key,
+                        'authToken' => (string) $sub->auth_token,
                     ]),
                     $payload
                 );
@@ -81,7 +84,7 @@ class SendTestPush extends Command
         }
 
         $this->info("Sending {$sentCount} notifications...");
-        
+
         foreach ($webPush->flush() as $report) {
             $endpoint = $report->getEndpoint();
             if ($report->isSuccess()) {
@@ -90,5 +93,7 @@ class SendTestPush extends Command
                 $this->error("❌ Failed: {$endpoint}. Reason: {$report->getReason()}");
             }
         }
+
+        return 0;
     }
 }

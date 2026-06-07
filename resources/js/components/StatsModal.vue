@@ -1,58 +1,86 @@
 <template>
     <div class="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--bg-app)]/90 backdrop-blur-xl p-2 sm:p-4 overflow-hidden">
         <div class="bg-[var(--bg-card)] w-full max-w-4xl h-full sm:h-auto sm:max-h-[90vh] rounded-[32px] shadow-2xl border border-[var(--color-border)] flex flex-col overflow-hidden animate-[scale-up_0.3s_ease-out]">
-            
             <!-- Header -->
             <div class="flex items-center justify-between px-6 py-5 border-b border-[var(--color-border)] shrink-0">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        <svg
+                            class="w-6 h-6"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                            />
                         </svg>
                     </div>
                     <h2 class="text-xl font-black text-[var(--color-text)] uppercase tracking-tight">
                         {{ $t('stats.title') }}
                     </h2>
                 </div>
-                <button @click="emit('close')" class="w-10 h-10 rounded-xl bg-[var(--bg-secondary)] flex items-center justify-center hover:opacity-80 transition-opacity border border-[var(--color-border)]">
-                    <svg class="w-5 h-5 text-[var(--color-text)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                <button class="w-10 h-10 rounded-xl bg-[var(--bg-secondary)] flex items-center justify-center hover:opacity-80 transition-opacity border border-[var(--color-border)]" @click="emit('close')">
+                    <svg
+                        class="w-5 h-5 text-[var(--color-text)]"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                        />
                     </svg>
                 </button>
             </div>
 
             <!-- Content -->
             <div class="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
-                
                 <!-- Loading State -->
                 <div v-if="loading" class="h-64 flex flex-col items-center justify-center gap-4">
-                    <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                    <p class="text-sm font-bold text-[var(--color-secondary)] uppercase tracking-widest">{{ $t('common.loading') }}</p>
+                    <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    <p class="text-sm font-bold text-[var(--color-secondary)] uppercase tracking-widest">
+                        {{ $t('common.loading') }}
+                    </p>
                 </div>
 
                 <template v-else-if="store.stats">
                     <!-- Counters Grid -->
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div v-for="(val, key) in counters" :key="key" class="bg-[var(--bg-secondary)] p-4 rounded-3xl border border-[var(--color-border)]">
-                            <p class="text-[9px] font-black text-[var(--color-secondary)] uppercase tracking-widest mb-1">{{ $t(`stats.counters.${key}`) }}</p>
-                            <p class="text-2xl font-black text-[var(--color-text)]">{{ val }}</p>
+                            <p class="text-[9px] font-black text-[var(--color-secondary)] uppercase tracking-widest mb-1">
+                                {{ $t(`stats.counters.${key}`) }}
+                            </p>
+                            <p class="text-2xl font-black text-[var(--color-text)]">
+                                {{ val }}
+                            </p>
                         </div>
                     </div>
 
                     <!-- Heatmap Section -->
                     <div class="space-y-4">
                         <div class="flex items-center justify-between px-1">
-                            <h3 class="text-xs font-black text-[var(--color-text)] uppercase tracking-widest">{{ $t('stats.heatmap.title') }}</h3>
+                            <h3 class="text-xs font-black text-[var(--color-text)] uppercase tracking-widest">
+                                {{ $t('stats.heatmap.title') }}
+                            </h3>
                             <span class="text-[10px] text-[var(--color-secondary)] font-bold italic">{{ $t('stats.heatmap.subtitle') }}</span>
                         </div>
                         <div class="bg-[var(--bg-secondary)] p-4 rounded-[24px] border border-[var(--color-border)] overflow-x-auto scrollbar-hide">
                             <div class="flex gap-1 min-w-max">
                                 <div v-for="week in heatmapWeeks" :key="week[0].date" class="flex flex-col gap-1">
-                                    <div v-for="day in week" :key="day.date" 
-                                         class="w-3 h-3 sm:w-4 sm:h-4 rounded-sm transition-all hover:scale-125 hover:z-10 cursor-help"
-                                         :class="getHeatmapClass(day.count)"
-                                         :title="`${day.date}: ${day.count} ${$t('stats.heatmap.completions')}`">
-                                    </div>
+                                    <div
+                                        v-for="day in week"
+                                        :key="day.date" 
+                                        class="w-3 h-3 sm:w-4 sm:h-4 rounded-sm transition-all hover:scale-125 hover:z-10 cursor-help"
+                                        :class="getHeatmapClass(day.count)"
+                                        :title="`${day.date}: ${day.count} ${$t('stats.heatmap.completions')}`"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -60,7 +88,9 @@
 
                     <!-- Balance Section -->
                     <div class="space-y-4">
-                        <h3 class="text-xs font-black text-[var(--color-text)] uppercase tracking-widest px-1">{{ $t('stats.balance.title') }}</h3>
+                        <h3 class="text-xs font-black text-[var(--color-text)] uppercase tracking-widest px-1">
+                            {{ $t('stats.balance.title') }}
+                        </h3>
                         <div class="bg-[var(--bg-secondary)] p-6 rounded-[24px] border border-[var(--color-border)]">
                             <div v-if="!store.stats.category_balance.length" class="text-center py-4 text-xs text-[var(--color-secondary)] italic">
                                 {{ $t('stats.balance.no_data') }}
@@ -72,11 +102,13 @@
                                         <span class="text-[var(--color-secondary)]">{{ item.count }}</span>
                                     </div>
                                     <div class="h-2 w-full bg-[var(--bg-app)] rounded-full overflow-hidden">
-                                        <div class="h-full rounded-full transition-all duration-1000"
-                                             :style="{ 
-                                                 width: `${(item.count / maxBalance) * 100}%`,
-                                                 backgroundColor: getCatColor(item.category_slug)
-                                             }"></div>
+                                        <div
+                                            class="h-full rounded-full transition-all duration-1000"
+                                            :style="{ 
+                                                width: `${(item.count / maxBalance) * 100}%`,
+                                                backgroundColor: getCatColor(item.category_slug)
+                                            }"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -91,9 +123,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useBalanceStore } from '../stores/balance';
-import { useI18n } from 'vue-i18n';
 
-const { t } = useI18n();
 const store = useBalanceStore();
 const emit = defineEmits(['close']);
 

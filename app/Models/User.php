@@ -3,14 +3,16 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
     /**
@@ -56,27 +58,32 @@ class User extends Authenticatable
         ];
     }
 
-    public function categories()
+    /** @return HasMany<Category, $this> */
+    public function categories(): HasMany
     {
         return $this->hasMany(Category::class);
     }
 
-    public function tasks()
+    /** @return HasMany<Task, $this> */
+    public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
     }
 
-    public function pushSubscriptions()
+    /** @return HasMany<PushSubscription, $this> */
+    public function pushSubscriptions(): HasMany
     {
         return $this->hasMany(PushSubscription::class);
     }
 
-    public function subcatCoeffs()
+    /** @return HasMany<SubcatCoeff, $this> */
+    public function subcatCoeffs(): HasMany
     {
         return $this->hasMany(SubcatCoeff::class);
     }
 
-    public function settings()
+    /** @return HasMany<Setting, $this> */
+    public function settings(): HasMany
     {
         return $this->hasMany(Setting::class);
     }

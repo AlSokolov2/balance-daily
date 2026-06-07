@@ -19,8 +19,8 @@ class CategoryApiTest extends TestCase
         $response = $this->actingAs($user)->getJson('/api/categories');
 
         $response->assertStatus(200)
-                 ->assertJsonCount(1)
-                 ->assertJsonPath('0.slug', 'test');
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.slug', 'test');
     }
 
     public function test_user_can_create_category(): void
@@ -31,13 +31,13 @@ class CategoryApiTest extends TestCase
             'slug' => 'work',
             'name' => 'Work',
             'weight' => 0.6,
-            'color' => '#ffffff'
+            'color' => '#ffffff',
         ]);
 
         $response->assertStatus(201);
         $this->assertDatabaseHas('categories', [
             'slug' => 'work',
-            'user_id' => $user->id
+            'user_id' => $user->id,
         ]);
     }
 
@@ -46,16 +46,16 @@ class CategoryApiTest extends TestCase
         $user = User::factory()->create();
         $cat = Category::create(['slug' => 'work', 'name' => 'Work', 'weight' => 0.1, 'user_id' => $user->id]);
 
-        $response = $this->actingAs($user)->putJson('/api/categories/' . $cat->id, [
-            'name' => 'New Name'
+        $response = $this->actingAs($user)->putJson('/api/categories/'.$cat->id, [
+            'name' => 'New Name',
         ]);
 
         $response->assertStatus(200);
-        
+
         $this->assertEquals('New Name', $cat->refresh()->name);
         $this->assertDatabaseHas('categories', [
             'id' => $cat->id,
-            'slug' => 'work'
+            'slug' => 'work',
         ]);
     }
 
@@ -64,7 +64,7 @@ class CategoryApiTest extends TestCase
         $user = User::factory()->create();
         $cat = Category::create(['slug' => 'work', 'name' => 'Work', 'weight' => 0.1, 'user_id' => $user->id]);
 
-        $response = $this->actingAs($user)->deleteJson('/api/categories/' . $cat->id);
+        $response = $this->actingAs($user)->deleteJson('/api/categories/'.$cat->id);
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('categories', ['id' => $cat->id]);

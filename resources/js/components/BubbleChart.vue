@@ -1,23 +1,31 @@
 <template>
-    <div ref="wrapper" class="bubble-wrapper relative w-full h-full transition-all duration-300"
-         :class="{ 'zoomed overflow-visible z-40': store.bubbleZoom !== 1 }"
-         @touchstart="handleTouchStart"
-         @touchmove="handleTouchMove"
-         @touchend="handleTouchEnd">
-        <div ref="container" class="bubble-container relative w-full h-full transition-transform duration-300"
-             :style="bubbleContainerStyle"
-             @click="hideTooltip">
-            <div v-for="t in store.bubbleTasks" 
-                 :key="t.id" 
-                 class="bubble absolute rounded-full flex items-center justify-center text-center font-medium p-1 cursor-default transition-all duration-500"
-                 :style="getBubbleStyle(t)"
-                 @mouseenter="!isTouchDevice && showTooltip($event, t)" 
-                 @mouseleave="!isTouchDevice && hideTooltip()"
-                 @click.stop="handleBubbleClick(t)"
-                 @pointerdown="handlePointerDown($event, t)"
-                 @pointerup="handlePointerUp($event, t)"
-                 @pointercancel="handlePointerUp($event, t)"
-                 @contextmenu.prevent>
+    <div
+        ref="wrapper"
+        class="bubble-wrapper relative w-full h-full transition-all duration-300"
+        :class="{ 'zoomed overflow-visible z-40': store.bubbleZoom !== 1 }"
+        @touchstart="handleTouchStart"
+        @touchmove="handleTouchMove"
+        @touchend="handleTouchEnd"
+    >
+        <div
+            ref="container"
+            class="bubble-container relative w-full h-full transition-transform duration-300"
+            :style="bubbleContainerStyle"
+            @click="hideTooltip"
+        >
+            <div
+                v-for="t in store.bubbleTasks" 
+                :key="t.id" 
+                class="bubble absolute rounded-full flex items-center justify-center text-center font-medium p-1 cursor-default transition-all duration-500"
+                :style="getBubbleStyle(t)"
+                @mouseenter="!isTouchDevice && showTooltip($event, t)" 
+                @mouseleave="!isTouchDevice && hideTooltip()"
+                @click.stop="handleBubbleClick(t)"
+                @pointerdown="handlePointerDown($event, t)"
+                @pointerup="handlePointerUp($event, t)"
+                @pointercancel="handlePointerUp($event, t)"
+                @contextmenu.prevent
+            >
                 <span class="block leading-[1.1] break-words pointer-events-none">
                     {{ t.title }}
                 </span>
@@ -35,16 +43,18 @@
                 </template>
             </div>
 
-            <div v-if="tooltip.visible" 
-                 class="bubble-tooltip absolute z-[9999] bg-[#fffee0] border border-[#ccc] rounded-lg px-2 py-1 text-[9px] max-w-[180px] shadow-[0_4px_8px_rgba(0,0,0,0.15)] pointer-events-none whitespace-pre-wrap break-words"
-                 :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }">
+            <div
+                v-if="tooltip.visible" 
+                class="bubble-tooltip absolute z-[9999] bg-[#fffee0] border border-[#ccc] rounded-lg px-2 py-1 text-[9px] max-w-[180px] shadow-[0_4px_8px_rgba(0,0,0,0.15)] pointer-events-none whitespace-pre-wrap break-words"
+                :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }"
+            >
                 {{ tooltip.text }}
             </div>
         </div>
         
         <!-- Индикатор расчета (Web Worker) -->
         <div v-if="isCalculating" class="absolute top-4 right-4 z-50">
-            <div class="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+            <div class="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent" />
         </div>
     </div>
 </template>
@@ -207,7 +217,7 @@ const handlePointerDown = (event, task) => {
     if (!isTouchDevice.value) return;
     touchMoved = false;
     isLongPress = false;
-    touchTimer = setTimeout(() => {
+    touchTimer = window.setTimeout(() => {
         if (!touchMoved) {
             isLongPress = true;
             showTooltip(event, task);
@@ -216,10 +226,10 @@ const handlePointerDown = (event, task) => {
     }, 400);
 };
 
-const handlePointerUp = (event, task) => {
+const handlePointerUp = (_event, _task) => {
     if (!isTouchDevice.value) return;
     if (touchTimer) {
-        clearTimeout(touchTimer);
+        window.clearTimeout(touchTimer);
         touchTimer = null;
     } else if (isLongPress) {
         hideTooltip();
@@ -295,9 +305,9 @@ window.addEventListener('resize', calcBubbles);
 onMounted(() => {
     isTouchDevice.value = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     
-    if (typeof Worker !== 'undefined') {
+    if (typeof window.Worker !== 'undefined') {
         const baseUrl = (window.apiBaseUrl || '').replace(/\/$/, '');
-        worker = new Worker(baseUrl + '/workers/packer.worker.js');
+        worker = new window.Worker(baseUrl + '/workers/packer.worker.js');
         
         worker.onmessage = (e) => {
             bubblePositions.value = e.data.bubblePositions;
@@ -305,7 +315,7 @@ onMounted(() => {
         };
     }
 
-    setTimeout(calcBubbles, 100);
+    window.setTimeout(calcBubbles, 100);
 });
 
 onUnmounted(() => {

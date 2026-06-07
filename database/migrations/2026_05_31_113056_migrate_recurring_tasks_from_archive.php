@@ -2,16 +2,14 @@
 
 use App\Models\Task;
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     /**
      * Run the migrations.
-     * 
-     * Logic: Move recurring tasks from "Archive" (completed=true) 
+     *
+     * Logic: Move recurring tasks from "Archive" (completed=true)
      * to "Hidden" or "Active" state based on their next occurrence.
      */
     public function up(): void
@@ -21,9 +19,9 @@ return new class extends Migration
             ->get();
 
         foreach ($tasks as $task) {
-            $baseDate = $task->last_completed_date 
-                ?? $task->completed_at 
-                ?? $task->updated_at 
+            $baseDate = $task->last_completed_date
+                ?? $task->completed_at
+                ?? $task->updated_at
                 ?? Carbon::now();
 
             $nextDate = $baseDate->copy();
@@ -31,11 +29,11 @@ return new class extends Migration
             if ($task->repeat_type === 'interval') {
                 $interval = (int) ($task->repeat_interval ?: 1);
                 $nextDate->addDays($interval);
-            } elseif ($task->repeat_type === 'weekly' && !empty($task->repeat_days)) {
+            } elseif ($task->repeat_type === 'weekly' && ! empty($task->repeat_days)) {
                 $days = $task->repeat_days;
                 $nextDate->addDay();
                 // Find next day from allowed days
-                while (!in_array($nextDate->dayOfWeek, $days)) {
+                while (! in_array($nextDate->dayOfWeek, $days)) {
                     $nextDate->addDay();
                 }
             }
@@ -46,7 +44,7 @@ return new class extends Migration
             $task->completed = false;
             $task->completed_at = null;
             $task->last_completed_date = $baseDate;
-            
+
             if ($nextDate->isFuture()) {
                 $task->hidden_until = $nextDate;
             } else {
@@ -59,8 +57,8 @@ return new class extends Migration
 
     /**
      * Reverse the migrations.
-     * 
-     * Note: We don't have a reliable way to know which tasks 
+     *
+     * Note: We don't have a reliable way to know which tasks
      * were previously completed, so we leave them as is.
      */
     public function down(): void

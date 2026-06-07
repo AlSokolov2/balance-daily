@@ -38,17 +38,17 @@ class AuthenticationTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'email' => 'test@example.com',
-            'google_id' => '123456789'
+            'google_id' => '123456789',
         ]);
 
         $user = User::where('email', 'test@example.com')->first();
-        
+
         $response->assertRedirect();
         $this->assertStringContainsString('token=', $response->getTargetUrl());
-        
+
         $this->assertDatabaseHas('categories', [
             'user_id' => $user->id,
-            'slug' => 'chor'
+            'slug' => 'chor',
         ]);
     }
 
@@ -57,7 +57,7 @@ class AuthenticationTest extends TestCase
         $response = $this->get('/auth/dev-login');
 
         $this->assertDatabaseHas('users', [
-            'email' => 'alsokolov2@gmail.com'
+            'email' => 'alsokolov2@gmail.com',
         ]);
 
         $response->assertRedirect();
@@ -66,7 +66,7 @@ class AuthenticationTest extends TestCase
         $user = User::where('email', 'alsokolov2@gmail.com')->first();
         $this->assertDatabaseHas('categories', [
             'user_id' => $user->id,
-            'slug' => 'chor'
+            'slug' => 'chor',
         ]);
     }
 
@@ -76,7 +76,7 @@ class AuthenticationTest extends TestCase
         $response = $this->actingAs($user)->getJson('/api/user');
 
         $response->assertStatus(200)
-                 ->assertJson(['email' => $user->email]);
+            ->assertJson(['email' => $user->email]);
     }
 
     public function test_unauthenticated_user_cannot_access_protected_routes(): void
