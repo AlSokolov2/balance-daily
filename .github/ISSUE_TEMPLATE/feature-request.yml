@@ -1,0 +1,26 @@
+name: "💡 Предложить идею / Suggest an Idea"
+description: "У вас есть крутая идея для приложения? Поделитесь! / Have a cool idea for the app? Share it!"
+title: "[IDEA]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 🇷🇺 Мы всегда рады новым идеям!
+        ### 🇺🇸 We are always happy to hear new ideas!
+  - type: textarea
+    id: idea
+    attributes:
+      label: "Ваша идея / Your idea"
+      description: "Какую новую штуку вы хотите увидеть в приложении? / What new thing do you want to see in the app?"
+      placeholder: "Было бы круто, если бы... / It would be cool if..."
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: "Зачем это нужно? / Why is this needed?"
+      description: "Как это поможет вам или другим пользователям? / How will this help you or other users?"
+      placeholder: "Это сэкономит время на... / This will save time on..."
+    validations:
+      required: false

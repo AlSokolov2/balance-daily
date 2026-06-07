@@ -4,6 +4,14 @@ Thank you for your interest in contributing to **Balance.Daily**! To make the de
 
 [🇷🇺 Читать на русском](CONTRIBUTING.ru.md)
 
+## 📣 Feedback & Bug Reports
+
+If you've found a bug or have an idea to improve the app, please let us know! We use **GitHub Issues** with simple forms to make it easy for everyone:
+
+*   **🐞 Report a Bug:** Use our [Bug Report form](https://github.com/AlSokolov2/balance-daily/issues/new?template=bug-report.yml) to tell us what went wrong.
+*   **💡 Suggest an Idea:** Use our [Feature Request form](https://github.com/AlSokolov2/balance-daily/issues/new?template=feature-request.yml) to share your thoughts.
+*   **💬 General Chat:** For questions or just to say hi, visit our [Discussions](https://github.com/AlSokolov2/balance-daily/discussions).
+
 ## 🛠 Environment
 
 The project is configured to run via Docker. Main services:
