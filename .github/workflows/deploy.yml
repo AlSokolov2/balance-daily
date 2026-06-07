@@ -5,7 +5,7 @@ on:
     branches: [ master, main, develop ]
     tags: [ 'v*' ]
   pull_request:
-    branches: [ master, main ]
+    branches: [ master, main, develop ]
 
 jobs:
   ci-testing:
