@@ -51,6 +51,7 @@
         "logout": "Logout",
         "settings": "Settings",
         "stats": "Statistics",
+        "feedback": "Feedback & Support",
         "placeholder": "What needs to be done?",
         "search_placeholder": "Search tasks...",
         "no_tasks": "No tasks",
@@ -167,6 +168,8 @@
             "sync_button": "Force Sync",
             "export_button": "Export (JSON)",
             "import_button": "Import (JSON)",
+            "bug_report": "Report a Bug",
+            "suggest_feature": "Suggest an Idea",
             "import_error": "Import error: {msg}"
         }
     },

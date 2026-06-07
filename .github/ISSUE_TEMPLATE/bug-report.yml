@@ -1,0 +1,42 @@
+name: "🐞 Сообщить об ошибке / Report a Bug"
+description: "Что-то работает не так? Расскажите нам. / Something is not working? Tell us."
+title: "[BUG]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 🇷🇺 Пожалуйста, заполните форму ниже. Это поможет нам быстрее исправить ошибку.
+        ### 🇺🇸 Please fill out the form below. It helps us fix the issue faster.
+  - type: textarea
+    id: description
+    attributes:
+      label: "Что случилось? / What happened?"
+      description: "Кратко опишите проблему. / Briefly describe the problem."
+      placeholder: "Например: Нажал на кнопку сохранения, но ничего не произошло. / Example: I clicked the save button, but nothing happened."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: "Как это повторить? / How to repeat it?"
+      description: "Напишите по шагам, что вы делали. / Tell us step-by-step what you did."
+      placeholder: "1. Открыл приложение. 2. Нажал на синий круг... / 1. Opened the app. 2. Clicked on the blue bubble..."
+    validations:
+      required: true
+  - type: dropdown
+    id: device
+    attributes:
+      label: "На чем вы открывали приложение? / What device were you using?"
+      options:
+        - "Телефон (Android/iPhone)"
+        - "Компьютер (Windows/Mac/Linux)"
+        - "Планшет / Tablet"
+        - "Другое / Other"
+    validations:
+      required: true
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: "Скриншоты или видео (по желанию) / Screenshots or video (optional)"
+      description: "Вы можете просто перетащить файл сюда. / You can just drag and drop files here."
