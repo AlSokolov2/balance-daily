@@ -255,7 +255,7 @@ const openAdvancedAdd = () => { router.push('/task/new'); };
 
 const deleteTask = async (id) => {
     if (window.confirm(t('app.alerts.delete_confirm'))) {
-        try { await store.deleteTask(id); } catch (_e) { window.alert(t('app.alerts.delete_error')); }
+        try { await store.deleteTask(id); } catch { window.alert(t('app.alerts.delete_error')); }
     }
 };
 

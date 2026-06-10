@@ -232,6 +232,13 @@
                         </a>
                     </div>
                 </div>
+                <input
+                    ref="fileInput"
+                    type="file"
+                    accept=".json"
+                    class="hidden"
+                    @change="handleImport"
+                >
             </section>
         </div>
 
@@ -253,7 +260,6 @@ import { useI18n } from 'vue-i18n';
 const { locale, t } = useI18n();
 const store = useBalanceStore();
 const router = useRouter();
-const tab = ref('gen');
 const fileInput = ref(null);
 const version = __APP_VERSION__;
 
@@ -275,23 +281,6 @@ const initData = () => {
     });
 };
 
-const syncWeights = (slug, w) => {
-    const keys = Object.keys(editableCats);
-    if (keys.length === 1) { editableCats[slug].weight = 100; return; }
-    const others = keys.filter(k => k !== slug);
-    const sumO = others.reduce((s, k) => s + editableCats[k].weight, 0);
-    const tot = w + sumO;
-    if (tot > 100) {
-        const ex = tot - 100;
-        others.forEach(k => { editableCats[k].weight = Math.max(1, Math.round(editableCats[k].weight - ex * (editableCats[k].weight / sumO))); });
-    } else if (tot < 100) {
-        const df = 100 - tot;
-        others.forEach(k => { editableCats[k].weight = Math.round(editableCats[k].weight + df * (editableCats[k].weight / sumO)); });
-    }
-    const currentSum = keys.reduce((s, k) => s + editableCats[k].weight, 0);
-    if (currentSum !== 100) { editableCats[slug].weight += (100 - currentSum); }
-};
-
 const openEditCategory = (slug) => {
     router.push(`/category/${slug}`);
 };
@@ -310,7 +299,7 @@ const saveCats = async () => {
             notepad: store.notepadText
         });
         await store.fetchAll();
-    } catch (_e) { window.alert(t('settings_modal.categories.save_error')); }
+    } catch { window.alert(t('settings_modal.categories.save_error')); }
 };
 
 const exportData = async () => {
@@ -321,7 +310,7 @@ const exportData = async () => {
         a.href = URL.createObjectURL(b);
         a.download = 'balance_backup.json';
         a.click();
-    } catch (_e) { console.error(_e); }
+    } catch { /* ignored */ }
 };
 
 const handleImport = (e) => {
@@ -334,7 +323,7 @@ const handleImport = (e) => {
             await axios.post('import', data);
             await store.fetchAll();
             window.location.reload();
-        } catch (_e) { window.alert(t('settings_modal.data.import_error')); }
+        } catch { window.alert(t('settings_modal.data.import_error')); }
     };
     reader.readAsText(file);
 };

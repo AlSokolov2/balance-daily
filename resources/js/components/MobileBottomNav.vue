@@ -98,8 +98,6 @@
 </template>
 
 <script setup>
-import { useBalanceStore } from '../stores/balance';
-
 defineProps({
     currentScreen: {
         type: Number,
