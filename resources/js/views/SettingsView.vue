@@ -6,7 +6,17 @@
                 {{ $t('settings.title') }}
             </h2>
             <button class="w-10 h-10 rounded-xl bg-[var(--bg-secondary)] flex items-center justify-center hover:opacity-80 transition-opacity border border-[var(--color-border)]" @click="router.push('/')">
-                <svg class="w-5 h-5 text-[var(--color-text)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                <svg
+                    class="w-5 h-5 text-[var(--color-text)]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                ><path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                /></svg>
             </button>
         </div>
 
@@ -22,7 +32,12 @@
                     <div>
                         <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-3">{{ $t('settings.general.language') }}</label>
                         <div class="grid grid-cols-2 gap-2 bg-[var(--bg-secondary)] p-1 rounded-2xl border border-[var(--color-border)]">
-                            <button v-for="l in ['ru', 'en']" :key="l" :class="['py-3 rounded-xl text-xs font-bold transition-all', store.locale === l ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']" @click="changeLanguage(l)">
+                            <button
+                                v-for="l in ['ru', 'en']"
+                                :key="l"
+                                :class="['py-3 rounded-xl text-xs font-bold transition-all', store.locale === l ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']"
+                                @click="changeLanguage(l)"
+                            >
                                 {{ l === 'ru' ? 'Русский' : 'English' }}
                             </button>
                         </div>
@@ -31,7 +46,12 @@
                     <div>
                         <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-3">{{ $t('settings.general.appearance') }}</label>
                         <div class="grid grid-cols-3 gap-2 bg-[var(--bg-secondary)] p-1 rounded-2xl border border-[var(--color-border)]">
-                            <button v-for="m in ['system', 'light', 'dark']" :key="m" :class="['py-3 rounded-xl text-xs font-bold transition-all', store.theme === m ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']" @click="store.setTheme(m)">
+                            <button
+                                v-for="m in ['system', 'light', 'dark']"
+                                :key="m"
+                                :class="['py-3 rounded-xl text-xs font-bold transition-all', store.theme === m ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']"
+                                @click="store.setTheme(m)"
+                            >
                                 {{ $t(`settings.general.theme.${m}`) }}
                             </button>
                         </div>
@@ -39,8 +59,12 @@
 
                     <div class="p-4 bg-[var(--bg-secondary)]/30 border border-[var(--color-border)] rounded-2xl flex items-center justify-between shadow-none">
                         <div class="flex-1">
-                            <p class="text-xs font-bold text-[var(--color-text)]">{{ $t('settings.general.notifications') }}</p>
-                            <p class="text-[10px] text-[var(--color-secondary)] mt-0.5">{{ $t('settings.general.notifications_desc') }}</p>
+                            <p class="text-xs font-bold text-[var(--color-text)]">
+                                {{ $t('settings.general.notifications') }}
+                            </p>
+                            <p class="text-[10px] text-[var(--color-secondary)] mt-0.5">
+                                {{ $t('settings.general.notifications_desc') }}
+                            </p>
                         </div>
                         <button :class="['w-12 h-6 rounded-full relative transition-all duration-300 border-none shadow-inner', store.notificationsEnabled ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-border)]']" @click="store.toggleNotifications()">
                             <div :class="['absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm', store.notificationsEnabled ? 'translate-x-6' : 'translate-x-0']" />
@@ -61,14 +85,29 @@
                 </div>
 
                 <div class="space-y-2">
-                    <div v-for="(c, slug) in editableCats" :key="slug" class="flex items-center justify-between p-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--color-border)] shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer" @click="openEditCategory(slug)">
+                    <div
+                        v-for="(c, slug) in editableCats"
+                        :key="slug"
+                        class="flex items-center justify-between p-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--color-border)] shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
+                        @click="openEditCategory(slug)"
+                    >
                         <div class="flex items-center gap-3">
                             <div class="w-4 h-4 rounded-full shadow-inner" :style="{ backgroundColor: c.color }" />
                             <span class="font-bold text-sm text-[var(--color-text)]">{{ c.name }}</span>
                         </div>
                         <div class="flex items-center gap-3">
                             <span class="text-xs font-black text-[var(--color-secondary)]">{{ c.weight }}%</span>
-                            <svg class="w-4 h-4 text-[var(--color-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            <svg
+                                class="w-4 h-4 text-[var(--color-secondary)]"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            ><path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 5l7 7-7 7"
+                            /></svg>
                         </div>
                     </div>
                 </div>
@@ -87,7 +126,14 @@
                 <div class="bg-[var(--bg-card)] p-6 rounded-[32px] border border-[var(--color-border)] shadow-sm space-y-1">
                     <div v-for="(coeff, name) in store.subcatCoeffs" :key="name" class="flex items-center gap-3 py-4 border-b border-[var(--color-border)] last:border-0">
                         <span class="flex-1 text-sm font-medium text-[var(--color-text)]">{{ name }}</span>
-                        <input v-model.number="store.subcatCoeffs[name]" type="range" min="0.5" max="4" step="0.1" class="w-24 accent-[var(--color-text)]">
+                        <input
+                            v-model.number="store.subcatCoeffs[name]"
+                            type="range"
+                            min="0.5"
+                            max="4"
+                            step="0.1"
+                            class="w-24 accent-[var(--color-text)]"
+                        >
                         <span class="text-xs font-bold text-[var(--color-secondary)] w-8">{{ Number(coeff).toFixed(1) }}</span>
                     </div>
                     <button class="w-full py-4 bg-[var(--bg-secondary)] text-[var(--color-text)] rounded-2xl font-bold text-xs mt-6 border border-[var(--color-border)] uppercase tracking-widest" @click="saveCats">
@@ -104,32 +150,84 @@
 
                 <div class="bg-[var(--bg-card)] p-6 rounded-[32px] border border-[var(--color-border)] shadow-sm space-y-6">
                     <div class="p-4 bg-[var(--bg-secondary)]/30 border border-[var(--color-border)] rounded-2xl text-[11px] text-[var(--color-secondary)] leading-relaxed">
-                        <p class="font-bold text-[var(--color-text)] mb-1">{{ $t('settings_modal.data.title') }}</p>
+                        <p class="font-bold text-[var(--color-text)] mb-1">
+                            {{ $t('settings_modal.data.title') }}
+                        </p>
                         {{ $t('settings_modal.data.description') }}
                     </div>
 
                     <div class="grid grid-cols-1 gap-3">
                         <button class="w-full py-4 bg-[var(--bg-secondary)] text-[var(--color-text)] rounded-2xl font-bold text-sm flex items-center justify-center gap-3 border border-[var(--color-border)]" @click="store.sync(true)">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            <svg
+                                class="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            ><path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                            /></svg>
                             {{ $t('settings_modal.data.sync_button') }}
                         </button>
                         <button class="w-full py-4 bg-[var(--bg-card)] border border-[var(--color-border)] text-[var(--color-text)] rounded-2xl font-bold text-sm flex items-center justify-center gap-3 shadow-sm" @click="exportData">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            <svg
+                                class="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            ><path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                            /></svg>
                             {{ $t('settings_modal.data.export_button') }}
                         </button>
                         <button class="w-full py-4 bg-[var(--bg-card)] border border-[var(--color-border)] text-[var(--color-text)] rounded-2xl font-bold text-sm flex items-center justify-center gap-3 shadow-sm" @click="fileInput?.click()">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                            <svg
+                                class="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            ><path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                            /></svg>
                             {{ $t('settings_modal.data.import_button') }}
                         </button>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
                         <a href="https://github.com/AlSokolov2/balance-daily/issues/new?template=bug-report.yml" target="_blank" class="flex-1 py-3.5 bg-[var(--bg-secondary)] text-red-500 rounded-2xl font-black text-[9px] uppercase tracking-[0.15em] hover:opacity-80 transition-all flex items-center justify-center gap-2 border border-[var(--color-border)]">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            <svg
+                                class="w-3.5 h-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            ><path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                            /></svg>
                             {{ $t('settings_modal.data.bug_report') }}
                         </a>
                         <a href="https://github.com/AlSokolov2/balance-daily/issues/new?template=feature-request.yml" target="_blank" class="flex-1 py-3.5 bg-[var(--bg-secondary)] text-[var(--color-primary)] rounded-2xl font-black text-[9px] uppercase tracking-[0.15em] hover:opacity-80 transition-all flex items-center justify-center gap-2 border border-[var(--color-border)]">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.364-6.364l-.707-.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M12 7a5 5 0 015 5 5 5 0 01-5 5 5 5 0 01-5-5 5 5 0 015-5z"/></svg>
+                            <svg
+                                class="w-3.5 h-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            ><path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.364-6.364l-.707-.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M12 7a5 5 0 015 5 5 5 0 01-5 5 5 5 0 01-5-5 5 5 0 015-5z"
+                            /></svg>
                             {{ $t('settings_modal.data.suggest_feature') }}
                         </a>
                     </div>

@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-import { computed, reactive } from 'vue';
+import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useBalanceStore } from '../stores/balance';
 import axios from 'axios';
@@ -46,7 +46,7 @@ const categoryData = computed(() => {
     };
 });
 
-const syncWeights = (s, w) => {
+const syncWeights = (_s, _w) => {
     // We use a simplified sync for the overlay, or we could refactor the sync logic to the store
     // For now, we'll let the save handle the final normalization on the server
 };

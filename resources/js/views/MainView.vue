@@ -159,7 +159,17 @@
         <!-- Mobile Search Overlay (Keep here as it's part of the Main Chart context) -->
         <div v-if="isHandheld && isSearchVisible" class="fixed inset-x-2 bottom-20 z-[70] transition-all duration-300 transform animate-[slide-up_0.3s_ease-out]">
             <div class="bg-[var(--bg-card)] border border-[var(--color-border)] rounded-2xl shadow-2xl p-2 flex items-center gap-2">
-                <svg class="w-5 h-5 ml-2 text-[var(--color-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <svg
+                    class="w-5 h-5 ml-2 text-[var(--color-secondary)]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                ><path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                /></svg>
                 <input
                     ref="searchInputMobile"
                     v-model="store.searchQuery"
@@ -168,7 +178,17 @@
                     class="flex-1 bg-transparent border-none outline-none text-[15px] p-2 text-[var(--color-text)]"
                 >
                 <button class="p-2 text-[var(--color-secondary)] border-none bg-transparent" @click="toggleSearch">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <svg
+                        class="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    ><path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                    /></svg>
                 </button>
             </div>
         </div>
@@ -203,8 +223,6 @@ const isMenuOpen = ref(false);
 const isSearchVisible = ref(false);
 const currentMobileScreen = ref(0);
 
-const emit = defineEmits(['task-added']);
-
 const mobileScrollContainer = ref(null);
 const verticalChartContainer = ref(null);
 const searchInputMobile = ref(null);
@@ -237,7 +255,7 @@ const openAdvancedAdd = () => { router.push('/task/new'); };
 
 const deleteTask = async (id) => {
     if (window.confirm(t('app.alerts.delete_confirm'))) {
-        try { await store.deleteTask(id); } catch (e) { window.alert(t('app.alerts.delete_error')); }
+        try { await store.deleteTask(id); } catch (_e) { window.alert(t('app.alerts.delete_error')); }
     }
 };
 

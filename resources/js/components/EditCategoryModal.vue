@@ -6,7 +6,17 @@
                 class="w-10 h-10 rounded-xl bg-[var(--bg-secondary)] flex items-center justify-center hover:opacity-80 transition-all border border-[var(--color-border)] shadow-none"
                 @click="$emit('close')"
             >
-                <svg class="w-5 h-5 text-[var(--color-text)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                <svg
+                    class="w-5 h-5 text-[var(--color-text)]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                ><path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2.5"
+                    d="M15 19l-7-7 7-7"
+                /></svg>
             </button>
             
             <h2 class="text-sm font-black text-[var(--color-text)] uppercase tracking-widest">
@@ -71,7 +81,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
 
             <div v-if="!isNew" class="pt-6">
@@ -79,7 +88,17 @@
                     class="w-full py-4 bg-[var(--bg-secondary)] text-red-500 rounded-2xl flex items-center justify-center gap-3 hover:bg-red-500/10 transition-colors border border-[var(--color-border)] font-bold text-xs uppercase tracking-widest shadow-none" 
                     @click="$emit('delete', slug)"
                 >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    <svg
+                        class="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    ><path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    /></svg>
                     {{ $t('common.delete') || 'Delete' }}
                 </button>
             </div>

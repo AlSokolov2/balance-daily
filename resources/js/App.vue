@@ -52,9 +52,6 @@ import { useI18n } from 'vue-i18n';
 
 import AuthScreen from './components/AuthScreen.vue';
 import MobileBottomNav from './components/MobileBottomNav.vue';
-import EditTaskModal from './components/EditTaskModal.vue';
-import SettingsModal from './components/SettingsModal.vue';
-import StatsModal from './components/StatsModal.vue';
 
 const { locale } = useI18n();
 const { offlineReady, needRefresh, updateServiceWorker } = useRegisterSW();
