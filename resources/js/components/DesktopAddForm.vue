@@ -41,10 +41,17 @@ const title = ref('');
 
 const handleAddTask = async () => {
     if (!title.value.trim()) return;
+
+    let categorySlug = store.filterCat;
+    if (['all', 'hidden', 'archive'].includes(categorySlug)) {
+        const firstCat = store.categories.find(c => c.slug !== '__archive__');
+        categorySlug = firstCat ? firstCat.slug : 'chor';
+    }
+
     try {
         await store.addTask({
             title: title.value,
-            category_slug: 'chor',
+            category_slug: categorySlug,
             importance: 2,
             repeat_type: 'none',
             repeat_interval: 1,
