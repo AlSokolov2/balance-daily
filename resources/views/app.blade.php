@@ -10,18 +10,20 @@
     <script>
         window.apiBaseUrl = '{{ config('app.url') }}';
         
-        // V2.1.3 PWA Fix: Force unregister old Service Workers to resolve scope conflicts
-        if (!localStorage.getItem('v2_1_3_pwa_fix')) {
+        // PWA Migration Fix: Clear old service workers for the new architecture (Vue Router + Tab Bar)
+        const ARCH_VERSION = 'v3_router';
+        if (localStorage.getItem('pwa_arch_version') !== ARCH_VERSION) {
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.getRegistrations().then(function(registrations) {
                     for(let registration of registrations) {
                         registration.unregister();
                     }
-                    localStorage.setItem('v2_1_3_pwa_fix', 'true');
+                    localStorage.setItem('pwa_arch_version', ARCH_VERSION);
+                    // Force clean reload to pick up new assets
                     window.location.reload(true);
                 });
             } else {
-                localStorage.setItem('v2_1_3_pwa_fix', 'true');
+                localStorage.setItem('pwa_arch_version', ARCH_VERSION);
             }
         }
     </script>

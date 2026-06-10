@@ -1,0 +1,46 @@
+<template>
+    <div 
+        class="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-2 sm:p-4 backdrop-blur-sm"
+        @click.self="router.push('/')"
+    >
+        <EditTaskModal
+            v-if="task"
+            :task="task"
+            :is-new="isNew"
+            class="animate-[scale-up_0.2s_ease-out]"
+            @close="router.push('/')"
+            @saved="router.push('/')"
+        />
+    </div>
+</template>
+
+<script setup>
+import { computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useBalanceStore } from '../stores/balance';
+import EditTaskModal from '../components/EditTaskModal.vue';
+
+const route = useRoute();
+const router = useRouter();
+const store = useBalanceStore();
+
+const isNew = computed(() => route.params.id === 'new');
+
+const task = computed(() => {
+    if (isNew.value) {
+        return { 
+            title: '', category_slug: 'chor', importance: 2, repeat_type: 'none', 
+            repeat_interval: 1, repeat_days: [], deadline: '', postpone_until: '', 
+            ha: false, force_active: false, notes: '', isNew: true 
+        };
+    }
+    return store.tasks.find(t => t.id === parseInt(route.params.id));
+});
+</script>
+
+<style scoped>
+@keyframes scale-up {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+</style>
