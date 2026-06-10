@@ -3,11 +3,13 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import BubbleChart from '../../../resources/js/components/BubbleChart.vue';
 import { useBalanceStore } from '../../../resources/js/stores/balance';
+import { mockPush } from '../setup';
 
 describe('BubbleChart Component', () => {
     beforeEach(() => {
         setActivePinia(createPinia());
         vi.useFakeTimers();
+        mockPush.mockClear();
         
         // Global mock for dimensions - essential for jsdom
         Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, value: 800 });
@@ -24,18 +26,17 @@ describe('BubbleChart Component', () => {
         expect(wrapper.text()).toContain('app.no_tasks');
     });
 
-    it('emits "edit" when handleBubbleClick is called on desktop', async () => {
+    it('navigates to edit screen when handleBubbleClick is called on desktop', async () => {
         const task = { id: 1, title: 'Task 1' };
         const wrapper = mount(BubbleChart);
         
         wrapper.vm.isTouchDevice = false;
         await wrapper.vm.handleBubbleClick(task);
 
-        expect(wrapper.emitted('edit')).toBeTruthy();
-        expect(wrapper.emitted('edit')[0][0]).toMatchObject({ id: 1 });
+        expect(mockPush).toHaveBeenCalledWith('/task/1');
     });
 
-    it('emits "edit" on short tap in mobile mode', async () => {
+    it('navigates to edit screen on short tap in mobile mode', async () => {
         const task = { id: 1, title: 'Task 1' };
         const wrapper = mount(BubbleChart);
         
@@ -43,8 +44,7 @@ describe('BubbleChart Component', () => {
         // Simulate short tap (no long press timer triggered)
         await wrapper.vm.handleBubbleClick(task);
 
-        expect(wrapper.emitted('edit')).toBeTruthy();
-        expect(wrapper.emitted('edit')[0][0]).toMatchObject({ id: 1 });
+        expect(mockPush).toHaveBeenCalledWith('/task/1');
     });
 
     it('shows tooltip on long press in mobile mode, hides on touch end, and ignores subsequent click', async () => {

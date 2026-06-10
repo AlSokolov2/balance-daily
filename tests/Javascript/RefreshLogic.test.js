@@ -1,11 +1,14 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
-import App from '../../resources/js/App.vue';
+import MainView from '../../resources/js/views/MainView.vue';
 import { useBalanceStore } from '../../resources/js/stores/balance';
 
 vi.mock('../../resources/js/components/BubbleChart.vue', () => ({
     default: { template: '<div class="bubble-chart-mock"></div>' }
+}));
+vi.mock('../../resources/js/components/TaskItem.vue', () => ({
+    default: { template: '<div class="task-item-mock"></div>' }
 }));
 
 describe('Manual Refresh Logic', () => {
@@ -14,18 +17,6 @@ describe('Manual Refresh Logic', () => {
         const store = useBalanceStore();
         store.token = 'fake-token';
         store.user = { name: 'Test User' };
-        
-        // Mock matchMedia
-        Object.defineProperty(window, 'matchMedia', {
-            writable: true,
-            value: vi.fn().mockImplementation(query => ({
-                matches: false,
-                media: query,
-                onchange: null,
-                addEventListener: vi.fn(),
-                removeEventListener: vi.fn(),
-            })),
-        });
     });
 
     afterEach(() => {
@@ -36,9 +27,9 @@ describe('Manual Refresh Logic', () => {
         const store = useBalanceStore();
         const spy = vi.spyOn(store, 'fetchAll').mockResolvedValue({});
         
-        const wrapper = mount(App);
-        wrapper.vm.isInitializing = false;
-        wrapper.vm.isHandheld = true;
+        const wrapper = mount(MainView, {
+            props: { isHandheld: true }
+        });
         await wrapper.vm.$nextTick();
 
         // Get the scrollable container
