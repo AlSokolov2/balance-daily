@@ -350,18 +350,22 @@ export const useBalanceStore = defineStore('balance', {
             const t = this.tasks.find(x => x.id === id);
             if (!t) return;
 
-            // Logic: Recurring tasks should go to 'hidden' instead of 'archive' on completion
+            // Logic for immediate offline feedback: 
+            // Recurring tasks should move to 'hidden' locally even before server responds
             const isRecurring = (payload.repeat_type && payload.repeat_type !== 'none') || 
                               (!payload.repeat_type && t.repeat_type && t.repeat_type !== 'none');
 
             if (payload.completed && isRecurring) {
-                payload.completed = false;
-                payload.completed_at = null;
-                
                 const nextData = this.calculateNextOccurrence(t, payload);
+                payload.completed = false; // Reset locally
+                payload.completed_at = null;
                 payload.hidden_until = nextData.hidden_until;
                 payload.last_completed_date = nextData.last_completed_date;
                 payload.missed_count = 0;
+                
+                // Special flag for backend to know this was a completion event 
+                // even if we send completed: false
+                payload._was_completed = true; 
             }
 
             const res = await axios.put(`tasks/${id}`, payload);
@@ -388,7 +392,6 @@ export const useBalanceStore = defineStore('balance', {
                 }
             }
 
-            // Ensure task activates at the very start of the target day (00:00:00)
             nextDate.setHours(0, 0, 0, 0);
 
             return {
@@ -401,15 +404,11 @@ export const useBalanceStore = defineStore('balance', {
             const t = this.tasks.find(x => x.id === id);
             if (!t || t.completed) return;
 
-            if (t.repeat_type === 'none') {
-                await this.updateTask(id, { 
-                    completed: true, 
-                    completed_at: new Date().toISOString(),
-                    missed_count: 0 
-                });
-            } else {
-                await this.updateTask(id, { completed: true }); // updateTask will handle the rest
-            }
+            await this.updateTask(id, { 
+                completed: true, 
+                completed_at: new Date().toISOString(),
+                missed_count: 0 
+            });
         },
 
         async restoreTask(id) {

@@ -83,7 +83,9 @@ export function recalculateTasks(tasks, categories, subcatCoeffs, now = new Date
                 }
             }
             if (due) {
-                t.missed_count = Math.max(0, Math.ceil((now - due) / 86400000));
+                const nowDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+                t.missed_count = Math.max(0, Math.floor((nowDay - dueDay) / 86400000));
             }
         }
     });

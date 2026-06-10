@@ -61,6 +61,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { useBalanceStore } from '../stores/balance';
 import { hexToRgba } from '../utils/colors';
 
@@ -69,8 +70,8 @@ const props = defineProps({
     mode: { type: String, default: 'combined' }
 });
 
-const emit = defineEmits(['edit']);
 const store = useBalanceStore();
+const router = useRouter();
 const container = ref(null);
 const wrapper = ref(null);
 const bubblePositions = ref([]);
@@ -241,11 +242,11 @@ window.addEventListener('pointermove', () => { touchMoved = true; }, { passive: 
 const handleBubbleClick = (task) => {
     if (isTouchDevice.value) {
         if (!isLongPress) {
-            emit('edit', task);
+            router.push(`/task/${task.id}`);
         }
         isLongPress = false;
     } else {
-        emit('edit', task);
+        router.push(`/task/${task.id}`);
     }
 };
 
