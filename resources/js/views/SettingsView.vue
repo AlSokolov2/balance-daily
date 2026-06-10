@@ -10,126 +10,131 @@
             </button>
         </div>
 
-        <!-- Sub-Tabs Nav -->
-        <div class="px-5 py-3 shrink-0">
-            <div class="flex gap-1 bg-[var(--bg-secondary)]/50 p-1 rounded-xl border border-[var(--color-border)] overflow-x-auto scrollbar-hide">
-                <button
-                    v-for="tName in ['gen', 'cat', 'sub', 'data']"
-                    :key="tName"
-                    :class="['flex-1 min-w-[70px] flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border-none shadow-none relative', 
-                             tab === tName ? 'bg-[var(--bg-card)] text-[var(--color-primary)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']"
-                    @click="tab = tName"
-                >
-                    {{ $t(`settings.tabs.${tName}`) }}
-                </button>
-            </div>
-        </div>
+        <!-- Settings List -->
+        <div class="flex-1 overflow-y-auto p-5 pt-4 custom-scrollbar space-y-12 pb-20">
+            <!-- Section: General -->
+            <section class="space-y-6">
+                <h3 class="text-[11px] font-black text-[var(--color-primary)] uppercase tracking-[0.2em] px-1 mb-4">
+                    {{ $t('settings.tabs.gen') }}
+                </h3>
+                
+                <div class="space-y-6 bg-[var(--bg-card)] p-6 rounded-[32px] border border-[var(--color-border)] shadow-sm">
+                    <div>
+                        <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-3">{{ $t('settings.general.language') }}</label>
+                        <div class="grid grid-cols-2 gap-2 bg-[var(--bg-secondary)] p-1 rounded-2xl border border-[var(--color-border)]">
+                            <button v-for="l in ['ru', 'en']" :key="l" :class="['py-3 rounded-xl text-xs font-bold transition-all', store.locale === l ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']" @click="changeLanguage(l)">
+                                {{ l === 'ru' ? 'Русский' : 'English' }}
+                            </button>
+                        </div>
+                    </div>
 
-        <!-- Content -->
-        <div class="flex-1 overflow-y-auto p-5 pt-0 custom-scrollbar">
-            <!-- Tab: General -->
-            <div v-if="tab === 'gen'" class="space-y-6 pb-6">
-                <div>
-                    <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-3">{{ $t('settings.general.language') }}</label>
-                    <div class="grid grid-cols-2 gap-2 bg-[var(--bg-secondary)] p-1 rounded-2xl border border-[var(--color-border)]">
-                        <button v-for="l in ['ru', 'en']" :key="l" :class="['py-3 rounded-xl text-xs font-bold transition-all', store.locale === l ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']" @click="changeLanguage(l)">
-                            {{ l === 'ru' ? 'Русский' : 'English' }}
+                    <div>
+                        <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-3">{{ $t('settings.general.appearance') }}</label>
+                        <div class="grid grid-cols-3 gap-2 bg-[var(--bg-secondary)] p-1 rounded-2xl border border-[var(--color-border)]">
+                            <button v-for="m in ['system', 'light', 'dark']" :key="m" :class="['py-3 rounded-xl text-xs font-bold transition-all', store.theme === m ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']" @click="store.setTheme(m)">
+                                {{ $t(`settings.general.theme.${m}`) }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-[var(--bg-secondary)]/30 border border-[var(--color-border)] rounded-2xl flex items-center justify-between shadow-none">
+                        <div class="flex-1">
+                            <p class="text-xs font-bold text-[var(--color-text)]">{{ $t('settings.general.notifications') }}</p>
+                            <p class="text-[10px] text-[var(--color-secondary)] mt-0.5">{{ $t('settings.general.notifications_desc') }}</p>
+                        </div>
+                        <button :class="['w-12 h-6 rounded-full relative transition-all duration-300 border-none shadow-inner', store.notificationsEnabled ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-border)]']" @click="store.toggleNotifications()">
+                            <div :class="['absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm', store.notificationsEnabled ? 'translate-x-6' : 'translate-x-0']" />
                         </button>
                     </div>
                 </div>
+            </section>
 
-                <div>
-                    <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-3">{{ $t('settings.general.appearance') }}</label>
-                    <div class="grid grid-cols-3 gap-2 bg-[var(--bg-secondary)] p-1 rounded-2xl border border-[var(--color-border)]">
-                        <button v-for="m in ['system', 'light', 'dark']" :key="m" :class="['py-3 rounded-xl text-xs font-bold transition-all', store.theme === m ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']" @click="store.setTheme(m)">
-                            {{ $t(`settings.general.theme.${m}`) }}
+            <!-- Section: Categories -->
+            <section class="space-y-4">
+                <div class="flex items-center justify-between px-1 mb-4">
+                    <h3 class="text-[11px] font-black text-[var(--color-primary)] uppercase tracking-[0.2em]">
+                        {{ $t('settings.tabs.cat') }}
+                    </h3>
+                    <button class="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-widest bg-[var(--bg-secondary)] px-3 py-1.5 rounded-lg border border-[var(--color-border)]" @click="addCategory">
+                        + {{ $t('settings_modal.categories.add_button') }}
+                    </button>
+                </div>
+
+                <div class="space-y-2">
+                    <div v-for="(c, slug) in editableCats" :key="slug" class="flex items-center justify-between p-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--color-border)] shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer" @click="openEditCategory(slug)">
+                        <div class="flex items-center gap-3">
+                            <div class="w-4 h-4 rounded-full shadow-inner" :style="{ backgroundColor: c.color }" />
+                            <span class="font-bold text-sm text-[var(--color-text)]">{{ c.name }}</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-black text-[var(--color-secondary)]">{{ c.weight }}%</span>
+                            <svg class="w-4 h-4 text-[var(--color-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="w-full py-4 mt-2 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] rounded-2xl font-black text-xs shadow-md border border-[var(--color-border)] uppercase tracking-widest" @click="saveCats">
+                    {{ $t('settings_modal.categories.save_button') }}
+                </button>
+            </section>
+
+            <!-- Section: Subcategories -->
+            <section class="space-y-4">
+                <h3 class="text-[11px] font-black text-[var(--color-primary)] uppercase tracking-[0.2em] px-1 mb-4">
+                    {{ $t('settings.tabs.sub') }}
+                </h3>
+                
+                <div class="bg-[var(--bg-card)] p-6 rounded-[32px] border border-[var(--color-border)] shadow-sm space-y-1">
+                    <div v-for="(coeff, name) in store.subcatCoeffs" :key="name" class="flex items-center gap-3 py-4 border-b border-[var(--color-border)] last:border-0">
+                        <span class="flex-1 text-sm font-medium text-[var(--color-text)]">{{ name }}</span>
+                        <input v-model.number="store.subcatCoeffs[name]" type="range" min="0.5" max="4" step="0.1" class="w-24 accent-[var(--color-text)]">
+                        <span class="text-xs font-bold text-[var(--color-secondary)] w-8">{{ Number(coeff).toFixed(1) }}</span>
+                    </div>
+                    <button class="w-full py-4 bg-[var(--bg-secondary)] text-[var(--color-text)] rounded-2xl font-bold text-xs mt-6 border border-[var(--color-border)] uppercase tracking-widest" @click="saveCats">
+                        {{ $t('settings_modal.subcategories.save_all_button') }}
+                    </button>
+                </div>
+            </section>
+
+            <!-- Section: Data -->
+            <section class="space-y-4">
+                <h3 class="text-[11px] font-black text-[var(--color-primary)] uppercase tracking-[0.2em] px-1 mb-4">
+                    {{ $t('settings.tabs.data') }}
+                </h3>
+
+                <div class="bg-[var(--bg-card)] p-6 rounded-[32px] border border-[var(--color-border)] shadow-sm space-y-6">
+                    <div class="p-4 bg-[var(--bg-secondary)]/30 border border-[var(--color-border)] rounded-2xl text-[11px] text-[var(--color-secondary)] leading-relaxed">
+                        <p class="font-bold text-[var(--color-text)] mb-1">{{ $t('settings_modal.data.title') }}</p>
+                        {{ $t('settings_modal.data.description') }}
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-3">
+                        <button class="w-full py-4 bg-[var(--bg-secondary)] text-[var(--color-text)] rounded-2xl font-bold text-sm flex items-center justify-center gap-3 border border-[var(--color-border)]" @click="store.sync(true)">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            {{ $t('settings_modal.data.sync_button') }}
+                        </button>
+                        <button class="w-full py-4 bg-[var(--bg-card)] border border-[var(--color-border)] text-[var(--color-text)] rounded-2xl font-bold text-sm flex items-center justify-center gap-3 shadow-sm" @click="exportData">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            {{ $t('settings_modal.data.export_button') }}
+                        </button>
+                        <button class="w-full py-4 bg-[var(--bg-card)] border border-[var(--color-border)] text-[var(--color-text)] rounded-2xl font-bold text-sm flex items-center justify-center gap-3 shadow-sm" @click="fileInput?.click()">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                            {{ $t('settings_modal.data.import_button') }}
                         </button>
                     </div>
-                </div>
 
-                <div class="p-4 bg-[var(--bg-card)] border border-[var(--color-border)] rounded-2xl flex items-center justify-between shadow-sm">
-                    <div class="flex-1">
-                        <p class="text-xs font-bold text-[var(--color-text)]">{{ $t('settings.general.notifications') }}</p>
-                        <p class="text-[10px] text-[var(--color-secondary)] mt-0.5">{{ $t('settings.general.notifications_desc') }}</p>
-                    </div>
-                    <button :class="['w-12 h-6 rounded-full relative transition-all duration-300 border-none shadow-inner', store.notificationsEnabled ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-border)]']" @click="store.toggleNotifications()">
-                        <div :class="['absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm', store.notificationsEnabled ? 'translate-x-6' : 'translate-x-0']" />
-                    </button>
-                </div>
-            </div>
-
-            <!-- Tab: Categories -->
-            <div v-if="tab === 'cat'" class="space-y-2 pb-6">
-                <div v-for="(c, slug) in editableCats" :key="slug" class="flex items-center justify-between p-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--color-border)] shadow-sm" @click="openEditCategory(slug)">
-                    <div class="flex items-center gap-3">
-                        <div class="w-4 h-4 rounded-full shadow-inner" :style="{ backgroundColor: c.color }" />
-                        <span class="font-bold text-sm text-[var(--color-text)]">{{ c.name }}</span>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs font-black text-[var(--color-secondary)]">{{ c.weight }}%</span>
-                        <svg class="w-4 h-4 text-[var(--color-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    <div class="grid grid-cols-2 gap-3">
+                        <a href="https://github.com/AlSokolov2/balance-daily/issues/new?template=bug-report.yml" target="_blank" class="flex-1 py-3.5 bg-[var(--bg-secondary)] text-red-500 rounded-2xl font-black text-[9px] uppercase tracking-[0.15em] hover:opacity-80 transition-all flex items-center justify-center gap-2 border border-[var(--color-border)]">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            {{ $t('settings_modal.data.bug_report') }}
+                        </a>
+                        <a href="https://github.com/AlSokolov2/balance-daily/issues/new?template=feature-request.yml" target="_blank" class="flex-1 py-3.5 bg-[var(--bg-secondary)] text-[var(--color-primary)] rounded-2xl font-black text-[9px] uppercase tracking-[0.15em] hover:opacity-80 transition-all flex items-center justify-center gap-2 border border-[var(--color-border)]">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.364-6.364l-.707-.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M12 7a5 5 0 015 5 5 5 0 01-5 5 5 5 0 01-5-5 5 5 0 015-5z"/></svg>
+                            {{ $t('settings_modal.data.suggest_feature') }}
+                        </a>
                     </div>
                 </div>
-                <div class="flex gap-2 pt-4">
-                    <button class="flex-1 py-4 bg-[var(--bg-secondary)] text-[var(--color-text)] rounded-xl font-bold text-xs" @click="addCategory">
-                        {{ $t('settings_modal.categories.add_button') }}
-                    </button>
-                    <button class="flex-1 py-4 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] rounded-xl font-bold text-xs shadow-md" @click="saveCats">
-                        {{ $t('settings_modal.categories.save_button') }}
-                    </button>
-                </div>
-            </div>
-
-            <!-- Tab: Subcategories -->
-            <div v-if="tab === 'sub'" class="space-y-1 pb-6">
-                <div v-for="(coeff, name) in store.subcatCoeffs" :key="name" class="flex items-center gap-3 py-4 border-b border-[var(--color-border)] last:border-0">
-                    <span class="flex-1 text-sm font-medium text-[var(--color-text)]">{{ name }}</span>
-                    <input v-model.number="store.subcatCoeffs[name]" type="range" min="0.5" max="4" step="0.1" class="w-24 accent-[var(--color-text)]">
-                    <span class="text-xs font-bold text-[var(--color-secondary)] w-8">{{ Number(coeff).toFixed(1) }}</span>
-                </div>
-                <button class="w-full py-4 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] rounded-2xl font-bold text-sm mt-6 shadow-md" @click="saveCats">
-                    {{ $t('settings_modal.subcategories.save_all_button') }}
-                </button>
-            </div>
-
-            <!-- Tab: Data -->
-            <div v-if="tab === 'data'" class="space-y-4 pb-6">
-                <div class="p-5 bg-[var(--bg-card)] border border-[var(--color-border)] rounded-2xl text-[12px] text-[var(--color-secondary)] shadow-sm">
-                    <p class="font-bold text-[var(--color-text)] mb-1">{{ $t('settings_modal.data.title') }}</p>
-                    {{ $t('settings_modal.data.description') }}
-                </div>
-                <div class="grid grid-cols-1 gap-2">
-                    <button class="w-full py-4 bg-[var(--bg-secondary)] text-[var(--color-text)] rounded-2xl font-bold text-sm flex items-center justify-center gap-3" @click="store.sync(true)">
-                        {{ $t('settings_modal.data.sync_button') }}
-                    </button>
-                    <button class="w-full py-4 bg-[var(--bg-card)] border border-[var(--color-border)] text-[var(--color-text)] rounded-2xl font-bold text-sm flex items-center justify-center gap-3 shadow-sm" @click="exportData">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        {{ $t('settings_modal.data.export_button') }}
-                    </button>
-                    <button class="w-full py-4 bg-[var(--bg-card)] border border-[var(--color-border)] text-[var(--color-text)] rounded-2xl font-bold text-sm flex items-center justify-center gap-3 shadow-sm" @click="fileInput?.click()">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                        {{ $t('settings_modal.data.import_button') }}
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-[var(--color-border)]">
-                    <a href="https://github.com/AlSokolov2/balance-daily/issues/new?template=bug-report.yml" target="_blank" class="flex-1 py-3 bg-[var(--bg-secondary)] text-red-500 rounded-2xl font-bold text-[10px] uppercase tracking-wider hover:opacity-80 transition-all flex items-center justify-center gap-2 border border-[var(--color-border)]">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                        {{ $t('settings_modal.data.bug_report') }}
-                    </a>
-                    <a href="https://github.com/AlSokolov2/balance-daily/issues/new?template=feature-request.yml" target="_blank" class="flex-1 py-3 bg-[var(--bg-secondary)] text-[var(--color-primary)] rounded-2xl font-bold text-[10px] uppercase tracking-wider hover:opacity-80 transition-all flex items-center justify-center gap-2 border border-[var(--color-border)]">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.364-6.364l-.707-.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M12 7a5 5 0 015 5 5 5 0 01-5 5 5 5 0 01-5-5 5 5 0 015-5z"/></svg>
-                        {{ $t('settings_modal.data.suggest_feature') }}
-                    </a>
-                </div>
-                <input
-                    ref="fileInput"
-                    type="file"
-                    accept=".json"
-                    class="hidden"
-                    @change="handleImport"
-                >
-            </div>
+            </section>
         </div>
 
         <!-- Footer -->

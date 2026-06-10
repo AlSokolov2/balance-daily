@@ -11,13 +11,17 @@
 
     <!-- Основное приложение: Router Shell -->
     <div v-else class="app-container w-full max-w-[1600px] mx-auto flex flex-col h-[100dvh] p-2 sm:p-4 overflow-hidden relative bg-[var(--bg-app)]">
-        <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
-            <router-view v-slot="{ Component }">
-                <component 
-                    :is="Component" 
-                    :is-handheld="isHandheld"
-                    :offline-ready="isActuallyOfflineReady"
-                />
+        <div class="flex-1 min-h-0 flex flex-col overflow-hidden relative">
+            <router-view v-slot="{ Component, route }">
+                <transition :name="transitionName">
+                    <component 
+                        :is="Component" 
+                        :key="route.path"
+                        :is-handheld="isHandheld"
+                        :offline-ready="isActuallyOfflineReady"
+                        class="absolute inset-0"
+                    />
+                </transition>
             </router-view>
         </div>
 
@@ -26,16 +30,6 @@
             v-if="isHandheld && !['edit-task', 'edit-category'].includes(route.name)"
             @open-advanced="openAdvancedAdd"
         />
-
-        <EditTaskModal
-            v-if="editingTask"
-            :task="editingTask"
-            :is-new="editingTask.isNew"
-            @close="editingTask = null"
-        />
-
-        <SettingsModal v-if="showSettingsModal" :offline-ready="isActuallyOfflineReady" @close="showSettingsModal = false" />
-        <StatsModal v-if="showStatsModal" @close="showStatsModal = false" />
 
         <!-- PWA Update Notification -->
         <div v-if="needRefresh" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-[100] cursor-pointer group" @click="updateServiceWorker(true)">
@@ -72,20 +66,25 @@ const route = useRoute();
 const isInitializing = ref(true);
 const isActuallyOfflineReady = ref(false);
 const isHandheld = ref(false);
-const editingTask = ref(null);
-const showSettingsModal = ref(false);
-const showStatsModal = ref(false);
-
-const openSettings = () => { showSettingsModal.value = true; };
-const openStats = () => { showStatsModal.value = true; };
+const transitionName = ref('slide-left');
 
 const openAdvancedAdd = () => {
-    editingTask.value = { 
-        title: '', category_slug: 'chor', importance: 2, repeat_type: 'none', 
-        repeat_interval: 1, repeat_days: [], deadline: '', postpone_until: '', 
-        ha: false, force_active: false, notes: '', isNew: true 
-    };
+    router.push('/task/new');
 };
+
+// Route Transition Logic
+const routeOrder = { 'home': 0, 'stats': 1, 'notepad': 2, 'settings': 3 };
+
+watch(() => route.name, (toName, fromName) => {
+    const toDepth = routeOrder[toName] ?? 99;
+    const fromDepth = routeOrder[fromName] ?? 99;
+
+    if (toName?.startsWith('edit-') || fromName?.startsWith('edit-')) {
+        transitionName.value = toName?.startsWith('edit-') ? 'slide-up' : 'slide-down';
+    } else {
+        transitionName.value = toDepth < fromDepth ? 'slide-right' : 'slide-left';
+    }
+});
 
 // Watchers
 watch(() => offlineReady.value, (val) => { if (val) isActuallyOfflineReady.value = true; }, { immediate: true });
@@ -134,4 +133,26 @@ input[type="range"] { accent-color: var(--color-text); }
     from { transform: translate(-50%, 100%); opacity: 0; }
     to { transform: translate(-50%, 0); opacity: 1; }
 }
+
+/* Route Transitions */
+.slide-left-enter-active, .slide-left-leave-active,
+.slide-right-enter-active, .slide-right-leave-active,
+.slide-up-enter-active, .slide-up-leave-active,
+.slide-down-enter-active, .slide-down-leave-active {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Horizontal Slides */
+.slide-left-enter-from { transform: translateX(100%); opacity: 0; }
+.slide-left-leave-to { transform: translateX(-30%); opacity: 0; }
+
+.slide-right-enter-from { transform: translateX(-100%); opacity: 0; }
+.slide-right-leave-to { transform: translateX(30%); opacity: 0; }
+
+/* Vertical Stack Slides */
+.slide-up-enter-from { transform: translateY(100%); }
+.slide-up-leave-to { opacity: 0.5; transform: scale(0.95); }
+
+.slide-down-enter-from { opacity: 0.5; transform: scale(0.95); }
+.slide-down-leave-to { transform: translateY(100%); }
 </style>

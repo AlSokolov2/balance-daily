@@ -1,13 +1,9 @@
 <template>
-    <div 
-        class="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-2 sm:p-4 backdrop-blur-sm"
-        @click.self="router.push('/')"
-    >
+    <div class="fixed inset-0 z-[200] bg-[var(--bg-app)] flex flex-col overflow-hidden">
         <EditTaskModal
             v-if="task"
             :task="task"
             :is-new="isNew"
-            class="animate-[scale-up_0.2s_ease-out]"
             @close="router.push('/')"
             @saved="router.push('/')"
         />

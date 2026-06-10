@@ -1,13 +1,27 @@
 <template>
-    <div class="fixed inset-0 z-[300] flex items-center justify-center bg-black/50 p-4" @click.self="$emit('close')">
-        <div class="bg-[var(--bg-card)] rounded-2xl p-4 sm:p-5 w-full max-w-sm shadow-2xl relative max-h-[90vh] overflow-y-auto overflow-x-hidden border border-[var(--color-border)]">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-[var(--color-text)]">
-                    {{ $t('edit_category.title') }}
-                </h2>
-                <span class="cursor-pointer text-2xl text-[var(--color-secondary)] hover:text-[var(--color-text)] transition-colors" @click="$emit('close')">&times;</span>
-            </div>
+    <div class="flex-1 flex flex-col h-full bg-[var(--bg-app)] overflow-hidden">
+        <!-- Header -->
+        <div class="px-4 py-4 flex items-center justify-between border-b border-[var(--color-border)] shrink-0 bg-[var(--bg-app)]">
+            <button 
+                class="w-10 h-10 rounded-xl bg-[var(--bg-secondary)] flex items-center justify-center hover:opacity-80 transition-all border border-[var(--color-border)] shadow-none"
+                @click="$emit('close')"
+            >
+                <svg class="w-5 h-5 text-[var(--color-text)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            
+            <h2 class="text-sm font-black text-[var(--color-text)] uppercase tracking-widest">
+                {{ $t('edit_category.title') }}
+            </h2>
 
+            <button 
+                class="px-5 py-2.5 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] rounded-xl font-bold text-xs shadow-sm hover:opacity-90 active:scale-95 transition-all border border-[var(--color-border)] uppercase tracking-widest"
+                @click="handleSave"
+            >
+                {{ $t('common.save') }}
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
             <div class="space-y-4">
                 <div class="min-w-0">
                     <label class="text-[10px] text-[var(--color-secondary)] uppercase font-bold px-1 tracking-wider">{{ $t('edit_category.name') }}</label>
@@ -58,25 +72,16 @@
                     </div>
                 </div>
 
-                <div class="pt-4 flex gap-2 border-t border-[var(--color-border)]">
-                    <button v-if="!isNew" class="w-12 py-3 bg-[var(--bg-secondary)] text-red-500 rounded-xl flex items-center justify-center hover:opacity-80 transition-colors border border-[var(--color-border)]" @click="$emit('delete', slug)">
-                        <svg
-                            class="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
-                        ><path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        /></svg>
-                    </button>
-                    <button class="flex-1 py-3 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] border border-[var(--color-border)] rounded-xl font-bold text-sm shadow-sm active:scale-[0.98] transition-all" @click="handleSave">
-                        {{ $t('edit_category.done') }}
-                    </button>
-                </div>
+            </div>
+
+            <div v-if="!isNew" class="pt-6">
+                <button 
+                    class="w-full py-4 bg-[var(--bg-secondary)] text-red-500 rounded-2xl flex items-center justify-center gap-3 hover:bg-red-500/10 transition-colors border border-[var(--color-border)] font-bold text-xs uppercase tracking-widest shadow-none" 
+                    @click="$emit('delete', slug)"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    {{ $t('common.delete') || 'Delete' }}
+                </button>
             </div>
         </div>
     </div>
