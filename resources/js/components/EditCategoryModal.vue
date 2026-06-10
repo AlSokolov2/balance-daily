@@ -40,7 +40,21 @@
                     </div>
                     <div class="min-w-0">
                         <label class="text-[10px] text-[var(--color-secondary)] uppercase font-bold px-1 tracking-wider">{{ $t('edit_category.hide_until') }}</label>
-                        <input v-model="editData.hide_until" type="time" class="w-full mt-1 p-2 border border-[var(--color-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--color-border)] outline-none transition-all bg-[var(--bg-secondary)] text-[var(--color-text)]">
+                        <div class="relative flex items-center mt-1">
+                            <input
+                                v-model="editData.hide_until"
+                                type="time"
+                                class="w-full p-2 border border-[var(--color-border)] rounded-xl text-sm focus:ring-2 focus:ring-[var(--color-border)] outline-none transition-all bg-[var(--bg-secondary)] text-[var(--color-text)] pr-10"
+                            >
+                            <button
+                                v-if="editData.hide_until"
+                                type="button"
+                                class="absolute right-2 text-xl text-[var(--color-secondary)] hover:text-red-500 transition-colors p-1 leading-none"
+                                @click="editData.hide_until = ''"
+                            >
+                                &times;
+                            </button>
+                        </div>
                     </div>
                 </div>
 
