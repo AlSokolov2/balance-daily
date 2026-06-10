@@ -1,41 +1,52 @@
 <template>
-    <div class="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-2 sm:p-4" @click.self="$emit('close')">
-        <div class="bg-[var(--bg-card)] rounded-[24px] sm:rounded-[32px] w-full max-w-md shadow-2xl relative h-[80vh] landscape:h-[95vh] flex flex-col overflow-hidden border border-[var(--color-border)]">
-            <!-- Header (Fixed) -->
-            <div class="p-4 sm:p-5 pb-3 shrink-0 landscape:p-3 landscape:pb-1 flex items-center gap-2 sm:gap-4">
+    <div class="flex-1 flex flex-col h-full bg-[var(--bg-app)] overflow-hidden">
+        <!-- New Modern Header -->
+        <div class="px-4 py-4 flex items-center justify-between border-b border-[var(--color-border)] shrink-0 bg-[var(--bg-app)]">
+            <button 
+                class="w-10 h-10 rounded-xl bg-[var(--bg-secondary)] flex items-center justify-center hover:opacity-80 transition-all border border-[var(--color-border)] shadow-none"
+                @click="$emit('close')"
+            >
+                <svg class="w-5 h-5 text-[var(--color-text)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            
+            <div class="flex-1 px-4 min-w-0">
                 <input
                     v-model="editData.title"
                     type="text" 
-                    class="flex-1 min-w-0 p-0 bg-transparent border-none text-xl sm:text-2xl font-black text-[var(--color-text)] outline-none placeholder:opacity-30 landscape:text-base" 
+                    class="w-full p-0 bg-transparent border-none text-lg font-black text-[var(--color-text)] outline-none placeholder:opacity-30" 
                     :placeholder="$t('edit_task.title')"
                 >
-                <div class="shrink-0 w-8 h-8 flex items-center justify-center cursor-pointer text-2xl text-[var(--color-secondary)] hover:text-[var(--color-text)] transition-colors" title="Close" @click="$emit('close')">
-                    &times;
-                </div>
             </div>
 
-            <!-- Tabs Nav (Fixed) -->
-            <div class="px-5 mb-2 shrink-0 landscape:px-3 landscape:mb-1">
-                <div class="flex gap-1 bg-[var(--bg-secondary)]/50 p-1 rounded-xl border border-[var(--color-border)] landscape:rounded-lg">
-                    <button
-                        v-for="tabItem in ['notes', 'setup', 'schedule', 'history']"
-                        :key="tabItem"
-                        :class="['flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border-none shadow-none relative landscape:py-1 landscape:text-[8px]', 
-                                 activeTab === tabItem ? 'bg-[var(--bg-card)] text-[var(--color-primary)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)] hover:text-[var(--color-text)]']"
-                        @click="activeTab = tabItem"
-                    >
-                        {{ $t(`edit_task.tabs.${tabItem}`) }}
-                        <div v-if="activeTab === tabItem" class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-[var(--color-primary)] rounded-full" />
-                    </button>
-                </div>
-            </div>
-
-            <!-- Main Content (Scrollable) -->
-            <div
-                class="flex-1 overflow-y-auto p-5 pt-2 custom-scrollbar min-h-0 landscape:p-3 landscape:pt-1"
-                @touchstart="handleTouchStart"
-                @touchend="handleTouchEnd"
+            <button 
+                class="px-5 py-2.5 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] rounded-xl font-bold text-xs shadow-sm hover:opacity-90 active:scale-95 transition-all border border-[var(--color-border)] uppercase tracking-widest"
+                @click="handleSave"
             >
+                {{ $t('common.save') }}
+            </button>
+        </div>
+
+        <!-- Tabs Nav (Sticky) -->
+        <div class="px-5 py-3 shrink-0 bg-[var(--bg-app)]">
+            <div class="flex gap-1 bg-[var(--bg-secondary)]/50 p-1 rounded-xl border border-[var(--color-border)]">
+                <button
+                    v-for="tabItem in ['notes', 'setup', 'schedule', 'history']"
+                    :key="tabItem"
+                    :class="['flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border-none shadow-none relative', 
+                             activeTab === tabItem ? 'bg-[var(--bg-card)] text-[var(--color-primary)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']"
+                    @click="activeTab = tabItem"
+                >
+                    {{ $t(`edit_task.tabs.${tabItem}`) }}
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content (Scrollable) -->
+        <div
+            class="flex-1 overflow-y-auto p-5 pt-0 custom-scrollbar min-h-0"
+            @touchstart="handleTouchStart"
+            @touchend="handleTouchEnd"
+        >
                 <!-- Tab: Notes (Log) -->
                 <div v-if="activeTab === 'notes'" class="h-full flex flex-col">
                     <textarea
@@ -214,30 +225,16 @@
             </div>
 
             <!-- Footer (Fixed) -->
-            <div class="p-5 border-t border-[var(--color-border)] bg-[var(--bg-card)] shrink-0 flex gap-2 landscape:p-2">
+            <div class="p-5 border-t border-[var(--color-border)] bg-[var(--bg-app)] shrink-0 flex gap-2">
                 <button
                     v-if="!isNew"
-                    class="w-14 py-4 landscape:py-2 bg-[var(--bg-secondary)] text-red-500 rounded-2xl landscape:rounded-xl flex items-center justify-center hover:bg-red-500/10 transition-colors border border-[var(--color-border)] shadow-none" 
+                    class="w-14 py-4 bg-[var(--bg-secondary)] text-red-500 rounded-2xl flex items-center justify-center hover:bg-red-500/10 transition-colors border border-[var(--color-border)] shadow-none" 
                     @click="handleDelete"
                 >
-                    <svg
-                        class="w-6 h-6 landscape:w-5 landscape:h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    ><path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    /></svg>
-                </button>
-                <button class="flex-1 py-4 landscape:py-2 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] border border-[var(--color-border)] rounded-2xl landscape:rounded-xl font-black text-sm landscape:text-xs shadow-lg hover:opacity-90 active:scale-[0.98] transition-all uppercase tracking-widest" @click="handleSave">
-                    {{ $t('common.save') }}
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
             </div>
         </div>
-    </div>
 </template>
 
 <script setup>

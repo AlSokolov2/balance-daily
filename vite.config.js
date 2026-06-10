@@ -12,7 +12,6 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
     
     return {
-        base: '/',
         define: {
             __APP_VERSION__: JSON.stringify(packageJson.version),
             __VAPID_PUBLIC_KEY__: JSON.stringify(env.VAPID_PUBLIC_KEY || ''),
@@ -37,7 +36,7 @@ export default defineConfig(({ mode }) => {
             }),
             tailwindcss(),
             VitePWA({
-                outDir: 'public',
+                outDir: 'public/build',
                 strategies: 'injectManifest',
                 srcDir: 'resources/js',
                 filename: 'sw.js',
@@ -55,8 +54,8 @@ export default defineConfig(({ mode }) => {
                     theme_color: '#f5f5f7',
                     background_color: '#f5f5f7',
                     display: 'standalone',
-                    start_url: '../',
-                    scope: '../',
+                    start_url: '/',
+                    scope: '/',
                     icons: [
                         {
                             src: '/favicon.svg',

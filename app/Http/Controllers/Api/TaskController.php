@@ -93,19 +93,45 @@ class TaskController extends Controller
             'hidden_until' => 'nullable|date',
             'last_completed_date' => 'nullable|date',
             'missed_count' => 'nullable|integer',
+            '_was_completed' => 'nullable|boolean',
         ]);
 
         $wasCompleted = $task->completed;
-        $task->update($validated);
+        $isCompletionEvent = (! $wasCompleted && ($validated['completed'] ?? false)) || ($request->input('_was_completed') === true);
+        
+        $task->fill($validated);
 
-        // If task was just marked as completed, record it in history
-        /** @phpstan-ignore-next-line */
-        if (! $wasCompleted && $task->completed) {
+        // If task is being marked as completed (directly or via offline-reset flag)
+        if ($isCompletionEvent) {
+            // 1. Record completion in history
             $task->completions()->create([
                 'user_id' => $this->user()->id,
                 'completed_at' => $task->completed_at ?? now(),
             ]);
+
+            // 2. Handle Recurring Logic (Server-side source of truth)
+            if ($task->repeat_type && $task->repeat_type !== 'none') {
+                $now = now();
+                $nextDate = now();
+
+                if ($task->repeat_type === 'interval') {
+                    $nextDate->addDays((int) ($task->repeat_interval ?: 1));
+                } elseif ($task->repeat_type === 'weekly' && ! empty($task->repeat_days)) {
+                    $nextDate->addDay();
+                    while (! in_array($nextDate->dayOfWeek, $task->repeat_days)) {
+                        $nextDate->addDay();
+                    }
+                }
+
+                $task->completed = false;
+                $task->completed_at = null;
+                $task->hidden_until = $nextDate->startOfDay();
+                $task->last_completed_date = $now;
+                $task->missed_count = 0;
+            }
         }
+
+        $task->save();
 
         return $task->load('latestCompletion');
     }

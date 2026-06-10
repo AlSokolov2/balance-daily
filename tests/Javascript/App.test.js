@@ -92,7 +92,7 @@ it('renders unified bottom bar on handheld', async () => {
 
     const bottomBar = wrapper.find('.z-\\[60\\]');
     expect(bottomBar.exists()).toBe(true);
-    expect(bottomBar.find('select').exists()).toBe(true); // Filter
-    expect(bottomBar.find('img').exists()).toBe(true);    // Avatar
+    // New Tab Bar uses router-links (stubs) instead of select/img
+    expect(bottomBar.findAll('a').length).toBeGreaterThan(0);
 });
 });
