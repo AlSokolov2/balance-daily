@@ -50,11 +50,17 @@ class ImportExportController extends Controller
             // Import Categories
             if (isset($data['categories']) && is_iterable($data['categories'])) {
                 foreach ($data['categories'] as $slug => $cat) {
+                    $weight = (float) ($cat['weight'] ?? 0.1);
+                    // If weight is sent as percentage (e.g. 50 instead of 0.5), normalize it
+                    if ($weight > 1) {
+                        $weight /= 100;
+                    }
+
                     Category::create([
                         'user_id' => $userId,
                         'slug' => $slug,
                         'name' => $cat['name'] ?? $slug,
-                        'weight' => $cat['weight'] ?? 0.1,
+                        'weight' => $weight,
                         'color' => $cat['color'] ?? '#8e8e93',
                         'hide_until' => $cat['hideUntil'] ?? ($cat['hide_until'] ?? null),
                     ]);
