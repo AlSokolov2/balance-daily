@@ -11,7 +11,7 @@
         window.apiBaseUrl = '{{ config('app.url') }}';
         
         // PWA Migration Fix: Clear old service workers for the new architecture (Vue Router + Tab Bar)
-        const ARCH_VERSION = 'v3_router';
+        const ARCH_VERSION = 'force_clear_v2_7_2';
         if (localStorage.getItem('pwa_arch_version') !== ARCH_VERSION) {
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.getRegistrations().then(function(registrations) {
