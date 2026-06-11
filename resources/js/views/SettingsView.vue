@@ -57,6 +57,20 @@
                         </div>
                     </div>
 
+                    <div>
+                        <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-3">{{ $t('settings.general.visual_style', 'Стиль (Visual Style)') }}</label>
+                        <div class="grid grid-cols-2 gap-2 bg-[var(--bg-secondary)] p-1 rounded-2xl border border-[var(--color-border)]">
+                            <button
+                                v-for="style in ['bubbles', 'treemap']"
+                                :key="style"
+                                :class="['py-3 rounded-xl text-xs font-bold transition-all', store.visualStyle === style ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']"
+                                @click="store.setVisualStyle(style)"
+                            >
+                                {{ style === 'bubbles' ? 'Круги (Bubbles)' : 'Блоки (Treemap)' }}
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="p-4 bg-[var(--bg-secondary)]/30 border border-[var(--color-border)] rounded-2xl flex items-center justify-between shadow-none">
                         <div class="flex-1">
                             <p class="text-xs font-bold text-[var(--color-text)]">

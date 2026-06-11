@@ -31,7 +31,7 @@
                     <div ref="verticalChartContainer" class="flex-1 overflow-y-auto snap-y snap-mandatory scrollbar-hide scroll-smooth h-full">
                         <!-- Plans -->
                         <div class="h-full w-full snap-start relative">
-                            <BubbleChart
+                            <TaskVisualizer
                                 :tasks="store.plansTasks"
                                 mode="single"
                                 class="w-full h-full"
@@ -43,7 +43,7 @@
                         </div>
                         <!-- Focus -->
                         <div id="mobile-focus-chart" class="h-full w-full snap-start relative">
-                            <BubbleChart
+                            <TaskVisualizer
                                 :tasks="store.focusTasks"
                                 mode="single"
                                 class="w-full h-full"
@@ -58,7 +58,7 @@
                         </div>
                         <!-- Routine -->
                         <div class="h-full w-full snap-start relative">
-                            <BubbleChart
+                            <TaskVisualizer
                                 :tasks="store.routineTasks"
                                 mode="single"
                                 class="w-full h-full"
@@ -120,7 +120,7 @@
                 v-if="store.filterCat !== 'archive' && store.filterCat !== 'hidden'" 
                 class="flex-1 bg-[var(--bg-card)] rounded-3xl shadow-sm border border-[var(--color-border)] relative overflow-hidden flex flex-col min-h-0 min-w-0"
             >
-                <BubbleChart class="flex-1 w-full h-full" @edit="handleEdit" />
+                <TaskVisualizer class="flex-1 w-full h-full" @edit="handleEdit" />
             </div>
 
             <div
@@ -202,7 +202,7 @@ import { useBalanceStore } from '../stores/balance';
 import { useI18n } from 'vue-i18n';
 
 // Components
-import BubbleChart from '../components/BubbleChart.vue';
+import TaskVisualizer from '../components/TaskVisualizer.vue';
 import TaskItem from '../components/TaskItem.vue';
 import AppHeader from '../components/AppHeader.vue';
 import DesktopFilterBar from '../components/DesktopFilterBar.vue';

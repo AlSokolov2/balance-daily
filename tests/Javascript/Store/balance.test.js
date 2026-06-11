@@ -147,6 +147,18 @@ describe('Balance Store - Prioritization Engine', () => {
         expect(axios.defaults.headers.common['Authorization']).toBeUndefined();
     });
 
+    describe('Settings Management', () => {
+        it('sets and saves visual style', async () => {
+            const store = useBalanceStore();
+            expect(store.visualStyle).toBe('bubbles'); // Default
+            
+            await store.setVisualStyle('treemap');
+            
+            expect(store.visualStyle).toBe('treemap');
+            expect(localStorage.getItem('visual_style')).toBe('treemap');
+        });
+    });
+
     describe('Pulse & Sync', () => {
         beforeEach(() => {
             vi.useFakeTimers();

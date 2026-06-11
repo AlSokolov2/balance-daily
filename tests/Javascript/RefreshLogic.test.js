@@ -4,11 +4,12 @@ import { createPinia, setActivePinia } from 'pinia';
 import MainView from '../../resources/js/views/MainView.vue';
 import { useBalanceStore } from '../../resources/js/stores/balance';
 
-vi.mock('../../resources/js/components/BubbleChart.vue', () => ({
-    default: { template: '<div class="bubble-chart-mock"></div>' }
+// Mock components
+vi.mock('../../resources/js/components/TaskVisualizer.vue', () => ({
+    default: { name: 'TaskVisualizer', template: '<div class="task-visualizer-mock"></div>' }
 }));
 vi.mock('../../resources/js/components/TaskItem.vue', () => ({
-    default: { template: '<div class="task-item-mock"></div>' }
+    default: { name: 'TaskItem', template: '<div class="task-item-mock"></div>' }
 }));
 
 describe('Manual Refresh Logic', () => {
