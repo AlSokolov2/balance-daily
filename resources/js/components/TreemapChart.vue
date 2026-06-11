@@ -46,7 +46,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBalanceStore } from '../stores/balance';
 import { hexToRgba } from '../utils/colors';
