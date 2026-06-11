@@ -12,6 +12,9 @@ export const useBalanceStore = defineStore('balance', {
         bubbleZoom: 1,
         notepadText: '',
         theme: 'system',
+        visualStyle: localStorage.getItem('visual_style') || 'bubbles',
+        treemapScale: parseFloat(localStorage.getItem('treemap_scale')) || 1.2,
+        treemapMode: localStorage.getItem('treemap_mode') || 'nested',
         locale: localStorage.getItem('locale') || 'ru',
         pulseInterval: parseInt(localStorage.getItem('pulse_interval')) || 1,
         notificationsEnabled: localStorage.getItem('notifications_enabled') === 'true',
@@ -228,6 +231,21 @@ export const useBalanceStore = defineStore('balance', {
             this.theme = newTheme;
             this.applyTheme();
             await axios.post('settings', { settings: { theme: newTheme } });
+        },
+
+        async setVisualStyle(style) {
+            this.visualStyle = style;
+            localStorage.setItem('visual_style', style);
+        },
+
+        async setTreemapScale(scale) {
+            this.treemapScale = parseFloat(scale);
+            localStorage.setItem('treemap_scale', scale);
+        },
+
+        async setTreemapMode(mode) {
+            this.treemapMode = mode;
+            localStorage.setItem('treemap_mode', mode);
         },
 
         async setLocale(newLocale) {

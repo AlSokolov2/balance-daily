@@ -12,11 +12,11 @@
     <!-- Основное приложение: Router Shell -->
     <div v-else class="app-container w-full max-w-[1600px] mx-auto flex flex-col h-[100dvh] p-2 sm:p-4 overflow-hidden relative bg-[var(--bg-app)]">
         <div class="flex-1 min-h-0 flex flex-col overflow-hidden relative">
-            <router-view v-slot="{ Component, route }">
+            <router-view v-slot="{ Component, route: currentRoute }">
                 <transition :name="transitionName">
                     <component 
                         :is="Component" 
-                        :key="route.path"
+                        :key="currentRoute.path"
                         :is-handheld="isHandheld"
                         :offline-ready="isActuallyOfflineReady"
                         class="absolute inset-0"

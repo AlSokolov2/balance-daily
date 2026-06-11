@@ -5,8 +5,8 @@ import MainView from '../../resources/js/views/MainView.vue';
 import { useBalanceStore } from '../../resources/js/stores/balance';
 
 // Mock components
-vi.mock('../../resources/js/components/BubbleChart.vue', () => ({
-    default: { name: 'BubbleChart', template: '<div class="bubble-chart-mock"></div>' }
+vi.mock('../../resources/js/components/TaskVisualizer.vue', () => ({
+    default: { name: 'TaskVisualizer', template: '<div class="task-visualizer-mock"></div>' }
 }));
 vi.mock('../../resources/js/components/TaskItem.vue', () => ({
     default: { name: 'TaskItem', template: '<div class="task-item-mock"></div>' }
@@ -38,7 +38,7 @@ describe('UI State Reset Logic (Issue #48)', () => {
         await wrapper.vm.$nextTick();
 
         // Initial state: Desktop, filter 'all'
-        expect(wrapper.find('.bubble-chart-mock').exists()).toBe(true);
+        expect(wrapper.find('.task-visualizer-mock').exists()).toBe(true);
         expect(wrapper.vm.showTaskList).toBe(false);
 
         // Switch to archive
@@ -46,7 +46,7 @@ describe('UI State Reset Logic (Issue #48)', () => {
         await wrapper.vm.$nextTick();
 
         expect(wrapper.vm.showTaskList).toBe(true);
-        expect(wrapper.find('.bubble-chart-mock').exists()).toBe(false);
+        expect(wrapper.find('.task-visualizer-mock').exists()).toBe(false);
         
         // Task list card should have flex-1 and max-h-none classes
         const taskListCard = wrapper.find('.card');
@@ -70,7 +70,7 @@ describe('UI State Reset Logic (Issue #48)', () => {
         await wrapper.vm.$nextTick();
 
         expect(wrapper.vm.showTaskList).toBe(false);
-        expect(wrapper.find('.bubble-chart-mock').exists()).toBe(true);
+        expect(wrapper.find('.task-visualizer-mock').exists()).toBe(true);
     });
 
     it('hides chart screen in handheld mode for archive category', async () => {
@@ -80,13 +80,13 @@ describe('UI State Reset Logic (Issue #48)', () => {
         await wrapper.vm.$nextTick();
         
         // Initially 'all' category, Screen 1 (chart) exists
-        expect(wrapper.find('.bubble-chart-mock').exists()).toBe(true);
+        expect(wrapper.find('.task-visualizer-mock').exists()).toBe(true);
 
         // Switch to archive
         store.filterCat = 'archive';
         await wrapper.vm.$nextTick();
 
         // Screen 1 should be gone due to v-if
-        expect(wrapper.find('.bubble-chart-mock').exists()).toBe(false);
+        expect(wrapper.find('.task-visualizer-mock').exists()).toBe(false);
     });
 });

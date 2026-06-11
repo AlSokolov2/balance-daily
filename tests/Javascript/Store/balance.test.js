@@ -147,6 +147,43 @@ describe('Balance Store - Prioritization Engine', () => {
         expect(axios.defaults.headers.common['Authorization']).toBeUndefined();
     });
 
+    describe('Settings Management', () => {
+        it('sets and saves visual style', async () => {
+            const store = useBalanceStore();
+            expect(store.visualStyle).toBe('bubbles'); // Default
+            
+            await store.setVisualStyle('treemap');
+            
+            expect(store.visualStyle).toBe('treemap');
+            expect(localStorage.getItem('visual_style')).toBe('treemap');
+        });
+
+        it('sets and saves treemap scale', async () => {
+            const store = useBalanceStore();
+            expect(store.treemapScale).toBe(1.2); // Default
+            
+            await store.setTreemapScale(2.5);
+            
+            expect(store.treemapScale).toBe(2.5);
+            expect(localStorage.getItem('treemap_scale')).toBe('2.5');
+            
+            // Test with string input from DOM
+            await store.setTreemapScale("1.8");
+            expect(store.treemapScale).toBe(1.8);
+            expect(localStorage.getItem('treemap_scale')).toBe('1.8');
+        });
+
+        it('sets and saves treemap mode', async () => {
+            const store = useBalanceStore();
+            expect(store.treemapMode).toBe('nested'); // Default
+            
+            await store.setTreemapMode('airy');
+            
+            expect(store.treemapMode).toBe('airy');
+            expect(localStorage.getItem('treemap_mode')).toBe('airy');
+        });
+    });
+
     describe('Pulse & Sync', () => {
         beforeEach(() => {
             vi.useFakeTimers();
