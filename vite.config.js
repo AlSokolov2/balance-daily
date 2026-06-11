@@ -36,17 +36,15 @@ export default defineConfig(({ mode }) => {
             }),
             tailwindcss(),
             VitePWA({
-                outDir: 'public/build',
+                base: '/',
+                scope: '/',
+                outDir: 'public',
                 strategies: 'injectManifest',
                 srcDir: 'resources/js',
                 filename: 'sw.js',
                 registerType: 'prompt',
-                injectRegister: 'auto',
+                injectRegister: false,
                 includeAssets: ['favicon.svg', 'robots.txt'],
-                devOptions: {
-                    enabled: true,
-                    type: 'module',
-                },
                 manifest: {
                     name: 'Баланс.Дейли',
                     short_name: 'Баланс',
@@ -94,16 +92,13 @@ export default defineConfig(({ mode }) => {
                     ]
                 },
                 injectManifest: {
+                    globDirectory: 'public',
+                    globPatterns: ['build/assets/*.{js,css,woff,woff2}', 'index.php'],
                     rollupOptions: {
                         output: {
                             codeSplitting: false,
                         },
                     },
-                },
-                workbox: {
-                    globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-                    navigateFallback: null,
-                    navigateFallbackDenylist: [/^\/api/],
                 },
                 devOptions: {
                     enabled: true,
