@@ -14,8 +14,11 @@
                 :class="getZoneClass(zone.id)"
                 :style="getZoneStyle(zone)"
             >
-                <div class="absolute top-4 left-6 opacity-20 pointer-events-none">
-                    <span class="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text)]">
+                <div class="absolute top-4 left-6 opacity-90 pointer-events-none">
+                    <span 
+                        class="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text)]"
+                        style="text-shadow: -1px -1px 0 var(--bg-card), 1px -1px 0 var(--bg-card), -1px 1px 0 var(--bg-card), 1px 1px 0 var(--bg-card), 0 0 8px var(--bg-card);"
+                    >
                         {{ $t(`app.sections.${zone.id}`) }}
                     </span>
                 </div>
@@ -25,13 +28,18 @@
             <div
                 v-for="rect in treemapRects"
                 :key="rect.task.id"
-                class="absolute rounded-2xl border border-black/10 flex items-center justify-center cursor-pointer transition-all duration-300 overflow-hidden shadow-sm hover:z-10 hover:shadow-md hover:scale-[1.02] active:scale-95"
+                class="absolute rounded-2xl flex items-center justify-center cursor-pointer transition-all duration-300 overflow-hidden shadow-sm hover:z-10 hover:shadow-md hover:scale-[1.02] active:scale-95"
                 :style="getStyle(rect)"
                 @click="handleClick(rect.task)"
             >
                 <div class="p-2 sm:p-4 text-center w-full max-w-full">
                     <span 
-                        class="block font-black text-white mix-blend-overlay drop-shadow-md break-words leading-tight"
+                        :class="[
+                            'block font-black break-words leading-tight',
+                            store.isEffectivelyPostponed(rect.task) && !rect.task.force_active 
+                                ? 'text-[var(--color-text)] opacity-70' 
+                                : 'text-white drop-shadow-md'
+                        ]"
                         :style="{ fontSize: getFontSize(rect) }"
                     >
                         {{ rect.task.title }}
@@ -289,9 +297,9 @@ const treemapRects = computed(() => {
 
 const getZoneClass = (id) => {
     return {
-        'bg-[var(--bg-secondary)]/10 border-dashed border-[var(--color-border)]/30': id === 'plans',
-        'bg-[var(--color-primary)]/5 border-solid border-[var(--color-primary)]/10 shadow-inner': id === 'focus',
-        'bg-black/5 dark:bg-white/5 border-dotted border-[var(--color-border)]/20': id === 'routine'
+        'bg-[var(--bg-secondary)]/10 border-dashed border-[var(--color-border)]/20': id === 'plans',
+        'bg-[var(--color-primary)]/10 border-solid border-[var(--color-primary)]/15 shadow-inner': id === 'focus',
+        'bg-black/5 dark:bg-white/10 border-dotted border-[var(--color-border)]/20': id === 'routine'
     };
 };
 
@@ -302,19 +310,20 @@ const getZoneStyle = (zone) => ({
     height: `${zone.h - 4}px`
 });
 
-const getTaskColorStyle = (task) => {
-    const category = store.categories.find(c => c.slug === task.category_slug);
+const getStyle = (rect) => {
+    const category = store.categories.find(c => c.slug === rect.task.category_slug);
     const color = category?.color || '#8e8e93';
-    return hexToRgba(color, 0.85);
-};
+    const postponed = store.isEffectivelyPostponed(rect.task) && !rect.task.force_active;
 
-const getStyle = (rect) => ({
-    left: `${rect.x}px`,
-    top: `${rect.y}px`,
-    width: `${rect.w}px`,
-    height: `${rect.h}px`,
-    backgroundColor: getTaskColorStyle(rect.task)
-});
+    return {
+        left: `${rect.x}px`,
+        top: `${rect.y}px`,
+        width: `${rect.w}px`,
+        height: `${rect.h}px`,
+        backgroundColor: hexToRgba(color, postponed ? 0.15 : 0.85),
+        border: `2px ${postponed ? 'dashed' : 'solid'} ${hexToRgba(color, 0.4)}`
+    };
+};
 
 const getFontSize = (rect) => {
     const area = Math.max(0, rect.w) * Math.max(0, rect.h);

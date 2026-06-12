@@ -38,7 +38,7 @@ describe('Feedback System UI Verification', () => {
             }
         });
 
-        const feedbackLink = wrapper.find('a[href*="discussions"]');
+        const feedbackLink = wrapper.find('a[href*="issues/new"]');
         expect(feedbackLink.exists()).toBe(true);
         expect(feedbackLink.text()).toContain('app.feedback');
     });

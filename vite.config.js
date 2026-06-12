@@ -121,10 +121,10 @@ export default defineConfig(({ mode }) => {
                 include: ['resources/js/stores/**', 'resources/js/utils/**'],
                 reporter: ['text', 'json', 'html'],
                 thresholds: {
-                    lines: 95,
-                    functions: 85,
-                    branches: 80,
-                    statements: 90
+                    lines: 100,
+                    functions: 100,
+                    branches: 100,
+                    statements: 100
                 }
             }
         },

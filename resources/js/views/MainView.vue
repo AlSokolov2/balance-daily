@@ -143,7 +143,7 @@
             </div>
             
             <!-- Zoom Controls -->
-            <div class="absolute bottom-4 right-4 flex items-center gap-1 bg-[var(--bg-card)]/80 backdrop-blur-md p-1.5 rounded-2xl border border-[var(--color-border)] shadow-sm z-10">
+            <div class="absolute bottom-4 right-4 flex items-center gap-1 bg-[var(--bg-card)]/80 backdrop-blur-md p-1.5 rounded-2xl border border-[var(--color-border)] shadow-sm z-50">
                 <button class="zoom-btn" @click="store.bubbleZoom = Math.max(0.5, store.bubbleZoom - 0.1)">
                     -
                 </button>

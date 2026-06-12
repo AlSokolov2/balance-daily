@@ -107,11 +107,10 @@ export function recalculateTasks(tasks, categories, subcatCoeffs, now = new Date
     });
 
     const totalWeight = categories.reduce((acc, c) => acc + c.currentWeight, 0);
-    if (totalWeight > 0) {
-        categories.forEach(c => {
-            c.currentWeight /= totalWeight;
-        });
-    }
+    // Since currentWeight is always initialized to at least 0.1, totalWeight is guaranteed to be > 0 if categories is not empty.
+    categories.forEach(c => {
+        c.currentWeight /= totalWeight;
+    });
 
     // 3. Priorities
     const catsMap = Object.fromEntries(categories.map(c => [c.slug, c]));

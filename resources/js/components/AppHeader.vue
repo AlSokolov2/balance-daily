@@ -117,20 +117,38 @@
                     </svg>
                     {{ $t('app.settings') }}
                 </button>
-                <a href="https://github.com/AlSokolov2/balance-daily/discussions" target="_blank" class="w-full text-left px-4 py-3 text-sm text-[var(--color-text)] hover:bg-[var(--bg-secondary)] flex items-center gap-3 border-t border-[var(--color-border)]">
+                <!-- Notepad -->
+                <router-link
+                    to="/notepad"
+                    class="w-full text-left px-4 py-3 text-sm text-[var(--color-text)] hover:bg-[var(--bg-secondary)] flex items-center gap-3 border-t border-[var(--color-border)]"
+                    @click="emit('toggle-menu')"
+                >
                     <svg
-                        class="w-4 h-4 text-[var(--color-secondary)]"
+                        class="w-5 h-5 opacity-70"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-                        />
-                    </svg>
+                    ><path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    /></svg>
+                    {{ $t('settings.tabs.notepad') }}
+                </router-link>
+
+                <a href="https://github.com/AlSokolov2/balance-daily/issues/new" target="_blank" class="w-full text-left px-4 py-3 text-sm text-[var(--color-text)] hover:bg-[var(--bg-secondary)] flex items-center gap-3 border-t border-[var(--color-border)]">
+                    <svg
+                        class="w-5 h-5 opacity-70"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    ><path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                    /></svg>
                     {{ $t('app.feedback') }}
                 </a>
                 <button class="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-[var(--bg-secondary)] flex items-center gap-3 border-t border-[var(--color-border)]" @click="emit('logout')">
