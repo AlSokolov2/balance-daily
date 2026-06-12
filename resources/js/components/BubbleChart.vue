@@ -117,13 +117,14 @@ const bubbleStyles = computed(() => {
         const s = pos.size;
         const fontSize = s < 50 ? Math.max(6, s / 12) : Math.max(8, s / 9);
         const borderWidth = (task.missed_count > 0) ? '3px' : '2px';
+        const bgAlpha = postponed ? 0.05 : 0.25;
 
         const style = {
             width: s + 'px',
             height: s + 'px',
             left: (pos.x - s / 2) + 'px',
             top: (pos.y - s / 2) + 'px',
-            background: hexToRgba(color, 0.25),
+            background: hexToRgba(color, bgAlpha),
             border: `${borderWidth} solid ${color}`,
             fontSize: fontSize + 'px',
             color: 'var(--color-text)',
@@ -141,8 +142,12 @@ const bubbleStyles = computed(() => {
                 style.filter = 'grayscale(0.8) blur(0.5px)';
             }
         } else {
-            style.opacity = postponed ? 0.4 : 1;
+            style.opacity = 1;
             style.zIndex = 10;
+        }
+
+        if (postponed) {
+            style.borderStyle = 'dashed';
         }
 
         styles[task.id] = style;

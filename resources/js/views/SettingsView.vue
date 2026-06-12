@@ -29,7 +29,44 @@
                 </h3>
                 
                 <div class="space-y-6 bg-[var(--bg-card)] p-6 rounded-[32px] border border-[var(--color-border)] shadow-sm">
-                    <div>
+                    <router-link to="/notepad" class="w-full p-4 bg-[var(--bg-secondary)]/50 border border-[var(--color-border)] rounded-2xl flex items-center justify-between hover:bg-[var(--bg-secondary)] transition-all">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-[var(--bg-card)] border border-[var(--color-border)] flex items-center justify-center shadow-sm">
+                                <svg
+                                    class="w-5 h-5 text-[var(--color-primary)]"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                ><path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                /></svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-[var(--color-text)]">
+                                    {{ $t('settings.tabs.notepad') }}
+                                </p>
+                                <p class="text-[10px] text-[var(--color-secondary)]">
+                                    {{ $t('settings_modal.notepad.placeholder') }}
+                                </p>
+                            </div>
+                        </div>
+                        <svg
+                            class="w-5 h-5 text-[var(--color-secondary)]"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        ><path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 5l7 7-7 7"
+                        /></svg>
+                    </router-link>
+
+                    <div class="border-t border-[var(--color-border)] pt-6">
                         <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-3">{{ $t('settings.general.language') }}</label>
                         <div class="grid grid-cols-2 gap-2 bg-[var(--bg-secondary)] p-1 rounded-2xl border border-[var(--color-border)]">
                             <button
@@ -58,7 +95,7 @@
                     </div>
 
                     <div>
-                        <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-3">{{ $t('settings.general.visual_style', 'Стиль (Visual Style)') }}</label>
+                        <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-3">{{ $t('settings.general.visual_style') }}</label>
                         <div class="grid grid-cols-2 gap-2 bg-[var(--bg-secondary)] p-1 rounded-2xl border border-[var(--color-border)]">
                             <button
                                 v-for="style in ['bubbles', 'treemap']"
@@ -66,14 +103,14 @@
                                 :class="['py-3 rounded-xl text-xs font-bold transition-all', store.visualStyle === style ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']"
                                 @click="store.setVisualStyle(style)"
                             >
-                                {{ style === 'bubbles' ? 'Круги (Bubbles)' : 'Блоки (Treemap)' }}
+                                {{ $t(`settings.general.visual_styles.${style}`) }}
                             </button>
                         </div>
                     </div>
 
                     <div v-if="store.visualStyle === 'treemap'" class="space-y-6 pt-4 border-t border-[var(--color-border)]">
                         <div>
-                            <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-3">{{ $t('settings.general.treemap_mode', 'Режим раскладки') }}</label>
+                            <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-3">{{ $t('settings.general.treemap_mode') }}</label>
                             <div class="grid grid-cols-3 gap-2 bg-[var(--bg-secondary)] p-1 rounded-2xl border border-[var(--color-border)]">
                                 <button
                                     v-for="mode in ['flat', 'nested', 'airy']"
@@ -81,14 +118,14 @@
                                     :class="['py-3 rounded-xl text-[10px] font-bold transition-all', store.treemapMode === mode ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']"
                                     @click="store.setTreemapMode(mode)"
                                 >
-                                    {{ mode === 'flat' ? 'Простой' : (mode === 'nested' ? 'Группы' : 'Центр+') }}
+                                    {{ $t(`settings.general.treemap_modes.${mode}`) }}
                                 </button>
                             </div>
                         </div>
 
                         <div>
                             <div class="flex justify-between items-center mb-3 px-1">
-                                <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black tracking-widest">{{ $t('settings.general.treemap_scale', 'Контрастность веса') }}</label>
+                                <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black tracking-widest">{{ $t('settings.general.treemap_scale') }}</label>
                                 <span class="text-[10px] font-bold text-[var(--color-primary)]">{{ store.treemapScale.toFixed(1) }}x</span>
                             </div>
                             <input
@@ -101,7 +138,7 @@
                                 @input="store.setTreemapScale($event.target.value)"
                             >
                             <p class="text-[9px] text-[var(--color-secondary)] mt-2 px-1 leading-relaxed">
-                                {{ $t('settings.general.treemap_scale_desc', 'Увеличивает визуальную разницу между важными и мелкими задачами.') }}
+                                {{ $t('settings.general.treemap_scale_desc') }}
                             </p>
                         </div>
                     </div>
