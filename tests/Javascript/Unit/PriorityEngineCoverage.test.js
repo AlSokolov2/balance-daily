@@ -1,10 +1,20 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { calcPriority, isCategoryPostponed, recalculateTasks, isEffectivelyPostponed } from '../../../resources/js/utils/priority-engine';
 
 describe('Priority Engine Exhaustive Branch Coverage', () => {
     const catsMap = {
         work: { slug: 'work', currentWeight: 0.5, weight: 0.5 }
     };
+
+    beforeEach(() => {
+        // Freeze time at noon to ensure stable day boundaries for Math.ceil logic
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-06-12T12:00:00Z'));
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
 
     it('covers default parameters and missing catsMap entries', () => {
         // calcPriority default subcatCoeffs = {}
@@ -60,17 +70,16 @@ describe('Priority Engine Exhaustive Branch Coverage', () => {
     });
 
     it('covers all deadline proximity branches in calcPriority', () => {
-        const now = new Date();
-        now.setHours(12, 0, 0, 0);
+        const now = new Date('2026-06-12T12:00:00Z');
         
         const cases = [
-            { d: -1, expected: 5 }, // Past
-            { d: 0, expected: 4 },  // Today
-            { d: 1, expected: 3 },  // Soon (1d)
-            { d: 2, expected: 3 },  // Soon (2d)
-            { d: 5, expected: 1 },  // Week (5d)
-            { d: 7, expected: 1 },  // Week (7d)
-            { d: 10, expected: 0 }  // Far future
+            { d: -1.5, expected: 5 }, // Past (more than 1 day to ensure Math.ceil gives < 0)
+            { d: 0, expected: 4 },    // Today
+            { d: 1, expected: 3 },    // Soon (1d)
+            { d: 2, expected: 3 },    // Soon (2d)
+            { d: 5, expected: 1 },    // Week (5d)
+            { d: 7, expected: 1 },    // Week (7d)
+            { d: 10, expected: 0 }    // Far future
         ];
 
         cases.forEach(({ d, expected }) => {
