@@ -364,6 +364,12 @@ export const useBalanceStore = defineStore('balance', {
             this.recalculateAll();
         },
 
+        async deleteTask(id) {
+            await axios.delete(`tasks/${id}`);
+            this.tasks = this.tasks.filter(x => x.id !== id);
+            this.recalculateAll();
+        },
+
         async updateTask(id, payload) {
             const t = this.tasks.find(x => x.id === id);
             if (!t) return;

@@ -35,11 +35,44 @@ class ImportExportController extends Controller
      */
     public function import(Request $request): JsonResponse
     {
-        $data = $request->all();
+        $validated = $request->validate([
+            'categories' => 'nullable|array',
+            'categories.*.name' => 'nullable|string|max:255',
+            'categories.*.weight' => 'nullable|numeric|min:0|max:100',
+            'categories.*.color' => 'nullable|string|max:7',
+            'categories.*.hideUntil' => 'nullable|string|max:5',
+            'categories.*.hide_until' => 'nullable|string|max:5',
+            'tasks' => 'nullable|array|max:10000',
+            'tasks.*.title' => 'nullable|string|max:500',
+            'tasks.*.category' => 'nullable|string|max:100',
+            'tasks.*.category_slug' => 'nullable|string|max:100',
+            'tasks.*.importance' => 'nullable|numeric|min:0|max:100',
+            'tasks.*.subcategory' => 'nullable|string|max:255',
+            'tasks.*.deadline' => 'nullable|date',
+            'tasks.*.repeatType' => 'nullable|string|max:50',
+            'tasks.*.repeat_type' => 'nullable|string|max:50',
+            'tasks.*.repeatInterval' => 'nullable|integer|min:1|max:365',
+            'tasks.*.repeat_interval' => 'nullable|integer|min:1|max:365',
+            'tasks.*.repeatDays' => 'nullable|array',
+            'tasks.*.repeat_days' => 'nullable|array',
+            'tasks.*.notes' => 'nullable|string|max:10000',
+            'tasks.*.completed' => 'nullable|boolean',
+            'tasks.*.ha' => 'nullable|boolean',
+            'tasks.*.forceActive' => 'nullable|boolean',
+            'tasks.*.force_active' => 'nullable|boolean',
+            'tasks.*.hiddenUntil' => 'nullable|date',
+            'tasks.*.hidden_until' => 'nullable|date',
+            'tasks.*.missedCount' => 'nullable|integer|min:0',
+            'tasks.*.missed_count' => 'nullable|integer|min:0',
+            'subcatCoeffs' => 'nullable|array',
+            'subcatCoeffs.*' => 'nullable|numeric|min:0|max:10',
+            'notepad' => 'nullable|string|max:100000',
+        ]);
+
         $user = $this->user();
         $userId = $user->id;
 
-        DB::transaction(function () use ($data, $userId) {
+        DB::transaction(function () use ($validated, $userId) {
             Schema::disableForeignKeyConstraints();
 
             // Clear existing for THIS user
@@ -48,8 +81,8 @@ class ImportExportController extends Controller
             SubcatCoeff::where('user_id', $userId)->delete();
 
             // Import Categories
-            if (isset($data['categories']) && is_iterable($data['categories'])) {
-                foreach ($data['categories'] as $slug => $cat) {
+            if (isset($validated['categories']) && is_iterable($validated['categories'])) {
+                foreach ($validated['categories'] as $slug => $cat) {
                     $weight = (float) ($cat['weight'] ?? 0.1);
                     // If weight is sent as percentage (e.g. 50 instead of 0.5), normalize it
                     if ($weight > 1) {
@@ -68,8 +101,8 @@ class ImportExportController extends Controller
             }
 
             // Import Tasks
-            if (isset($data['tasks']) && is_iterable($data['tasks'])) {
-                foreach ($data['tasks'] as $task) {
+            if (isset($validated['tasks']) && is_iterable($validated['tasks'])) {
+                foreach ($validated['tasks'] as $task) {
                     Task::create([
                         'user_id' => $userId,
                         'title' => $task['title'] ?? 'Untitled',
@@ -94,8 +127,8 @@ class ImportExportController extends Controller
             }
 
             // Import SubcatCoeffs
-            if (! empty($data['subcatCoeffs']) && is_iterable($data['subcatCoeffs'])) {
-                foreach ($data['subcatCoeffs'] as $name => $coeff) {
+            if (! empty($validated['subcatCoeffs']) && is_iterable($validated['subcatCoeffs'])) {
+                foreach ($validated['subcatCoeffs'] as $name => $coeff) {
                     SubcatCoeff::create([
                         'user_id' => $userId,
                         'name' => $name,
@@ -105,10 +138,10 @@ class ImportExportController extends Controller
             }
 
             // Import Notepad
-            if (isset($data['notepad'])) {
+            if (isset($validated['notepad'])) {
                 Setting::updateOrCreate(
                     ['key' => 'notepad_text', 'user_id' => $userId],
-                    ['value' => (string) $data['notepad']]
+                    ['value' => (string) $validated['notepad']]
                 );
             }
 
