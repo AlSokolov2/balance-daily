@@ -124,4 +124,19 @@ describe('Balance Store - Advanced Coverage', () => {
         expect(store.tasks).toHaveLength(1);
         expect(store.tasks[0].id).toBe(2);
     });
+
+    it('archiveTask marks task completed without history', async () => {
+        const store = useBalanceStore();
+        store.tasks = [{ id: 1, title: 'Task 1', category_slug: 'chor' }];
+        store.categories = [{ slug: 'chor', color: '#fff', weight: 0.5, currentWeight: 0.5 }];
+        axios.put.mockResolvedValue({ data: { id: 1, completed: true } });
+
+        await store.archiveTask(1);
+        expect(axios.put).toHaveBeenCalledWith('tasks/1', {
+            completed: true,
+            completed_at: expect.any(String),
+            _skip_history: true,
+        });
+        expect(store.tasks).toHaveLength(0);
+    });
 });

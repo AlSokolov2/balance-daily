@@ -103,6 +103,7 @@
             "missed": "missed {n}d",
             "repeat": "repeat",
             "completed": "done",
+            "archive": "Archive without completion mark",
             "last_completed": "last completed"
         },
         "meta": {

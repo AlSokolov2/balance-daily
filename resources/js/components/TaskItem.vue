@@ -49,13 +49,21 @@
             <button v-if="canComplete" class="action-btn" @click="store.completeTask(task.id)">
                 ✓
             </button>
+            <button
+                v-if="canComplete"
+                class="action-btn"
+                :title="$t('task.archive')"
+                @click="store.archiveTask(task.id)"
+            >
+                📦
+            </button>
             <button v-if="canRestore" class="action-btn" @click="store.restoreTask(task.id)">
                 ↩
             </button>
             <button v-if="canReturnNow" class="action-btn" @click="store.returnNow(task.id)">
                 ↩
             </button>
-            
+
             <button class="action-btn" @click="$emit('edit', task)">
                 ✎
             </button>
