@@ -43,6 +43,27 @@ class SettingsApiTest extends TestCase
         ]);
     }
 
+    public function test_update_ignores_unknown_keys(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->postJson('/api/settings', [
+            'settings' => [
+                'theme' => 'dark',
+                'malicious_key' => 'injected',
+            ],
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson(['theme' => 'dark'])
+            ->assertJsonMissing(['malicious_key' => 'injected']);
+
+        $this->assertDatabaseMissing('settings', [
+            'user_id' => $user->id,
+            'key' => 'malicious_key',
+        ]);
+    }
+
     public function test_user_cannot_see_others_settings(): void
     {
         $userA = User::factory()->create();
