@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuthCode;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -46,12 +48,15 @@ class AuthController extends Controller
 
             Auth::login($user);
 
-            $token = $user->createToken('auth_token')->plainTextToken;
+            $code = bin2hex(random_bytes(32));
 
-            // Redirect back to frontend
-            $frontendUrl = url('/');
+            $user->authCodes()->create([
+                'code' => hash('sha256', $code),
+                'expires_at' => now()->addSeconds(60),
+            ]);
 
-            return redirect($frontendUrl.'?token='.$token);
+            // Redirect back to frontend with one-time auth code
+            return redirect(url('/') . '?code=' . $code);
 
         } catch (\Exception $e) {
             \Log::error('Google Auth Error: '.$e->getMessage());
@@ -80,9 +85,39 @@ class AuthController extends Controller
 
         $this->seedDefaultCategories($user);
 
+        $code = bin2hex(random_bytes(32));
+
+        $user->authCodes()->create([
+            'code' => hash('sha256', $code),
+            'expires_at' => now()->addSeconds(60),
+        ]);
+
+        return redirect(url('/') . '?code=' . $code);
+    }
+
+    /**
+     * Exchange a one-time auth code for a Sanctum token.
+     */
+    public function exchangeCode(Request $request): JsonResponse
+    {
+        $request->validate(['code' => 'required|string']);
+
+        $hashedCode = hash('sha256', $request->code);
+        $authCode = AuthCode::where('code', $hashedCode)
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (! $authCode) {
+            return response()->json(['message' => 'Invalid or expired code'], 422);
+        }
+
+        $user = $authCode->user;
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return redirect(url('/').'?token='.$token);
+        // Remove all codes for this user — one-time use
+        $user->authCodes()->delete();
+
+        return response()->json(['token' => $token]);
     }
 
     /**

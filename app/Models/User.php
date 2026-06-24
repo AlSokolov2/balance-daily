@@ -87,4 +87,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(Setting::class);
     }
+
+    /** @return HasMany<AuthCode, $this> */
+    public function authCodes(): HasMany
+    {
+        return $this->hasMany(AuthCode::class);
+    }
 }

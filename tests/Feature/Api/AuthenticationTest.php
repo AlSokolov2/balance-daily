@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\AuthCode;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Socialite\Facades\Socialite;
@@ -45,12 +46,57 @@ class AuthenticationTest extends TestCase
         $user = User::where('email', 'test@example.com')->first();
 
         $response->assertRedirect();
-        $this->assertStringContainsString('token=', $response->getTargetUrl());
+        $this->assertStringContainsString('code=', $response->getTargetUrl());
 
         $this->assertDatabaseHas('categories', [
             'user_id' => $user->id,
             'slug' => 'chor',
         ]);
+    }
+
+    public function test_code_exchange_returns_token(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $plainCode = bin2hex(random_bytes(32));
+        AuthCode::create([
+            'user_id' => $user->id,
+            'code' => hash('sha256', $plainCode),
+            'expires_at' => now()->addSeconds(60),
+        ]);
+
+        $response = $this->postJson('/api/auth/exchange-code', [
+            'code' => $plainCode,
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonStructure(['token']);
+
+        // Code should be consumed — cannot reuse
+        $secondResponse = $this->postJson('/api/auth/exchange-code', [
+            'code' => $plainCode,
+        ]);
+        $secondResponse->assertStatus(422);
+    }
+
+    public function test_code_exchange_rejects_expired_code(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+
+        $plainCode = bin2hex(random_bytes(32));
+        AuthCode::create([
+            'user_id' => $user->id,
+            'code' => hash('sha256', $plainCode),
+            'expires_at' => now()->subMinute(),
+        ]);
+
+        $response = $this->postJson('/api/auth/exchange-code', [
+            'code' => $plainCode,
+        ]);
+
+        $response->assertStatus(422);
     }
 
     public function test_dev_login_works_in_allowed_environments(): void
@@ -62,7 +108,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $this->assertStringContainsString('token=', $response->getTargetUrl());
+        $this->assertStringContainsString('code=', $response->getTargetUrl());
 
         /** @var User $user */
         $user = User::where('email', 'alsokolov2@gmail.com')->first();

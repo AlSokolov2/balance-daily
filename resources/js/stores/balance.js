@@ -120,11 +120,16 @@ export const useBalanceStore = defineStore('balance', {
     actions: {
         async init() {
             const urlParams = new window.URLSearchParams(window.location.search);
-            const tokenFromUrl = urlParams.get('token');
-            if (tokenFromUrl) {
-                this.token = tokenFromUrl;
-                localStorage.setItem('auth_token', tokenFromUrl);
+            const codeFromUrl = urlParams.get('code');
+            if (codeFromUrl) {
                 window.history.replaceState({}, document.title, window.location.pathname);
+                try {
+                    const res = await axios.post('auth/exchange-code', { code: codeFromUrl });
+                    this.token = res.data.token;
+                    localStorage.setItem('auth_token', this.token);
+                } catch (e) {
+                    console.error('Code exchange error:', e);
+                }
             }
 
             if (this.token) {
