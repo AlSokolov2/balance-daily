@@ -98,7 +98,11 @@ class TaskController extends Controller
         ]);
 
         $wasCompleted = $task->completed;
-        $isCompletionEvent = (! $wasCompleted && ($validated['completed'] ?? false)) || ($request->input('_was_completed') === true);
+        $skipHistory = $request->input('_skip_history') === true;
+        $isCompletionEvent = !$skipHistory && (
+            (! $wasCompleted && ($validated['completed'] ?? false)) ||
+            ($request->input('_was_completed') === true)
+        );
         
         $task->fill($validated);
 

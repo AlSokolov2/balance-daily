@@ -327,6 +327,17 @@ export const useBalanceStore = defineStore('balance', {
             });
         },
 
+        /** Archive a task without recording completion in history. */
+        async archiveTask(id) {
+            await axios.put(`tasks/${id}`, {
+                completed: true,
+                completed_at: new Date().toISOString(),
+                _skip_history: true,
+            });
+            this.tasks = this.tasks.filter(x => x.id !== id);
+            this.recalculateAll();
+        },
+
         /** Restore a completed task to active. */
         async restoreTask(id) {
             await this.updateTask(id, { completed: false, completed_at: null, hidden_until: null, postpone_until: null });
