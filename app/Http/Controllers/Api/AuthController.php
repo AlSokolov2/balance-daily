@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AuthCode;
 use App\Models\User;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ConnectException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\InvalidStateException;
 
 class AuthController extends Controller
 {
@@ -58,9 +61,17 @@ class AuthController extends Controller
             // Redirect back to frontend with one-time auth code
             return redirect(url('/') . '?code=' . $code);
 
+        } catch (InvalidStateException $e) {
+            \Log::warning('Google Auth: invalid state', ['error' => $e->getMessage()]);
+            return redirect('/?error=state_invalid');
+        } catch (ClientException $e) {
+            \Log::warning('Google Auth: access denied or invalid grant', ['error' => $e->getMessage()]);
+            return redirect('/?error=access_denied');
+        } catch (ConnectException $e) {
+            \Log::error('Google Auth: network error', ['error' => $e->getMessage()]);
+            return redirect('/?error=network_error');
         } catch (\Exception $e) {
             \Log::error('Google Auth Error: '.$e->getMessage());
-
             return redirect('/?error=auth_failed');
         }
     }
