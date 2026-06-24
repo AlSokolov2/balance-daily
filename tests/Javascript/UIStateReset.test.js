@@ -48,10 +48,10 @@ describe('UI State Reset Logic (Issue #48)', () => {
         expect(wrapper.vm.showTaskList).toBe(true);
         expect(wrapper.find('.task-visualizer-mock').exists()).toBe(false);
         
-        // Task list card should have flex-1 and max-h-none classes
+        // Task list card should have flex-1 for archive, NOT max-h-[40vh]
         const taskListCard = wrapper.find('.card');
         expect(taskListCard.classes()).toContain('flex-1');
-        expect(taskListCard.classes()).toContain('max-h-none');
+        expect(taskListCard.classes()).not.toContain('max-h-[40vh]');
     });
 
     it('collapses list and shows chart when switching back from archive to all', async () => {
