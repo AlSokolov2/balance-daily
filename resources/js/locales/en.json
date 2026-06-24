@@ -135,6 +135,7 @@
         "subcategory": "Subcategory",
         "deadline": "Deadline",
         "postpone_until": "Postpone until",
+        "hidden_until": "Appears on (date)",
         "repeat": {
             "type": "Repeat type",
             "none": "No repeat",
