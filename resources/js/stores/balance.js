@@ -3,54 +3,72 @@ import axios from 'axios';
 import { recalculateTasks, isEffectivelyPostponed, isCategoryPostponed } from '../utils/priority-engine';
 
 export const useBalanceStore = defineStore('balance', {
+    // ═══════════════════════════════════════════
+    //  STATE
+    // ═══════════════════════════════════════════
     state: () => ({
+        // ── Auth ──
+        token: localStorage.getItem('auth_token') || null,
+        user: null,
+
+        // ── Core Data (synced with server) ──
         tasks: [],
         categories: [],
         subcatCoeffs: {},
-        filterCat: 'all',
-        loading: false,
-        bubbleZoom: 1,
         notepadText: '',
+        lastSync: localStorage.getItem('last_sync') || null,
+        stats: null,
+
+        // ── Server-persisted Settings ──
         theme: 'system',
+        locale: localStorage.getItem('locale') || 'ru',
+        pulseInterval: parseInt(localStorage.getItem('pulse_interval')) || 1,
+
+        // ── Frontend-only Settings (localStorage, never sent to API) ──
         visualStyle: localStorage.getItem('visual_style') || 'bubbles',
         treemapScale: parseFloat(localStorage.getItem('treemap_scale')) || 1.2,
         treemapMode: localStorage.getItem('treemap_mode') || 'nested',
-        locale: localStorage.getItem('locale') || 'ru',
-        pulseInterval: parseInt(localStorage.getItem('pulse_interval')) || 1,
+        bubbleZoom: 1,
         notificationsEnabled: localStorage.getItem('notifications_enabled') === 'true',
+
+        // ── UI State ──
+        filterCat: 'all',
         searchQuery: '',
-        lastSync: localStorage.getItem('last_sync') || null,
+        loading: false,
+
+        // ── Pulse ──
         lastPulse: new Date().toDateString(),
         pulseTimer: null,
-        user: null,
-        token: localStorage.getItem('auth_token') || null,
-        stats: null,
     }),
 
+    // ═══════════════════════════════════════════
+    //  GETTERS
+    // ═══════════════════════════════════════════
     getters: {
+        // ── Auth ──
         isAuthenticated: (state) => !!state.token,
         googleAuthUrl: () => (window.apiBaseUrl || '').replace(/\/$/, '') + '/auth/google',
+
+        // ── Derived Lists ──
         allSubcats: (state) => Object.keys(state.subcatCoeffs),
 
         /**
-         * Base getter for all tasks sorted by priority.
+         * All tasks sorted by calculated priority (descending).
          */
         allTasksOrdered: (state) => {
             if (!Array.isArray(state.tasks)) return [];
             return [...state.tasks].sort((a, b) => b.calculatedPriority - a.calculatedPriority);
         },
 
-        /**
-         * Getters for visualization sections.
-         */
+        // ── View-specific Task Filters ──
+
+        /** Active, non-hidden tasks for bubble/treemap visualization. */
         bubbleTasks: (state) => {
             const active = state.allTasksOrdered.filter(t => {
                 if (t.completed) return false;
-                const now = new Date();
-                if (t.hidden_until && new Date(t.hidden_until) > now) return false;
+                if (t.hidden_until && new Date(t.hidden_until) > new Date()) return false;
                 return true;
             });
-
             if (state.filterCat === 'all') return active;
             if (['archive', 'hidden'].includes(state.filterCat)) return [];
             return active.filter(t => t.category_slug === state.filterCat);
@@ -60,34 +78,31 @@ export const useBalanceStore = defineStore('balance', {
         plansTasks: (state) => state.bubbleTasks.filter(t => state.isEffectivelyPostponed(t)),
         routineTasks: (state) => state.bubbleTasks.filter(t => t.ha && !state.isEffectivelyPostponed(t)),
 
-        /**
-         * Main tasks list getter with full filtering logic.
-         */
+        /** Main task list with full filtering (search, archive, hidden). */
         filteredTasks: (state) => {
             const now = new Date();
             let tasks = state.allTasksOrdered;
-            
+
             if (state.filterCat === 'hidden') {
                 return tasks.filter(t => t.hidden_until && new Date(t.hidden_until) > now && !t.completed)
                     .sort((a, b) => new Date(a.hidden_until) - new Date(b.hidden_until));
             }
-            
+
             if (state.filterCat === 'archive') {
                 return tasks.filter(t => t.completed)
                     .sort((a, b) => new Date(b.completed_at || 0) - new Date(a.completed_at || 0));
             }
 
-            // Regular filter
             tasks = tasks.filter(t => !t.completed && (!t.hidden_until || new Date(t.hidden_until) <= now));
-            
+
             if (state.filterCat !== 'all') {
                 tasks = tasks.filter(t => t.category_slug === state.filterCat);
             }
 
             if (state.searchQuery) {
                 const q = state.searchQuery.toLowerCase();
-                tasks = tasks.filter(t => 
-                    (t.title && t.title.toLowerCase().includes(q)) || 
+                tasks = tasks.filter(t =>
+                    (t.title && t.title.toLowerCase().includes(q)) ||
                     (t.notes && t.notes.toLowerCase().includes(q))
                 );
             }
@@ -95,10 +110,10 @@ export const useBalanceStore = defineStore('balance', {
             return tasks;
         },
 
+        /** Task counts by status (all, hidden, archive, by category). */
         counts: (state) => {
             const now = new Date();
             const res = { all: 0, hidden: 0, archive: 0, byCat: {} };
-
             if (!Array.isArray(state.tasks)) return res;
 
             state.tasks.forEach(t => {
@@ -117,7 +132,17 @@ export const useBalanceStore = defineStore('balance', {
         }
     },
 
+    // ═══════════════════════════════════════════
+    //  ACTIONS
+    // ═══════════════════════════════════════════
     actions: {
+        // ─────────────────────────────────────────
+        //  Auth & Lifecycle
+        // ─────────────────────────────────────────
+
+        /**
+         * Initialize the app: exchange auth code, load user, sync data, start pulse.
+         */
         async init() {
             const urlParams = new window.URLSearchParams(window.location.search);
             const codeFromUrl = urlParams.get('code');
@@ -146,6 +171,7 @@ export const useBalanceStore = defineStore('balance', {
             }
         },
 
+        /** Clear all state and revoke server token. */
         async logout() {
             this.stopPulse();
             if (this.token) {
@@ -162,10 +188,16 @@ export const useBalanceStore = defineStore('balance', {
             await this.sync(true);
         },
 
+        // ─────────────────────────────────────────
+        //  Data & Sync
+        // ─────────────────────────────────────────
+
+        /** Force a full data refresh. */
         async fetchAll() {
             await this.sync(true);
         },
 
+        /** Load stats from server. */
         async fetchStats() {
             if (!this.token) return;
             try {
@@ -176,6 +208,10 @@ export const useBalanceStore = defineStore('balance', {
             }
         },
 
+        /**
+         * Sync data with server. Full sync on first load or when forced;
+         * incremental (delta) sync otherwise.
+         */
         async sync(forceFull = false) {
             this.loading = true;
             try {
@@ -189,7 +225,6 @@ export const useBalanceStore = defineStore('balance', {
                 const res = await axios.get('sync', { params });
                 const data = res.data;
 
-                // Sync logic...
                 this.mergeCollection('tasks', data.tasks, forceFull);
                 this.mergeCollection('categories', data.categories, forceFull);
 
@@ -199,7 +234,7 @@ export const useBalanceStore = defineStore('balance', {
                     this.locale = data.settings.locale || this.locale;
                     this.pulseInterval = parseInt(data.settings.pulse_interval) || this.pulseInterval;
                 }
-                
+
                 if (data.subcatCoeffs) this.subcatCoeffs = data.subcatCoeffs;
 
                 this.lastSync = data.server_time;
@@ -214,6 +249,10 @@ export const useBalanceStore = defineStore('balance', {
             }
         },
 
+        /**
+         * Merge sync data into local collections. On full sync, replace
+         * entire collection. On delta, upsert updated items and remove deleted.
+         */
         mergeCollection(key, data, isFull) {
             if (!data) return;
             if (isFull) {
@@ -232,25 +271,80 @@ export const useBalanceStore = defineStore('balance', {
             }
         },
 
+        // ─────────────────────────────────────────
+        //  Task CRUD
+        // ─────────────────────────────────────────
+
+        async addTask(taskData) {
+            const res = await axios.post('tasks', taskData);
+            this.tasks.push(res.data);
+            this.recalculateAll();
+        },
+
+        async deleteTask(id) {
+            await axios.delete(`tasks/${id}`);
+            this.tasks = this.tasks.filter(x => x.id !== id);
+            this.recalculateAll();
+        },
+
+        /**
+         * Update a task. Handles recurring task completion locally:
+         * moves task to hidden state before server responds.
+         */
+        async updateTask(id, payload) {
+            const t = this.tasks.find(x => x.id === id);
+            if (!t) return;
+
+            const isRecurring = (payload.repeat_type && payload.repeat_type !== 'none') ||
+                              (!payload.repeat_type && t.repeat_type && t.repeat_type !== 'none');
+
+            if (payload.completed && isRecurring) {
+                const nextData = this.calculateNextOccurrence(t, payload);
+                payload.completed = false;
+                payload.completed_at = null;
+                payload.hidden_until = nextData.hidden_until;
+                payload.last_completed_date = nextData.last_completed_date;
+                payload.missed_count = 0;
+                payload._was_completed = true;
+            }
+
+            const res = await axios.put(`tasks/${id}`, payload);
+            const idx = this.tasks.findIndex(x => x.id === id);
+            if (idx !== -1) this.tasks[idx] = res.data;
+
+            this.recalculateAll();
+        },
+
+        /** Mark a task as completed. */
+        async completeTask(id) {
+            const t = this.tasks.find(x => x.id === id);
+            if (!t || t.completed) return;
+
+            await this.updateTask(id, {
+                completed: true,
+                completed_at: new Date().toISOString(),
+                missed_count: 0
+            });
+        },
+
+        /** Restore a completed task to active. */
+        async restoreTask(id) {
+            await this.updateTask(id, { completed: false, completed_at: null, hidden_until: null });
+        },
+
+        /** Bring a hidden task back immediately. */
+        async returnNow(id) {
+            await this.updateTask(id, { hidden_until: null });
+        },
+
+        // ─────────────────────────────────────────
+        //  Settings
+        // ─────────────────────────────────────────
+
         async setTheme(newTheme) {
             this.theme = newTheme;
             this.applyTheme();
             await axios.post('settings', { settings: { theme: newTheme } });
-        },
-
-        async setVisualStyle(style) {
-            this.visualStyle = style;
-            localStorage.setItem('visual_style', style);
-        },
-
-        async setTreemapScale(scale) {
-            this.treemapScale = parseFloat(scale);
-            localStorage.setItem('treemap_scale', scale);
-        },
-
-        async setTreemapMode(mode) {
-            this.treemapMode = mode;
-            localStorage.setItem('treemap_mode', mode);
         },
 
         async setLocale(newLocale) {
@@ -265,6 +359,29 @@ export const useBalanceStore = defineStore('balance', {
             this.startPulse();
             await axios.post('settings', { settings: { pulse_interval: minutes } });
         },
+
+        // ─────────────────────────────────────────
+        //  Frontend-only Visual Settings
+        // ─────────────────────────────────────────
+
+        setVisualStyle(style) {
+            this.visualStyle = style;
+            localStorage.setItem('visual_style', style);
+        },
+
+        setTreemapScale(scale) {
+            this.treemapScale = parseFloat(scale);
+            localStorage.setItem('treemap_scale', scale);
+        },
+
+        setTreemapMode(mode) {
+            this.treemapMode = mode;
+            localStorage.setItem('treemap_mode', mode);
+        },
+
+        // ─────────────────────────────────────────
+        //  Push Notifications
+        // ─────────────────────────────────────────
 
         async toggleNotifications() {
             this.notificationsEnabled ? await this.unsubscribeFromPush() : await this.subscribeToPush();
@@ -311,15 +428,11 @@ export const useBalanceStore = defineStore('balance', {
             }
         },
 
-        urlBase64ToUint8Array(base64String) {
-            const padding = '='.repeat((4 - base64String.length % 4) % 4);
-            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-            const rawData = window.atob(base64);
-            const outputArray = new Uint8Array(rawData.length);
-            for (let i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
-            return outputArray;
-        },
+        // ─────────────────────────────────────────
+        //  Pulse & Recalculation
+        // ─────────────────────────────────────────
 
+        /** Start periodic priority recalculation (every N minutes). */
         startPulse() {
             this.stopPulse();
             if (this.pulseInterval <= 0) return;
@@ -339,14 +452,49 @@ export const useBalanceStore = defineStore('balance', {
             if (this.pulseTimer) { window.clearInterval(this.pulseTimer); this.pulseTimer = null; }
         },
 
+        /** Re-run priority engine on all tasks. */
+        recalculateAll() {
+            this.tasks = recalculateTasks(this.tasks, this.categories, this.subcatCoeffs);
+        },
+
+        // ─────────────────────────────────────────
+        //  Theme Application
+        // ─────────────────────────────────────────
+
         applyTheme() {
-            const isDark = this.theme === 'dark' || 
+            const isDark = this.theme === 'dark' ||
                 (this.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
             document.documentElement.classList.toggle('dark', isDark);
         },
 
-        recalculateAll() {
-            this.tasks = recalculateTasks(this.tasks, this.categories, this.subcatCoeffs);
+        // ─────────────────────────────────────────
+        //  Priority Helpers
+        // ─────────────────────────────────────────
+
+        /** Calculate next occurrence date for a recurring task. */
+        calculateNextOccurrence(t, payload = {}) {
+            const repeat_type = payload.repeat_type || t.repeat_type;
+            const repeat_interval = payload.repeat_interval || t.repeat_interval;
+            const repeat_days = payload.repeat_days || t.repeat_days;
+
+            const now = new Date();
+            let nextDate = new Date();
+
+            if (repeat_type === 'interval') {
+                nextDate.setDate(nextDate.getDate() + (parseInt(repeat_interval) || 1));
+            } else if (repeat_type === 'weekly' && repeat_days?.length) {
+                nextDate.setDate(nextDate.getDate() + 1);
+                while (!repeat_days.includes(nextDate.getDay())) {
+                    nextDate.setDate(nextDate.getDate() + 1);
+                }
+            }
+
+            nextDate.setHours(0, 0, 0, 0);
+
+            return {
+                hidden_until: nextDate.toISOString(),
+                last_completed_date: now.toISOString()
+            };
         },
 
         isCategoryPostponed(catSlug) {
@@ -363,89 +511,17 @@ export const useBalanceStore = defineStore('balance', {
             return t.hidden_until && new Date(t.hidden_until) > new Date();
         },
 
-        async addTask(taskData) {
-            const res = await axios.post('tasks', taskData);
-            this.tasks.push(res.data);
-            this.recalculateAll();
-        },
+        // ─────────────────────────────────────────
+        //  Utilities
+        // ─────────────────────────────────────────
 
-        async deleteTask(id) {
-            await axios.delete(`tasks/${id}`);
-            this.tasks = this.tasks.filter(x => x.id !== id);
-            this.recalculateAll();
-        },
-
-        async updateTask(id, payload) {
-            const t = this.tasks.find(x => x.id === id);
-            if (!t) return;
-
-            // Logic for immediate offline feedback: 
-            // Recurring tasks should move to 'hidden' locally even before server responds
-            const isRecurring = (payload.repeat_type && payload.repeat_type !== 'none') || 
-                              (!payload.repeat_type && t.repeat_type && t.repeat_type !== 'none');
-
-            if (payload.completed && isRecurring) {
-                const nextData = this.calculateNextOccurrence(t, payload);
-                payload.completed = false; // Reset locally
-                payload.completed_at = null;
-                payload.hidden_until = nextData.hidden_until;
-                payload.last_completed_date = nextData.last_completed_date;
-                payload.missed_count = 0;
-                
-                // Special flag for backend to know this was a completion event 
-                // even if we send completed: false
-                payload._was_completed = true; 
-            }
-
-            const res = await axios.put(`tasks/${id}`, payload);
-            const idx = this.tasks.findIndex(x => x.id === id);
-            if (idx !== -1) this.tasks[idx] = res.data;
-            
-            this.recalculateAll();
-        },
-
-        calculateNextOccurrence(t, payload = {}) {
-            const repeat_type = payload.repeat_type || t.repeat_type;
-            const repeat_interval = payload.repeat_interval || t.repeat_interval;
-            const repeat_days = payload.repeat_days || t.repeat_days;
-            
-            const now = new Date();
-            let nextDate = new Date();
-            
-            if (repeat_type === 'interval') {
-                nextDate.setDate(nextDate.getDate() + (parseInt(repeat_interval) || 1));
-            } else if (repeat_type === 'weekly' && repeat_days?.length) {
-                nextDate.setDate(nextDate.getDate() + 1);
-                while (!repeat_days.includes(nextDate.getDay())) { 
-                    nextDate.setDate(nextDate.getDate() + 1); 
-                }
-            }
-
-            nextDate.setHours(0, 0, 0, 0);
-
-            return {
-                hidden_until: nextDate.toISOString(),
-                last_completed_date: now.toISOString()
-            };
-        },
-
-        async completeTask(id) {
-            const t = this.tasks.find(x => x.id === id);
-            if (!t || t.completed) return;
-
-            await this.updateTask(id, { 
-                completed: true, 
-                completed_at: new Date().toISOString(),
-                missed_count: 0 
-            });
-        },
-
-        async restoreTask(id) {
-            await this.updateTask(id, { completed: false, completed_at: null, hidden_until: null });
-        },
-
-        async returnNow(id) {
-            await this.updateTask(id, { hidden_until: null });
+        urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
+            return outputArray;
         },
     }
 });
