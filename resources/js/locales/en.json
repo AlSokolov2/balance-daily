@@ -176,14 +176,10 @@
         },
         "data": {
             "title": "Data Management",
-            "description": "You can export your data to a JSON file or import a backup.",
-            "warning": "Warning: Import will completely replace current tasks and settings!",
+            "description": "Sync your data or get help with the app.",
             "sync_button": "Force Sync",
-            "export_button": "Export (JSON)",
-            "import_button": "Import (JSON)",
             "bug_report": "Report a Bug",
-            "suggest_feature": "Suggest an Idea",
-            "import_error": "Import error: {msg}"
+            "suggest_feature": "Suggest an Idea"
         }
     },
     "stats": {

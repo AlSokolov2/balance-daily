@@ -43,6 +43,27 @@ class SettingsApiTest extends TestCase
         ]);
     }
 
+    public function test_update_ignores_unknown_keys(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->postJson('/api/settings', [
+            'settings' => [
+                'theme' => 'dark',
+                'malicious_key' => 'injected',
+            ],
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson(['theme' => 'dark'])
+            ->assertJsonMissing(['malicious_key' => 'injected']);
+
+        $this->assertDatabaseMissing('settings', [
+            'user_id' => $user->id,
+            'key' => 'malicious_key',
+        ]);
+    }
+
     public function test_user_cannot_see_others_settings(): void
     {
         $userA = User::factory()->create();
@@ -55,16 +76,4 @@ class SettingsApiTest extends TestCase
             ->assertJsonMissing(['secret' => 'private']);
     }
 
-    public function test_user_automatically_resets_date_on_new_day(): void
-    {
-        $user = User::factory()->create(['last_reset_date' => '2020-01-01']);
-
-        // Fetch settings - this should trigger the auto-reset logic for 'today'
-        $response = $this->actingAs($user)->getJson('/api/settings');
-
-        $response->assertStatus(200);
-
-        $user->refresh();
-        $this->assertEquals(now()->toDateString(), $user->last_reset_date);
-    }
 }

@@ -28,7 +28,6 @@ class User extends Authenticatable
         'avatar',
         'google_token',
         'google_refresh_token',
-        'last_reset_date',
     ];
 
     /**
@@ -86,5 +85,11 @@ class User extends Authenticatable
     public function settings(): HasMany
     {
         return $this->hasMany(Setting::class);
+    }
+
+    /** @return HasMany<AuthCode, $this> */
+    public function authCodes(): HasMany
+    {
+        return $this->hasMany(AuthCode::class);
     }
 }
