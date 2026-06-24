@@ -314,6 +314,8 @@ const getStyle = (rect) => {
     const category = store.categories.find(c => c.slug === rect.task.category_slug);
     const color = category?.color || '#8e8e93';
     const postponed = store.isEffectivelyPostponed(rect.task) && !rect.task.force_active;
+    const isMissed = rect.task.missed_count > 0;
+    const borderColor = isMissed ? 'rgba(239,68,68,0.8)' : hexToRgba(color, 0.4);
 
     return {
         left: `${rect.x}px`,
@@ -321,7 +323,8 @@ const getStyle = (rect) => {
         width: `${rect.w}px`,
         height: `${rect.h}px`,
         backgroundColor: hexToRgba(color, postponed ? 0.15 : 0.85),
-        border: `2px ${postponed ? 'dashed' : 'solid'} ${hexToRgba(color, 0.4)}`
+        border: `${isMissed ? 3 : 2}px ${postponed ? 'dashed' : 'solid'} ${borderColor}`,
+        boxShadow: isMissed ? '0 0 6px rgba(239,68,68,0.5)' : 'none',
     };
 };
 
