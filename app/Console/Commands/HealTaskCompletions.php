@@ -102,6 +102,7 @@ class HealTaskCompletions extends Command
                     $totalCleaned++;
                 }
             }
+        }
         });
 
         $this->info('---');

@@ -42,7 +42,7 @@ jobs:
         run: npm run lint
 
       - name: Run PHP Static Analysis
-        run: ./vendor/bin/phpstan analyze app --level=8 --no-progress
+        run: ./vendor/bin/phpstan analyze app --level=8 --no-progress --memory-limit=512M
 
       - name: Run PHPUnit Tests
         run: php artisan test

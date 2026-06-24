@@ -85,7 +85,8 @@ class AuthController extends Controller
             abort(404);
         }
 
-        $devEmail = env('DEV_LOGIN_EMAIL', 'alsokolov2@gmail.com');
+        /** @phpstan-ignore-next-line dev-only, config cache irrelevant */
+        $devEmail = (string) env('DEV_LOGIN_EMAIL', 'alsokolov2@gmail.com');
 
         $user = User::firstOrCreate(
             ['email' => $devEmail],
@@ -125,6 +126,10 @@ class AuthController extends Controller
         }
 
         $user = $authCode->user;
+        if (! $user) {
+            return response()->json(['message' => 'Invalid or expired code'], 422);
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         // Remove all codes for this user — one-time use
