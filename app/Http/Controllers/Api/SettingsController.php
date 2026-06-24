@@ -15,15 +15,22 @@ class SettingsController extends Controller
      */
     public function index(): Collection
     {
-        $user = $this->user();
-        $today = now()->toDateString();
-
-        if ($user->last_reset_date !== $today) {
-            $user->update(['last_reset_date' => $today]);
-        }
-
-        return Setting::where('user_id', $user->id)->pluck('value', 'key');
+        return Setting::where('user_id', $this->user()->id)->pluck('value', 'key');
     }
+
+    /**
+     * Update user settings.
+     * @return Collection<string, mixed>
+     */
+    /**
+     * Allowed setting keys — any other keys are silently ignored.
+     */
+    private const ALLOWED_KEYS = [
+        'theme',
+        'locale',
+        'pulse_interval',
+        'notepad_text',
+    ];
 
     /**
      * Update user settings.
@@ -35,7 +42,10 @@ class SettingsController extends Controller
             'settings' => 'required|array',
         ]);
 
-        foreach ($validated['settings'] as $key => $value) {
+        $allowed = array_flip(self::ALLOWED_KEYS);
+        $filtered = array_intersect_key($validated['settings'], $allowed);
+
+        foreach ($filtered as $key => $value) {
             Setting::updateOrCreate(
                 ['key' => $key, 'user_id' => $this->user()->id],
                 ['value' => $value]
