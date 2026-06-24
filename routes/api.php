@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
-use App\Http\Controllers\Api\ImportExportController;
 use App\Http\Controllers\Api\PushSubscriptionController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\StatsController;
@@ -36,9 +35,6 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
 
     Route::post('push-subscriptions', [PushSubscriptionController::class, 'store']);
     Route::delete('push-subscriptions', [PushSubscriptionController::class, 'destroy']);
-
-    Route::get('export', [ImportExportController::class, 'export']);
-    Route::post('import', [ImportExportController::class, 'import']);
 
     Route::get('stats', [StatsController::class, 'index']);
 

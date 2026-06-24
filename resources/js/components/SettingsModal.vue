@@ -273,34 +273,6 @@
                             /></svg>
                             {{ $t('settings_modal.data.sync_button') }}
                         </button>
-                        <button class="w-full py-3.5 bg-[var(--bg-card)] border border-[var(--color-border)] text-[var(--color-text)] rounded-2xl font-bold text-sm hover:bg-[var(--bg-secondary)] transition-all flex items-center justify-center gap-3" @click="exportData">
-                            <svg
-                                class="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            ><path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                            /></svg>
-                            {{ $t('settings_modal.data.export_button') }}
-                        </button>
-                        <button class="w-full py-3.5 bg-[var(--bg-card)] border border-[var(--color-border)] text-[var(--color-text)] rounded-2xl font-bold text-sm hover:bg-[var(--bg-secondary)] transition-all flex items-center justify-center gap-3" @click="$refs.fileInput.click()">
-                            <svg
-                                class="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            ><path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                            /></svg>
-                            {{ $t('settings_modal.data.import_button') }}
-                        </button>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2 pt-2 border-t border-[var(--color-border)]">
@@ -333,13 +305,6 @@
                             {{ $t('settings_modal.data.suggest_feature') }}
                         </a>
                     </div>
-                    <input
-                        ref="fileInput"
-                        type="file"
-                        accept=".json"
-                        class="hidden"
-                        @change="handleImport"
-                    >
                 </div>
             </div>
 
@@ -508,15 +473,15 @@ const addCategory = () => {
 
 const saveCats = async () => {
     try {
-        await axios.post('import', {
-            categories: {
-                ...editableCats,
-                '__archive__': store.categories.find(c => c.slug === '__archive__')
-            },
-            tasks: store.tasks, 
-            subcatCoeffs: store.subcatCoeffs,
-            notepad: store.notepadText
-        });
+        for (const [slug, data] of Object.entries(editableCats)) {
+            await axios.post('categories', {
+                slug,
+                name: data.name,
+                weight: data.weight,
+                color: data.color,
+                hide_until: data.hide_until ?? data.hideUntil ?? null,
+            });
+        }
         await store.fetchAll();
         emit('close');
     } catch (_e) {
@@ -541,37 +506,6 @@ const saveNotepad = async () => {
     } catch (_e) {
         console.error('Save notepad error:', _e);
     }
-};
-
-const exportData = async () => {
-    try {
-        const res = await axios.get('export');
-        const b = new Blob([JSON.stringify(res.data)], { type: 'application/json' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(b);
-        a.download = 'balance_backup_new.json';
-        a.click();
-    } catch (_e) {
-        console.error('Export error:', _e);
-    }
-};
-
-const handleImport = (e) => {
-    const f = e.target.files[0];
-    if (!f) return;
-    const r = new FileReader();
-    r.onload = async (ev) => {
-        try {
-            const d = JSON.parse(ev.target.result);
-            await axios.post('import', d);
-            window.location.reload();
-        } catch (_ex) {
-            console.error('Import error:', _ex);
-            const msg = _ex.response?.data?.message || _ex.message || 'Error';
-            window.alert(t('settings_modal.data.import_error', { msg }));
-        }
-    };
-    r.readAsText(f);
 };
 
 onMounted(initData);
