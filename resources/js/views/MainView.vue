@@ -125,8 +125,8 @@
 
             <div
                 v-if="showTaskList" 
-                :class="{ 'flex-1 max-h-none': store.filterCat === 'archive' || store.filterCat === 'hidden' }"
-                class="card bg-[var(--bg-card)] rounded-[16px] flex flex-col shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[var(--color-border)] min-h-[100px] shrink-0 max-h-[40vh] overflow-hidden"
+                :class="store.filterCat === 'archive' || store.filterCat === 'hidden' ? 'flex-1' : 'max-h-[40vh] shrink-0'"
+                class="card bg-[var(--bg-card)] rounded-[16px] flex flex-col shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[var(--color-border)] min-h-[100px] overflow-hidden"
             >
                 <div class="flex-1 overflow-y-auto p-4">
                     <div v-if="!store.filteredTasks.length" class="text-center py-8 text-[var(--color-secondary)] text-sm">
