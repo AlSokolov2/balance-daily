@@ -24,10 +24,11 @@ const isNew = computed(() => route.params.id === 'new');
 
 const task = computed(() => {
     if (isNew.value) {
-        return { 
-            title: '', category_slug: 'chor', importance: 2, repeat_type: 'none', 
-            repeat_interval: 1, repeat_days: [], deadline: '', postpone_until: '', 
-            ha: false, force_active: false, notes: '', isNew: true 
+        const presetTitle = (route.query.title || '').trim();
+        return {
+            title: presetTitle, category_slug: 'chor', importance: 2, repeat_type: 'none',
+            repeat_interval: 1, repeat_days: [], deadline: '', postpone_until: '',
+            ha: false, force_active: false, notes: '', isNew: true
         };
     }
     return store.tasks.find(t => t.id === parseInt(route.params.id));

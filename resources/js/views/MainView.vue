@@ -251,7 +251,7 @@ const toggleSearch = () => {
 };
 
 const handleEdit = (task) => { router.push(`/task/${task.id}`); };
-const openAdvancedAdd = () => { router.push('/task/new'); };
+const openAdvancedAdd = (presetTitle = '') => { router.push(`/task/new?title=${encodeURIComponent(presetTitle)}`); };
 
 const deleteTask = async (id) => {
     if (window.confirm(t('app.alerts.delete_confirm'))) {
