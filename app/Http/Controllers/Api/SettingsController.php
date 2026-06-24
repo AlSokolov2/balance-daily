@@ -15,14 +15,7 @@ class SettingsController extends Controller
      */
     public function index(): Collection
     {
-        $user = $this->user();
-        $today = now()->toDateString();
-
-        if ($user->last_reset_date !== $today) {
-            $user->update(['last_reset_date' => $today]);
-        }
-
-        return Setting::where('user_id', $user->id)->pluck('value', 'key');
+        return Setting::where('user_id', $this->user()->id)->pluck('value', 'key');
     }
 
     /**
