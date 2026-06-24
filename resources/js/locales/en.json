@@ -137,6 +137,10 @@
         "deadline": "Deadline",
         "postpone_until": "Postpone until",
         "hidden_until": "Appears on (date)",
+        "add_completion": "Add",
+        "no_completions": "No completion marks",
+        "delete_completion": "Delete mark",
+        "confirm_delete_completion": "Delete completion mark?",
         "repeat": {
             "type": "Repeat type",
             "none": "No repeat",

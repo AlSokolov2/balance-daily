@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\PushSubscriptionController;
+use App\Http\Controllers\Api\TaskCompletionController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\StatsController;
 use App\Http\Controllers\Api\SyncController;
@@ -27,6 +28,9 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('tasks/{id}', [TaskController::class, 'show']);
     Route::put('tasks/{id}', [TaskController::class, 'update']);
     Route::delete('tasks/{id}', [TaskController::class, 'destroy']);
+
+    Route::post('task-completions', [TaskCompletionController::class, 'store']);
+    Route::delete('task-completions/{id}', [TaskCompletionController::class, 'destroy']);
 
     Route::get('sync', [SyncController::class, 'index']);
 

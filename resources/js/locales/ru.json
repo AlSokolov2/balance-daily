@@ -136,6 +136,10 @@
         "deadline": "Дедлайн",
         "postpone_until": "Отложить до",
         "hidden_until": "Появится (дата)",
+        "add_completion": "Добавить",
+        "no_completions": "Нет отметок в истории",
+        "delete_completion": "Удалить отметку",
+        "confirm_delete_completion": "Удалить отметку выполнения?",
         "repeat": {
             "type": "Тип повтора",
             "none": "Без повтора",
