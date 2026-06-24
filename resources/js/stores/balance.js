@@ -329,12 +329,12 @@ export const useBalanceStore = defineStore('balance', {
 
         /** Restore a completed task to active. */
         async restoreTask(id) {
-            await this.updateTask(id, { completed: false, completed_at: null, hidden_until: null });
+            await this.updateTask(id, { completed: false, completed_at: null, hidden_until: null, postpone_until: null });
         },
 
         /** Bring a hidden task back immediately. */
         async returnNow(id) {
-            await this.updateTask(id, { hidden_until: null });
+            await this.updateTask(id, { hidden_until: null, postpone_until: null });
         },
 
         // ─────────────────────────────────────────
