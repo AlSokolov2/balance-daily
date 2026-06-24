@@ -140,6 +140,7 @@
         "add_completion": "Add",
         "no_completions": "No completion marks",
         "delete_completion": "Delete mark",
+        "reminder_times": "Reminder times",
         "confirm_delete_completion": "Delete completion mark?",
         "repeat": {
             "type": "Repeat type",

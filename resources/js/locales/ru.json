@@ -140,6 +140,7 @@
         "no_completions": "Нет отметок в истории",
         "delete_completion": "Удалить отметку",
         "confirm_delete_completion": "Удалить отметку выполнения?",
+        "reminder_times": "Напоминания (время)",
         "repeat": {
             "type": "Тип повтора",
             "none": "Без повтора",
