@@ -23,6 +23,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Safety: force debug off in production regardless of .env
+        if (app()->environment('production') && config('app.debug')) {
+            config(['app.debug' => false]);
+        }
+
         Task::observe(SyncObserver::class);
         Category::observe(SyncObserver::class);
 
