@@ -69,11 +69,27 @@
 
             <!-- Tab: History -->
             <div v-if="activeTab === 'history'" class="space-y-4">
+                <!-- Add completion form -->
+                <div class="flex gap-2">
+                    <input
+                        v-model="newCompletionDate"
+                        type="datetime-local"
+                        class="flex-1 p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-[11px] text-[var(--color-text)] outline-none"
+                    >
+                    <button
+                        class="px-4 py-2.5 bg-[var(--color-primary)] text-white rounded-xl text-xs font-bold hover:opacity-80"
+                        :disabled="!newCompletionDate"
+                        @click="addCompletion"
+                    >
+                        + {{ $t('edit_task.add_completion') }}
+                    </button>
+                </div>
+
                 <div v-if="loadingHistory" class="flex justify-center py-10">
                     <div class="w-6 h-6 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
                 </div>
-                <div v-else-if="!fullTaskDetails?.completions?.length" class="text-center py-10 text-[var(--color-secondary)] text-xs italic">
-                    {{ $t('app.no_tasks_in_category') }}
+                <div v-else-if="!fullTaskDetails?.completions?.length" class="text-center py-6 text-[var(--color-secondary)] text-xs italic">
+                    {{ $t('edit_task.no_completions') }}
                 </div>
                 <div v-else class="space-y-3">
                     <div class="flex items-center justify-between px-1">
@@ -83,25 +99,44 @@
                     <div class="space-y-2">
                         <div
                             v-for="comp in fullTaskDetails.completions"
-                            :key="comp.id" 
+                            :key="comp.id"
                             class="bg-[var(--bg-secondary)]/50 p-3 rounded-2xl border border-[var(--color-border)] flex items-center justify-between"
                         >
                             <div class="flex flex-col">
                                 <span class="text-xs font-bold text-[var(--color-text)]">{{ formatDate(comp.completed_at) }}</span>
                                 <span class="text-[10px] text-[var(--color-secondary)]">{{ formatTime(comp.completed_at) }}</span>
                             </div>
-                            <div class="w-6 h-6 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500">
-                                <svg
-                                    class="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                ><path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="3"
-                                    d="M5 13l4 4L19 7"
-                                /></svg>
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-6 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500">
+                                    <svg
+                                        class="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    ><path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="3"
+                                        d="M5 13l4 4L19 7"
+                                    /></svg>
+                                </div>
+                                <button
+                                    class="w-6 h-6 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500 hover:bg-red-500/20"
+                                    :title="$t('edit_task.delete_completion')"
+                                    @click="deleteCompletion(comp.id)"
+                                >
+                                    <svg
+                                        class="w-3 h-3"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    ><path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="3"
+                                        d="M6 18L18 6M6 6l12 12"
+                                    /></svg>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -286,6 +321,7 @@ const tabs = ['notes', 'setup', 'schedule', 'history'];
 
 const fullTaskDetails = ref(null);
 const loadingHistory = ref(false);
+const newCompletionDate = ref('');
 
 const fetchFullDetails = async () => {
     if (props.isNew) return;
@@ -297,6 +333,32 @@ const fetchFullDetails = async () => {
         // Error
     } finally {
         loadingHistory.value = false;
+    }
+};
+
+const addCompletion = async () => {
+    if (!newCompletionDate.value || !fullTaskDetails.value) return;
+    try {
+        const res = await axios.post('task-completions', {
+            task_id: props.task.id,
+            completed_at: newCompletionDate.value,
+        });
+        fullTaskDetails.value.completions.unshift(res.data);
+        newCompletionDate.value = '';
+    } catch (e) {
+        console.error('Add completion error:', e);
+    }
+};
+
+const deleteCompletion = async (completionId) => {
+    if (!window.confirm(t('edit_task.confirm_delete_completion'))) return;
+    try {
+        await axios.delete(`task-completions/${completionId}`);
+        if (fullTaskDetails.value?.completions) {
+            fullTaskDetails.value.completions = fullTaskDetails.value.completions.filter(c => c.id !== completionId);
+        }
+    } catch (e) {
+        console.error('Delete completion error:', e);
     }
 };
 
