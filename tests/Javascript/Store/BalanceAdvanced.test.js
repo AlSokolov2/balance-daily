@@ -105,10 +105,10 @@ describe('Balance Store - Advanced Coverage', () => {
         axios.put.mockResolvedValue({ data: { id: 1, completed: false } });
 
         await store.restoreTask(1);
-        expect(axios.put).toHaveBeenCalledWith('tasks/1', expect.objectContaining({ completed: false }));
+        expect(axios.put).toHaveBeenCalledWith('tasks/1', expect.objectContaining({ completed: false, postpone_until: null }));
 
         await store.returnNow(1);
-        expect(axios.put).toHaveBeenCalledWith('tasks/1', expect.objectContaining({ hidden_until: null }));
+        expect(axios.put).toHaveBeenCalledWith('tasks/1', expect.objectContaining({ hidden_until: null, postpone_until: null }));
     });
 
     it('deleteTask removes task and recalculates', async () => {
