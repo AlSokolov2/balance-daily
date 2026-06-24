@@ -291,6 +291,10 @@ const handleTouchEndPull = async () => {
 };
 
 onMounted(() => {
+    // Restore task list visibility for archive/hidden views on remount (#82)
+    if (store.filterCat === 'archive' || store.filterCat === 'hidden') {
+        showTaskList.value = true;
+    }
     nextTick(() => {
         if (verticalChartContainer.value) verticalChartContainer.value.scrollTop = verticalChartContainer.value.clientHeight;
     });
