@@ -36,3 +36,6 @@ commit_message.txt
 /public/sw.js
 /public/workbox-*.js
 coverage/
+tests/e2e/e2e.sqlite*
+test-results/
+playwright-report/

@@ -115,7 +115,7 @@ export default defineConfig(({ mode }) => {
             globals: true,
             environment: 'jsdom',
             setupFiles: ['./tests/Javascript/setup.js'],
-            exclude: ['**/node_modules/**', '**/dist/**', '**/.local/**'],
+            exclude: ['**/node_modules/**', '**/dist/**', '**/.local/**', 'tests/e2e/**'],
             coverage: {
                 provider: 'v8',
                 include: ['resources/js/stores/**', 'resources/js/utils/**'],
