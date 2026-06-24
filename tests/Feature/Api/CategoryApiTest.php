@@ -69,4 +69,40 @@ class CategoryApiTest extends TestCase
         $response->assertStatus(204);
         $this->assertDatabaseMissing('categories', ['id' => $cat->id]);
     }
+
+    public function test_category_rejects_invalid_hide_until(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->postJson('/api/categories', [
+            'slug' => 'test',
+            'name' => 'Test',
+            'weight' => 0.5,
+            'color' => '#ffffff',
+            'hide_until' => 'invalid',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors('hide_until');
+    }
+
+    public function test_category_accepts_valid_hide_until(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->postJson('/api/categories', [
+            'slug' => 'test',
+            'name' => 'Test',
+            'weight' => 0.5,
+            'color' => '#ffffff',
+            'hide_until' => '23:59',
+        ]);
+
+        $response->assertStatus(201);
+        $this->assertDatabaseHas('categories', [
+            'slug' => 'test',
+            'user_id' => $user->id,
+            'hide_until' => '23:59',
+        ]);
+    }
 }

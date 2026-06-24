@@ -112,4 +112,30 @@ class TaskIsolationTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonValidationErrors('category_slug');
     }
+
+    public function test_user_can_get_single_task(): void
+    {
+        $user = User::factory()->create();
+        Category::create(['slug' => 'work', 'name' => 'Work', 'weight' => 0.1, 'user_id' => $user->id]);
+        $task = Task::create(['title' => 'My Task', 'category_slug' => 'work', 'importance' => 2, 'user_id' => $user->id]);
+
+        $response = $this->actingAs($user)->getJson("/api/tasks/{$task->id}");
+
+        $response->assertStatus(200)
+            ->assertJson(['id' => $task->id, 'title' => 'My Task']);
+    }
+
+    public function test_user_can_delete_own_task(): void
+    {
+        $user = User::factory()->create();
+        Category::create(['slug' => 'work', 'name' => 'Work', 'weight' => 0.1, 'user_id' => $user->id]);
+        $task = Task::create(['title' => 'Delete Me', 'category_slug' => 'work', 'importance' => 2, 'user_id' => $user->id]);
+
+        $this->assertDatabaseHas('tasks', ['id' => $task->id]);
+
+        $response = $this->actingAs($user)->deleteJson("/api/tasks/{$task->id}");
+
+        $response->assertStatus(204);
+        $this->assertDatabaseMissing('tasks', ['id' => $task->id]);
+    }
 }
