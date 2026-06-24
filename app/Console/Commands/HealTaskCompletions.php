@@ -29,13 +29,13 @@ class HealTaskCompletions extends Command
     public function handle(): int
     {
         $dryRun = (bool) $this->option('dry-run');
-        $tasks = Task::all();
         $totalMigrated = 0;
         $totalCleaned = 0;
 
         $this->info('Starting data healing process...'.($dryRun ? ' [DRY RUN]' : ''));
 
-        foreach ($tasks as $task) {
+        Task::chunk(100, function ($tasks) use ($dryRun, &$totalMigrated, &$totalCleaned) {
+            foreach ($tasks as $task) {
             $notes = (string) $task->notes;
             if (empty($notes)) {
                 continue;
@@ -102,7 +102,7 @@ class HealTaskCompletions extends Command
                     $totalCleaned++;
                 }
             }
-        }
+        });
 
         $this->info('---');
         $this->info('Healing complete!');

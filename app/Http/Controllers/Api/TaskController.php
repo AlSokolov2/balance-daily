@@ -61,7 +61,7 @@ class TaskController extends Controller
         /** @var Task $task */
         $task = $this->user()->tasks()
             ->with(['latestCompletion', 'completions' => function ($query) {
-                $query->orderBy('completed_at', 'desc');
+                $query->orderBy('completed_at', 'desc')->limit(50);
             }])
             ->findOrFail($id);
 

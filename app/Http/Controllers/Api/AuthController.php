@@ -85,12 +85,14 @@ class AuthController extends Controller
             abort(404);
         }
 
+        $devEmail = env('DEV_LOGIN_EMAIL', 'alsokolov2@gmail.com');
+
         $user = User::firstOrCreate(
-            ['email' => 'alsokolov2@gmail.com'],
+            ['email' => $devEmail],
             [
                 'name' => 'AlSokolov',
-                'google_id' => 'dev_id_alsokolov',
-                'avatar' => 'https://www.gravatar.com/avatar/'.md5('alsokolov2@gmail.com').'?s=200&d=identicon',
+                'google_id' => 'dev_id_'.md5($devEmail),
+                'avatar' => 'https://www.gravatar.com/avatar/'.md5($devEmail).'?s=200&d=identicon',
             ]
         );
 
