@@ -1,7 +1,7 @@
 <template>
     <div
-        class="task-item flex items-center py-2.5 border-b border-[var(--color-border)] gap-2.5 last:border-0 transition-opacity" 
-        :class="{ 'opacity-50': isDimmed }"
+        class="task-item flex items-center py-2.5 border-b border-[var(--color-border)] gap-2.5 last:border-0 transition-opacity"
+        :class="{ 'opacity-50': isDimmed, 'border-l-4 border-l-red-500 pl-2': isMissed }"
     >
         <div
             class="task-color w-3.5 h-3.5 rounded-full shrink-0" 
@@ -87,6 +87,7 @@ const categoryName = computed(() => category.value?.name || props.task.category_
 
 const isPostponed = computed(() => store.isEffectivelyPostponed(props.task));
 const isHidden = computed(() => store.isHidden(props.task));
+const isMissed = computed(() => (props.task.missed_count || 0) > 0);
 const isDimmed = computed(() => isPostponed.value && !isHidden.value);
 
 // --- Action Visibility ---
