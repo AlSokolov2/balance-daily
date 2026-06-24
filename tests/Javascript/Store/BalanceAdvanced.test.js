@@ -25,19 +25,34 @@ describe('Balance Store - Advanced Coverage', () => {
         vi.stubGlobal('atob', (s) => Buffer.from(s, 'base64').toString('binary'));
     });
 
-    it('init handles token in URL', async () => {
-        window.location.search = '?token=url-token';
+    it('init exchanges code from URL for token', async () => {
+        window.location.search = '?code=url-code';
         const store = useBalanceStore();
-        axios.get.mockResolvedValue({ data: { name: 'URL User' } });
-        axios.get.mockImplementation((url) => {
-            if (url === 'sync') return Promise.resolve({ data: { server_time: 'now', tasks: { updated: [] }, categories: { updated: [] } } });
-            return Promise.resolve({ data: { name: 'URL User' } });
-        });
-        
+        axios.post.mockResolvedValueOnce({ data: { token: 'exchanged-token' } });
+        axios.get.mockResolvedValueOnce({ data: { name: 'URL User' } });
+        axios.get.mockResolvedValueOnce({ data: { server_time: 'now', tasks: { updated: [] }, categories: { updated: [] } } });
+
         await store.init();
-        
-        expect(store.token).toBe('url-token');
+
+        expect(axios.post).toHaveBeenCalledWith('auth/exchange-code', { code: 'url-code' });
+        expect(store.token).toBe('exchanged-token');
         expect(window.history.replaceState).toHaveBeenCalled();
+    });
+
+    it('init handles code exchange failure gracefully', async () => {
+        window.location.search = '?code=bad-code';
+        const store = useBalanceStore();
+        // Force the exchange-code POST to reject
+        axios.post.mockImplementationOnce(() => Promise.reject(new Error('Network error')));
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        await store.init();
+
+        expect(axios.post).toHaveBeenCalledWith('auth/exchange-code', { code: 'bad-code' });
+        expect(store.token).toBeNull();
+        expect(window.history.replaceState).toHaveBeenCalled();
+
+        consoleSpy.mockRestore();
     });
 
     it('sync merges data and updates lastSync', async () => {
@@ -94,5 +109,19 @@ describe('Balance Store - Advanced Coverage', () => {
 
         await store.returnNow(1);
         expect(axios.put).toHaveBeenCalledWith('tasks/1', expect.objectContaining({ hidden_until: null }));
+    });
+
+    it('deleteTask removes task and recalculates', async () => {
+        const store = useBalanceStore();
+        store.tasks = [
+            { id: 1, title: 'Task 1' },
+            { id: 2, title: 'Task 2' }
+        ];
+        axios.delete.mockResolvedValue({});
+
+        await store.deleteTask(1);
+        expect(axios.delete).toHaveBeenCalledWith('tasks/1');
+        expect(store.tasks).toHaveLength(1);
+        expect(store.tasks[0].id).toBe(2);
     });
 });

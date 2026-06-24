@@ -30,7 +30,7 @@ class CategoryController extends Controller
             'name' => 'required|string',
             'weight' => 'required|numeric',
             'color' => 'required|string',
-            'hide_until' => 'nullable|string',
+            'hide_until' => 'nullable|date_format:H:i',
         ]);
 
         /** @var Category $category */
@@ -65,7 +65,7 @@ class CategoryController extends Controller
             'name' => 'sometimes|required|string',
             'weight' => 'sometimes|required|numeric',
             'color' => 'sometimes|required|string',
-            'hide_until' => 'nullable|string',
+            'hide_until' => 'nullable|date_format:H:i',
         ]);
 
         $category->update($validated);

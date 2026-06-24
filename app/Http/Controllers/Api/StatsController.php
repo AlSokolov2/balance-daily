@@ -67,11 +67,9 @@ class StatsController extends Controller
     {
         /** @var list<string> $allDates */
         $allDates = TaskCompletion::where('user_id', $userId)
-            ->orderBy('completed_at', 'desc')
-            ->get()
-            ->map(fn ($c) => $c->completed_at->toDateString())
-            ->unique()
-            ->values()
+            ->selectRaw('DISTINCT DATE(completed_at) as date')
+            ->orderBy('date', 'desc')
+            ->pluck('date')
             ->toArray();
 
         if (empty($allDates)) {

@@ -3,12 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuthCode;
 use App\Models\User;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ConnectException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\InvalidStateException;
 
 class AuthController extends Controller
 {
@@ -46,16 +51,27 @@ class AuthController extends Controller
 
             Auth::login($user);
 
-            $token = $user->createToken('auth_token')->plainTextToken;
+            $code = bin2hex(random_bytes(32));
 
-            // Redirect back to frontend
-            $frontendUrl = url('/');
+            $user->authCodes()->create([
+                'code' => hash('sha256', $code),
+                'expires_at' => now()->addSeconds(60),
+            ]);
 
-            return redirect($frontendUrl.'?token='.$token);
+            // Redirect back to frontend with one-time auth code
+            return redirect(url('/') . '?code=' . $code);
 
+        } catch (InvalidStateException $e) {
+            \Log::warning('Google Auth: invalid state', ['error' => $e->getMessage()]);
+            return redirect('/?error=state_invalid');
+        } catch (ClientException $e) {
+            \Log::warning('Google Auth: access denied or invalid grant', ['error' => $e->getMessage()]);
+            return redirect('/?error=access_denied');
+        } catch (ConnectException $e) {
+            \Log::error('Google Auth: network error', ['error' => $e->getMessage()]);
+            return redirect('/?error=network_error');
         } catch (\Exception $e) {
             \Log::error('Google Auth Error: '.$e->getMessage());
-
             return redirect('/?error=auth_failed');
         }
     }
@@ -69,20 +85,57 @@ class AuthController extends Controller
             abort(404);
         }
 
+        /** @phpstan-ignore-next-line dev-only, config cache irrelevant */
+        $devEmail = (string) env('DEV_LOGIN_EMAIL', 'alsokolov2@gmail.com');
+
         $user = User::firstOrCreate(
-            ['email' => 'alsokolov2@gmail.com'],
+            ['email' => $devEmail],
             [
                 'name' => 'AlSokolov',
-                'google_id' => 'dev_id_alsokolov',
-                'avatar' => 'https://www.gravatar.com/avatar/'.md5('alsokolov2@gmail.com').'?s=200&d=identicon',
+                'google_id' => 'dev_id_'.md5($devEmail),
+                'avatar' => 'https://www.gravatar.com/avatar/'.md5($devEmail).'?s=200&d=identicon',
             ]
         );
 
         $this->seedDefaultCategories($user);
 
+        $code = bin2hex(random_bytes(32));
+
+        $user->authCodes()->create([
+            'code' => hash('sha256', $code),
+            'expires_at' => now()->addSeconds(60),
+        ]);
+
+        return redirect(url('/') . '?code=' . $code);
+    }
+
+    /**
+     * Exchange a one-time auth code for a Sanctum token.
+     */
+    public function exchangeCode(Request $request): JsonResponse
+    {
+        $request->validate(['code' => 'required|string']);
+
+        $hashedCode = hash('sha256', $request->code);
+        $authCode = AuthCode::where('code', $hashedCode)
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (! $authCode) {
+            return response()->json(['message' => 'Invalid or expired code'], 422);
+        }
+
+        $user = $authCode->user;
+        if (! $user) {
+            return response()->json(['message' => 'Invalid or expired code'], 422);
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return redirect(url('/').'?token='.$token);
+        // Remove all codes for this user — one-time use
+        $user->authCodes()->delete();
+
+        return response()->json(['token' => $token]);
     }
 
     /**
