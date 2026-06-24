@@ -21,6 +21,7 @@ class TaskCompletionController extends Controller
         ]);
 
         // Verify task belongs to user
+        /** @var \App\Models\Task $task */
         $task = $this->user()->tasks()->findOrFail($validated['task_id']);
 
         $completion = $task->completions()->create([
