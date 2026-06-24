@@ -139,4 +139,66 @@ describe('Balance Store - Advanced Coverage', () => {
         });
         expect(store.tasks).toHaveLength(0);
     });
+
+    it('checkReminders triggers notification for matching time', () => {
+        const store = useBalanceStore();
+        const now = new Date();
+        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        store.tasks = [
+            { id: 1, title: 'Remind me', reminder_times: [currentTime], completed: false, hidden_until: null },
+        ];
+
+        const notificationSpy = vi.fn();
+        vi.stubGlobal('Notification', notificationSpy);
+        notificationSpy.permission = 'granted';
+
+        store.checkReminders();
+        expect(notificationSpy).toHaveBeenCalledWith('Remind me', expect.any(Object));
+    });
+
+    it('checkReminders skips completed tasks', () => {
+        const store = useBalanceStore();
+        store.tasks = [
+            { id: 1, title: 'Done', reminder_times: ['12:00'], completed: true, hidden_until: null },
+        ];
+
+        const notificationSpy = vi.fn();
+        vi.stubGlobal('Notification', notificationSpy);
+        notificationSpy.permission = 'granted';
+
+        store.checkReminders();
+        expect(notificationSpy).not.toHaveBeenCalled();
+    });
+
+    it('checkReminders skips hidden tasks', () => {
+        const store = useBalanceStore();
+        const future = new Date();
+        future.setDate(future.getDate() + 1);
+
+        store.tasks = [
+            { id: 1, title: 'Hidden', reminder_times: ['12:00'], completed: false, hidden_until: future.toISOString() },
+        ];
+
+        const notificationSpy = vi.fn();
+        vi.stubGlobal('Notification', notificationSpy);
+        notificationSpy.permission = 'granted';
+
+        store.checkReminders();
+        expect(notificationSpy).not.toHaveBeenCalled();
+    });
+
+    it('checkReminders skips non-matching time', () => {
+        const store = useBalanceStore();
+        store.tasks = [
+            { id: 1, title: 'No match', reminder_times: ['03:00'], completed: false, hidden_until: null },
+        ];
+
+        const notificationSpy = vi.fn();
+        vi.stubGlobal('Notification', notificationSpy);
+        notificationSpy.permission = 'granted';
+
+        store.checkReminders();
+        expect(notificationSpy).not.toHaveBeenCalled();
+    });
 });

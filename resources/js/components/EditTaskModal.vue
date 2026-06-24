@@ -270,6 +270,36 @@
                         <input v-model="editData.completed_at" type="datetime-local" class="w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-[11px] text-[var(--color-text)] outline-none">
                     </div>
                 </div>
+
+                <!-- Reminder Times -->
+                <div class="space-y-2 pt-3 border-t border-[var(--color-border)]">
+                    <div class="flex items-center justify-between px-1">
+                        <span class="text-[9px] text-[var(--color-secondary)] uppercase font-black tracking-widest">{{ $t('edit_task.reminder_times') }}</span>
+                        <button
+                            class="w-6 h-6 rounded-lg bg-[var(--color-primary)] text-white flex items-center justify-center text-xs font-black"
+                            @click="addReminderTime"
+                        >
+                            +
+                        </button>
+                    </div>
+                    <div
+                        v-for="(rt, idx) in editData.reminder_times"
+                        :key="idx"
+                        class="flex items-center gap-2"
+                    >
+                        <input
+                            v-model="editData.reminder_times[idx]"
+                            type="time"
+                            class="flex-1 p-2 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-xs text-[var(--color-text)] outline-none"
+                        >
+                        <button
+                            class="w-6 h-6 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center text-xs"
+                            @click="removeReminderTime(idx)"
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -362,6 +392,14 @@ const deleteCompletion = async (completionId) => {
     }
 };
 
+const addReminderTime = () => {
+    editData.reminder_times.push('09:00');
+};
+
+const removeReminderTime = (idx) => {
+    editData.reminder_times.splice(idx, 1);
+};
+
 // Swipe logic
 const touchStart = ref({ x: 0, y: 0 });
 const handleTouchStart = (e) => {
@@ -399,7 +437,8 @@ const editData = reactive({
     postpone_until: props.task.postpone_until ? props.task.postpone_until.substring(0, 16) : '',
     hidden_until: props.task.hidden_until ? props.task.hidden_until.substring(0, 16) : '',
     completed_at: props.task?.completed_at ? props.task.completed_at.substring(0, 16) : '',
-    repeat_days: props.task.repeat_days || []
+    repeat_days: props.task.repeat_days || [],
+    reminder_times: props.task.reminder_times?.length ? [...props.task.reminder_times] : [],
 });
 
 const autoResize = () => {

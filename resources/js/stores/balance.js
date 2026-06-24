@@ -456,6 +456,7 @@ export const useBalanceStore = defineStore('balance', {
                 } else {
                     this.recalculateAll();
                 }
+                this.checkReminders();
             }, this.pulseInterval * 60000);
         },
 
@@ -466,6 +467,29 @@ export const useBalanceStore = defineStore('balance', {
         /** Re-run priority engine on all tasks. */
         recalculateAll() {
             this.tasks = recalculateTasks(this.tasks, this.categories, this.subcatCoeffs);
+        },
+
+        /** Check if any task has a reminder matching the current time. */
+        checkReminders() {
+            if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+
+            const now = new Date();
+            const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            this.tasks.forEach(task => {
+                if (task.completed || !task.reminder_times?.length) return;
+                if (task.hidden_until && new Date(task.hidden_until) > now) return;
+
+                if (task.reminder_times.includes(currentTime)) {
+                    try {
+                        new Notification(task.title, {
+                            body: task.subcategory || task.notes || '',
+                            icon: '/favicon.svg',
+                            tag: `reminder-${task.id}-${currentTime}`,
+                        });
+                    } catch { /* Notification not supported */ }
+                }
+            });
         },
 
         // ─────────────────────────────────────────
