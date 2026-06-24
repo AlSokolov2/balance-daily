@@ -180,6 +180,10 @@
                         <label class="text-[9px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-1.5">{{ $t('edit_task.postpone_until') }}</label>
                         <input v-model="editData.postpone_until" type="datetime-local" class="w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-[11px] text-[var(--color-text)] outline-none">
                     </div>
+                    <div>
+                        <label class="text-[9px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-1.5">{{ $t('edit_task.hidden_until') }}</label>
+                        <input v-model="editData.hidden_until" type="datetime-local" class="w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-[11px] text-[var(--color-text)] outline-none">
+                    </div>
                 </div>
 
                 <div class="space-y-3 pt-3 border-t border-[var(--color-border)]">
@@ -331,6 +335,7 @@ const editData = reactive({
     // Format dates for input[type="datetime-local"]
     deadline: props.task.deadline ? props.task.deadline.substring(0, 16) : '',
     postpone_until: props.task.postpone_until ? props.task.postpone_until.substring(0, 16) : '',
+    hidden_until: props.task.hidden_until ? props.task.hidden_until.substring(0, 16) : '',
     completed_at: props.task?.completed_at ? props.task.completed_at.substring(0, 16) : '',
     repeat_days: props.task.repeat_days || []
 });
@@ -368,6 +373,7 @@ const handleSave = async () => {
             ...editData,
             deadline: editData.deadline || null,
             postpone_until: editData.postpone_until || null,
+            hidden_until: editData.hidden_until || null,
             completed_at: editData.completed_at || null,
         };
         

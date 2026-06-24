@@ -134,6 +134,7 @@
         "subcategory": "Подкатегория",
         "deadline": "Дедлайн",
         "postpone_until": "Отложить до",
+        "hidden_until": "Появится (дата)",
         "repeat": {
             "type": "Тип повтора",
             "none": "Без повтора",
