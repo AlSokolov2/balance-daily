@@ -13,7 +13,8 @@ jobs:
     env:
       LARAVEL_BYPASS_ENV_CHECK: 1
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -41,7 +42,7 @@ jobs:
         run: npm run lint
 
       - name: Run PHP Static Analysis
-        run: ./vendor/bin/phpstan analyze app --level=8 --no-progress
+        run: ./vendor/bin/phpstan analyze app --level=8 --no-progress --memory-limit=512M
 
       - name: Run PHPUnit Tests
         run: php artisan test
@@ -94,7 +95,7 @@ jobs:
           VITE_BASE_URL: /
 
       - name: Deploy to Server via SSH
-        uses: easingthemes/ssh-deploy@main
+        uses: easingthemes/ssh-deploy@v5.1.1
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           ARGS: "-avz --delete"
@@ -106,7 +107,7 @@ jobs:
           EXCLUDE: "/.git/, /.github/, /node_modules/, /tests/, /docker/, /docker-compose.yml, /.env, /storage/*.key"
 
       - name: Run Post-Deploy Commands
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
