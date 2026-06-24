@@ -10,10 +10,11 @@ use App\Http\Controllers\Api\SyncController;
 use App\Http\Controllers\Api\TaskController;
 use Illuminate\Support\Facades\Route;
 
-// Public auth endpoint — exchanges one-time code for token
-Route::post('auth/exchange-code', [AuthController::class, 'exchangeCode']);
+// Public auth endpoint — exchanges one-time code for token (strict rate limit)
+Route::post('auth/exchange-code', [AuthController::class, 'exchangeCode'])
+    ->middleware('throttle:5,1');
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     // Explicit Category Routes
     Route::get('categories', [CategoryController::class, 'index']);
     Route::post('categories', [CategoryController::class, 'store']);

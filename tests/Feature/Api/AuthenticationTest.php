@@ -99,6 +99,17 @@ class AuthenticationTest extends TestCase
         $response->assertStatus(422);
     }
 
+    public function test_code_exchange_is_rate_limited(): void
+    {
+        // 5 requests per minute allowed, 6th should be throttled
+        for ($i = 0; $i < 5; $i++) {
+            $this->postJson('/api/auth/exchange-code', ['code' => 'any']);
+        }
+
+        $response = $this->postJson('/api/auth/exchange-code', ['code' => 'any']);
+        $response->assertStatus(429);
+    }
+
     public function test_dev_login_works_in_allowed_environments(): void
     {
         $response = $this->get('/auth/dev-login');
