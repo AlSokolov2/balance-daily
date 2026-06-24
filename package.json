@@ -10,10 +10,14 @@
         "lint": "eslint resources/js",
         "lint:fix": "eslint resources/js --fix",
         "format": "docker-compose exec app ./vendor/bin/pint",
-        "phpstan": "docker-compose exec app ./vendor/bin/phpstan analyze app --level=8 --memory-limit=-1"
+        "phpstan": "docker-compose exec app ./vendor/bin/phpstan analyze app --level=8 --memory-limit=-1",
+        "test:e2e": "npx playwright test --reporter=list",
+        "test:e2e:ui": "npx playwright test --ui",
+        "test:e2e:report": "npx playwright show-report"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
+        "@playwright/test": "^1.61.1",
         "@tailwindcss/vite": "^4.0.0",
         "@vitejs/plugin-vue": "^6.0.7",
         "@vitest/coverage-v8": "^4.1.8",
