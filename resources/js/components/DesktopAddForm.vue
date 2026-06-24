@@ -10,7 +10,7 @@
         <button
             class="p-[12px] bg-[var(--bg-secondary)] text-[var(--color-text)] rounded-2xl font-bold shadow-sm hover:opacity-80 transition-colors w-[46px] h-[46px] flex items-center justify-center shrink-0 border border-[var(--color-border)]" 
             :title="$t('app.advanced_add') || 'Advanced Add'" 
-            @click="emit('open-advanced')"
+            @click="emit('open-advanced', title)"
         >
             <svg
                 class="w-5 h-5"
