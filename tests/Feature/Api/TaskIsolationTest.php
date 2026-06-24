@@ -81,4 +81,35 @@ class TaskIsolationTest extends TestCase
             'category_slug' => 'work',
         ]);
     }
+
+    public function test_user_cannot_create_task_with_nonexistent_category(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->postJson('/api/tasks', [
+            'title' => 'Task with bad category',
+            'category_slug' => 'nonexistent',
+            'importance' => 3,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors('category_slug');
+    }
+
+    public function test_user_cannot_use_other_users_category(): void
+    {
+        $userA = User::factory()->create();
+        $userB = User::factory()->create();
+
+        Category::create(['slug' => 'private', 'name' => 'Private', 'weight' => 0.1, 'user_id' => $userB->id]);
+
+        $response = $this->actingAs($userA)->postJson('/api/tasks', [
+            'title' => 'Should fail',
+            'category_slug' => 'private',
+            'importance' => 3,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors('category_slug');
+    }
 }

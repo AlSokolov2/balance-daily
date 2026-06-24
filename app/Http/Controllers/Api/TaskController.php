@@ -7,6 +7,7 @@ use App\Models\Task;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Validation\Rule;
 
 class TaskController extends Controller
 {
@@ -30,7 +31,7 @@ class TaskController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string',
-            'category_slug' => 'required|string',
+            'category_slug' => ['required', 'string', Rule::exists('categories', 'slug')->where('user_id', auth()->id())],
             'importance' => 'required|numeric',
             'subcategory' => 'nullable|string',
             'deadline' => 'nullable|date',
