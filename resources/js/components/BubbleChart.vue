@@ -117,8 +117,8 @@ const bubbleStyles = computed(() => {
         const s = pos.size;
         const fontSize = s < 50 ? Math.max(6, s / 12) : Math.max(8, s / 9);
         const isMissed = task.missed_count > 0;
-        const borderWidth = isMissed ? '3px' : '2px';
-        const borderColor = isMissed ? '#ef4444' : color;
+        const borderWidth = isMissed ? '5px' : '2px';
+        const borderColor = color;
         const bgAlpha = postponed ? 0.05 : 0.25;
 
         const style = {
@@ -128,7 +128,6 @@ const bubbleStyles = computed(() => {
             top: (pos.y - s / 2) + 'px',
             background: hexToRgba(color, bgAlpha),
             border: `${borderWidth} solid ${borderColor}`,
-            boxShadow: isMissed ? '0 0 8px rgba(239,68,68,0.4)' : 'none',
             fontSize: fontSize + 'px',
             color: 'var(--color-text)',
             transition: 'all 0.4s ease-out'

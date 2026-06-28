@@ -1,7 +1,8 @@
 <template>
     <div
         class="task-item flex items-center py-2.5 border-b border-[var(--color-border)] gap-2.5 last:border-0 transition-opacity"
-        :class="{ 'opacity-50': isDimmed, 'border-l-4 border-l-red-500 pl-2': isMissed }"
+        :class="{ 'opacity-50': isDimmed }"
+        :style="isMissed ? { borderLeft: `4px solid ${categoryColor}`, paddingLeft: '8px' } : {}"
     >
         <div
             class="task-color w-3.5 h-3.5 rounded-full shrink-0" 
@@ -122,7 +123,7 @@ const activeBadges = computed(() => {
     }
     if (task.repeat_type !== 'none' && !task.completed && !isHidden.value) {
         if (task.missed_count > 0) {
-            list.push({ text: t('task.status.missed', { n: task.missed_count }), classes: 'bg-red-500/20 text-red-500 font-black' });
+            list.push({ text: t('task.status.missed', { n: task.missed_count }), classes: 'bg-[var(--bg-secondary)] text-[var(--color-text)] font-black border border-[var(--color-border)]' });
         } else if (!isPostponed.value) {
             list.push({ text: t('task.status.repeat'), classes: 'bg-[var(--bg-secondary)] text-[var(--color-secondary)]' });
         }
