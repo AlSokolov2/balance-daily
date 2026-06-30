@@ -25,12 +25,21 @@ return new class extends Migration
         });
 
         // Migrate existing data from users table
-        DB::statement(
-            'INSERT INTO user_providers (user_id, provider, provider_id, token, refresh_token, created_at)
-             SELECT id, provider, provider_id, google_token, google_refresh_token, NOW()
-             FROM users
-             WHERE provider IS NOT NULL AND provider_id IS NOT NULL'
-        );
+        $existingUsers = DB::table('users')
+            ->whereNotNull('provider')
+            ->whereNotNull('provider_id')
+            ->get();
+
+        foreach ($existingUsers as $u) {
+            DB::table('user_providers')->insert([
+                'user_id' => $u->id,
+                'provider' => $u->provider,
+                'provider_id' => $u->provider_id,
+                'token' => $u->google_token,
+                'refresh_token' => $u->google_refresh_token,
+                'created_at' => now(),
+            ]);
+        }
     }
 
     public function down(): void
