@@ -24,6 +24,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'provider',
+        'provider_id',
         'google_id',
         'avatar',
         'google_token',
@@ -40,6 +42,7 @@ class User extends Authenticatable
         'remember_token',
         'google_token',
         'google_refresh_token',
+        'vk_token',
     ];
 
     /**
@@ -54,6 +57,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'google_token' => 'encrypted',
             'google_refresh_token' => 'encrypted',
+            'vk_token' => 'encrypted',
         ];
     }
 
@@ -91,5 +95,11 @@ class User extends Authenticatable
     public function authCodes(): HasMany
     {
         return $this->hasMany(AuthCode::class);
+    }
+
+    /** @return HasMany<UserProvider, $this> */
+    public function providers(): HasMany
+    {
+        return $this->hasMany(UserProvider::class);
     }
 }

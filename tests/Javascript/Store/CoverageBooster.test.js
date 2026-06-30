@@ -40,6 +40,7 @@ describe('Balance Store Coverage Booster', () => {
         window.apiBaseUrl = undefined;
         const store = useBalanceStore();
         expect(store.googleAuthUrl).toBe('/auth/google');
+        expect(store.vkAuthUrl).toBe('/auth/vkid');
         window.apiBaseUrl = originalBaseUrl;
     });
 

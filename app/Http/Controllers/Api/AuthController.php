@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AuthCode;
 use App\Models\User;
+use App\Models\UserProvider;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ConnectException;
 use Illuminate\Http\JsonResponse;
@@ -18,37 +19,156 @@ use Laravel\Socialite\Two\InvalidStateException;
 class AuthController extends Controller
 {
     /**
-     * Redirect the user to the Google authentication page.
+     * Default OAuth driver.
      */
-    public function redirectToGoogle(): RedirectResponse
+    private function defaultDriver(): string
     {
+        return config('auth.oauth_driver', 'vkid');
+    }
+
+    // ────────────────────────────────────────────
+    //  Generic provider-agnostic redirect
+    // ────────────────────────────────────────────
+
+    /**
+     * Redirect to an OAuth provider.
+     */
+    public function redirectToProvider(Request $request, ?string $driver = null): RedirectResponse
+    {
+        $driver = $driver ?? $this->defaultDriver();
+
         /** @var RedirectResponse $response */
-        $response = Socialite::driver('google')->redirect();
+        $response = Socialite::driver($driver)->redirect();
 
         return $response;
     }
 
+    // ────────────────────────────────────────────
+    //  Generic OAuth callback
+    // ────────────────────────────────────────────
+
     /**
-     * Obtain the user information from Google.
+     * Handle OAuth provider callback.
+     *
+     * Three outcomes for normal login:
+     *   1. Identity found in user_providers → login
+     *   2. Identity not found, email matches existing user → auto-link → login
+     *   3. Identity not found, email unknown → create new user + provider → login
+     *
+     * When session has oauth_link_user_id (set by linkRedirect),
+     * the provider is manually linked to that user.
      */
-    public function handleGoogleCallback(): RedirectResponse
+    public function handleProviderCallback(Request $request, ?string $driver = null): RedirectResponse
     {
+        $driver = $driver ?? $this->defaultDriver();
+
         try {
-            /** @var \Laravel\Socialite\Two\User $googleUser */
-            $googleUser = Socialite::driver('google')->user();
+            /** @var \Laravel\Socialite\Two\User $socialUser */
+            $socialUser = Socialite::driver($driver)->user();
 
-            $user = User::updateOrCreate([
-                'google_id' => $googleUser->getId(),
-            ], [
-                'name' => $googleUser->getName(),
-                'email' => $googleUser->getEmail(),
-                'avatar' => $googleUser->getAvatar(),
-                'google_token' => $googleUser->token,
-                'google_refresh_token' => $googleUser->refreshToken,
-            ]);
+            // ── Intent: link provider from session (set by linkRedirect) ──
+            $linkUserId = session()->pull('oauth_link_user_id');
+            session()->pull('oauth_link_driver');
 
-            $this->seedDefaultCategories($user);
+            if ($linkUserId) {
+                /** @var User|null $currentUser */
+                $currentUser = User::find($linkUserId);
 
+                if (! $currentUser) {
+                    return redirect('/?error=link_user_not_found');
+                }
+
+                // Check this provider identity isn't already linked elsewhere
+                $existing = UserProvider::where('provider', $driver)
+                    ->where('provider_id', $socialUser->getId())
+                    ->first();
+
+                if ($existing && $existing->user_id !== $currentUser->id) {
+                    \Log::warning("OAuth ({$driver}): identity already linked to user {$existing->user_id}");
+                    return redirect('/?error=provider_already_linked');
+                }
+
+                // Link/update this provider for the user
+                UserProvider::updateOrCreate(
+                    ['user_id' => $currentUser->id, 'provider' => $driver],
+                    [
+                        'provider_id' => $socialUser->getId(),
+                        'email' => $socialUser->getEmail(),
+                        'token' => $socialUser->token,
+                        'refresh_token' => $socialUser->refreshToken,
+                    ]
+                );
+
+                // VK becomes the primary email
+                if ($socialUser->getEmail()) {
+                    $currentUser->update(['email' => $socialUser->getEmail()]);
+                }
+
+                Auth::login($currentUser);
+
+                $code = bin2hex(random_bytes(32));
+                $currentUser->authCodes()->create([
+                    'code' => hash('sha256', $code),
+                    'expires_at' => now()->addSeconds(60),
+                ]);
+
+                return redirect(url('/') . '?code=' . $code);
+            }
+
+            // ── Normal login flow ──
+
+            // 1. Find by provider + provider_id in user_providers
+            $providerIdentity = UserProvider::where('provider', $driver)
+                ->where('provider_id', $socialUser->getId())
+                ->first();
+
+            if ($providerIdentity) {
+                $user = $providerIdentity->user;
+            } else {
+                // 2. Try email match — auto-link
+                $user = null;
+                if ($socialUser->getEmail()) {
+                    $user = User::where('email', $socialUser->getEmail())->first();
+                    if ($user) {
+                        // Auto-link: add this provider to the existing user
+                        $user->providers()->create([
+                            'provider' => $driver,
+                            'provider_id' => $socialUser->getId(),
+                            'email' => $socialUser->getEmail(),
+                            'token' => $socialUser->token,
+                            'refresh_token' => $socialUser->refreshToken,
+                        ]);
+                        \Log::info("OAuth ({$driver}): auto-linked to existing user {$user->id} by email");
+                    }
+                }
+
+                // 3. Brand new user
+                if (! $user) {
+                    $user = User::create([
+                        'name' => $socialUser->getName(),
+                        'email' => $socialUser->getEmail(),
+                        'avatar' => $socialUser->getAvatar(),
+                    ]);
+
+                    $user->providers()->create([
+                        'provider' => $driver,
+                        'provider_id' => $socialUser->getId(),
+                        'email' => $socialUser->getEmail(),
+                        'token' => $socialUser->token,
+                        'refresh_token' => $socialUser->refreshToken,
+                    ]);
+
+                    $this->seedDefaultCategories($user);
+                } else {
+                    // Update existing user's name/avatar if not set
+                    $user->update([
+                        'name' => $user->name ?? $socialUser->getName(),
+                        'avatar' => $user->avatar ?? $socialUser->getAvatar(),
+                    ]);
+                }
+            }
+
+            /** @var User $user */
             Auth::login($user);
 
             $code = bin2hex(random_bytes(32));
@@ -58,23 +178,100 @@ class AuthController extends Controller
                 'expires_at' => now()->addSeconds(60),
             ]);
 
-            // Redirect back to frontend with one-time auth code
             return redirect(url('/') . '?code=' . $code);
 
         } catch (InvalidStateException $e) {
-            \Log::warning('Google Auth: invalid state', ['error' => $e->getMessage()]);
+            \Log::warning("OAuth ({$driver}): invalid state", ['error' => $e->getMessage()]);
             return redirect('/?error=state_invalid');
         } catch (ClientException $e) {
-            \Log::warning('Google Auth: access denied or invalid grant', ['error' => $e->getMessage()]);
+            \Log::warning("OAuth ({$driver}): access denied or invalid grant", ['error' => $e->getMessage()]);
             return redirect('/?error=access_denied');
         } catch (ConnectException $e) {
-            \Log::error('Google Auth: network error', ['error' => $e->getMessage()]);
+            \Log::error("OAuth ({$driver}): network error", ['error' => $e->getMessage()]);
             return redirect('/?error=network_error');
         } catch (\Exception $e) {
-            \Log::error('Google Auth Error: '.$e->getMessage());
+            \Log::error("OAuth ({$driver}): " . $e->getMessage());
             return redirect('/?error=auth_failed');
         }
     }
+
+    // ────────────────────────────────────────────
+    //  Manual provider linking (from Settings)
+    // ────────────────────────────────────────────
+
+    /**
+     * Generate a one-time redirect URL for linking a new OAuth provider
+     * to the currently authenticated user.
+     */
+    public function linkToken(Request $request): JsonResponse
+    {
+        $userId = $this->user()->id;
+        $token = bin2hex(random_bytes(24));
+
+        cache(['auth_link_' . $token => $userId], 300); // 5 min TTL
+
+        $driver = $this->defaultDriver();
+
+        return response()->json([
+            'url' => url("/auth/{$driver}/link?token={$token}"),
+        ]);
+    }
+
+    /**
+     * Initiate OAuth for provider linking. Resolves the user from a
+     * temporary token and stores the intent in the session.
+     */
+    public function linkRedirect(Request $request, ?string $driver = null): RedirectResponse
+    {
+        $driver = $driver ?? $this->defaultDriver();
+        $token = $request->query('token');
+
+        if (! $token) {
+            return redirect('/?error=missing_token');
+        }
+
+        $userId = cache('auth_link_' . $token);
+
+        if (! $userId) {
+            return redirect('/?error=invalid_or_expired_token');
+        }
+
+        // Consume the token
+        cache()->forget('auth_link_' . $token);
+
+        // Store linking intent in session for the callback
+        session()->put('oauth_link_driver', $driver);
+        session()->put('oauth_link_user_id', $userId);
+
+        /** @var RedirectResponse $response */
+        $response = Socialite::driver($driver)->redirect();
+
+        return $response;
+    }
+
+    // ────────────────────────────────────────────
+    //  Google OAuth (transitional wrappers)
+    // ────────────────────────────────────────────
+
+    /**
+     * @deprecated Use redirectToProvider for the default provider.
+     */
+    public function redirectToGoogle(): RedirectResponse
+    {
+        return $this->redirectToProvider(request(), 'google');
+    }
+
+    /**
+     * @deprecated Use handleProviderCallback for the default provider.
+     */
+    public function handleGoogleCallback(): RedirectResponse
+    {
+        return $this->handleProviderCallback(request(), 'google');
+    }
+
+    // ────────────────────────────────────────────
+    //  Dev login
+    // ────────────────────────────────────────────
 
     /**
      * Fast login for development environments.
@@ -92,9 +289,14 @@ class AuthController extends Controller
             ['email' => $devEmail],
             [
                 'name' => 'AlSokolov',
-                'google_id' => 'dev_id_'.md5($devEmail),
-                'avatar' => 'https://www.gravatar.com/avatar/'.md5($devEmail).'?s=200&d=identicon',
+                'avatar' => 'https://www.gravatar.com/avatar/' . md5($devEmail) . '?s=200&d=identicon',
             ]
+        );
+
+        // Ensure dev provider identity exists
+        $user->providers()->firstOrCreate(
+            ['provider' => 'dev'],
+            ['provider_id' => 'dev_id_' . md5($devEmail)]
         );
 
         $this->seedDefaultCategories($user);
@@ -108,6 +310,10 @@ class AuthController extends Controller
 
         return redirect(url('/') . '?code=' . $code);
     }
+
+    // ────────────────────────────────────────────
+    //  Token exchange (provider-agnostic)
+    // ────────────────────────────────────────────
 
     /**
      * Exchange a one-time auth code for a Sanctum token.
@@ -137,6 +343,10 @@ class AuthController extends Controller
 
         return response()->json(['token' => $token]);
     }
+
+    // ────────────────────────────────────────────
+    //  Helpers
+    // ────────────────────────────────────────────
 
     /**
      * Seed initial categories for a new user.

@@ -53,6 +53,7 @@
         "no": "No"
     },
     "auth": {
+        "login_with_vkid": "Login with VK ID",
         "login_with_google": "Login with Google",
         "description": "Your personal assistant for managing life balance and tasks.",
         "loading_app": "Loading Balance.Daily..."

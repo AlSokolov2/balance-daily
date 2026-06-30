@@ -41,6 +41,12 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URL'),
     ],
 
+    'vkid' => [
+        'client_id' => env('VKID_CLIENT_ID'),
+        'client_secret' => env('VKID_CLIENT_SECRET'),
+        'redirect' => env('VKID_REDIRECT_URI'),
+    ],
+
     'webpush' => [
         'public_key' => env('VAPID_PUBLIC_KEY'),
         'private_key' => env('VAPID_PRIVATE_KEY'),

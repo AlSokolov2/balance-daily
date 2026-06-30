@@ -48,6 +48,7 @@ export const useBalanceStore = defineStore('balance', {
         // ── Auth ──
         isAuthenticated: (state) => !!state.token,
         googleAuthUrl: () => (window.apiBaseUrl || '').replace(/\/$/, '') + '/auth/google',
+        vkAuthUrl: () => (window.apiBaseUrl || '').replace(/\/$/, '') + '/auth/vkid',
 
         // ── Derived Lists ──
         allSubcats: (state) => Object.keys(state.subcatCoeffs),

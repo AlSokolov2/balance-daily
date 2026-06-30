@@ -114,4 +114,16 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | OAuth Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Default Socialite driver for authentication. Can be overridden per
+    | request via the route parameter.
+    |
+    */
+
+    'oauth_driver' => env('AUTH_OAUTH_DRIVER', 'vkid'),
+
 ];

@@ -5,8 +5,11 @@ namespace App\Providers;
 use App\Models\Category;
 use App\Models\Task;
 use App\Observers\SyncObserver;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use SocialiteProviders\Manager\SocialiteWasCalled;
+use SocialiteProviders\VKID\Provider as VKIDProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,6 +33,10 @@ class AppServiceProvider extends ServiceProvider
 
         Task::observe(SyncObserver::class);
         Category::observe(SyncObserver::class);
+
+        Event::listen(function (SocialiteWasCalled $event) {
+            $event->extendSocialite('vkid', VKIDProvider::class);
+        });
 
         if (config('app.url')) {
             $url = config('app.url');
