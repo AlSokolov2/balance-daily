@@ -13,6 +13,94 @@ class AuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
+    // ────────────────────────────────────────────
+    //  VK ID OAuth (new default provider)
+    // ────────────────────────────────────────────
+
+    public function test_vkid_redirect_works(): void
+    {
+        $response = $this->get('/auth/vkid');
+        $response->assertRedirect();
+        $this->assertStringContainsString('oauth.vk.com', $response->getTargetUrl());
+    }
+
+    public function test_vkid_callback_creates_user(): void
+    {
+        $abstractUser = Mockery::mock('Laravel\Socialite\Two\User');
+        $abstractUser->shouldReceive('getId')->andReturn('987654321');
+        $abstractUser->shouldReceive('getName')->andReturn('VK User');
+        $abstractUser->shouldReceive('getEmail')->andReturn('vkuser@example.com');
+        $abstractUser->shouldReceive('getAvatar')->andReturn('https://vk.com/ava.jpg');
+        $abstractUser->token = 'vk-fake-token';
+
+        $provider = Mockery::mock('Laravel\Socialite\Two\AbstractProvider');
+        $provider->shouldReceive('user')->andReturn($abstractUser);
+
+        Socialite::shouldReceive('driver')->with('vkid')->andReturn($provider);
+
+        $response = $this->get('/auth/vkid/callback');
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'vkuser@example.com',
+            'provider' => 'vkid',
+            'provider_id' => '987654321',
+        ]);
+
+        /** @var User $user */
+        $user = User::where('email', 'vkuser@example.com')->first();
+
+        $response->assertRedirect();
+        $this->assertStringContainsString('code=', $response->getTargetUrl());
+
+        $this->assertDatabaseHas('categories', [
+            'user_id' => $user->id,
+            'slug' => 'chor',
+        ]);
+    }
+
+    /**
+     * Account linking: when a user with an existing account (e.g. Google)
+     * authenticates via VK ID with the same email, the VK provider
+     * should be linked to the existing account.
+     */
+    public function test_vkid_callback_links_by_email_to_existing_user(): void
+    {
+        // Create an existing user (simulating a Google-originated account)
+        User::create([
+            'name' => 'Existing User',
+            'email' => 'existing@example.com',
+            'provider' => 'google',
+            'provider_id' => 'google-old-id',
+        ]);
+
+        $abstractUser = Mockery::mock('Laravel\Socialite\Two\User');
+        $abstractUser->shouldReceive('getId')->andReturn('vk-new-id');
+        $abstractUser->shouldReceive('getName')->andReturn('Existing User');
+        $abstractUser->shouldReceive('getEmail')->andReturn('existing@example.com');
+        $abstractUser->shouldReceive('getAvatar')->andReturn('https://vk.com/ava.jpg');
+        $abstractUser->token = 'vk-fake-token';
+
+        $provider = Mockery::mock('Laravel\Socialite\Two\AbstractProvider');
+        $provider->shouldReceive('user')->andReturn($abstractUser);
+
+        Socialite::shouldReceive('driver')->with('vkid')->andReturn($provider);
+
+        $this->get('/auth/vkid/callback');
+
+        // Should be one user, now linked to VK
+        $this->assertDatabaseCount('users', 1);
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'existing@example.com',
+            'provider' => 'vkid',
+            'provider_id' => 'vk-new-id',
+        ]);
+    }
+
+    // ────────────────────────────────────────────
+    //  Google OAuth (backward compatibility)
+    // ────────────────────────────────────────────
+
     public function test_google_redirect_works(): void
     {
         $response = $this->get('/auth/google');
@@ -20,7 +108,7 @@ class AuthenticationTest extends TestCase
         $this->assertStringContainsString('accounts.google.com', $response->getTargetUrl());
     }
 
-    public function test_google_callback_creates_user_and_token(): void
+    public function test_google_callback_creates_user(): void
     {
         $abstractUser = Mockery::mock('Laravel\Socialite\Two\User');
         $abstractUser->shouldReceive('getId')->andReturn('123456789');
@@ -39,7 +127,8 @@ class AuthenticationTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'email' => 'test@example.com',
-            'google_id' => '123456789',
+            'provider' => 'google',
+            'provider_id' => '123456789',
         ]);
 
         /** @var User $user */
@@ -53,6 +142,10 @@ class AuthenticationTest extends TestCase
             'slug' => 'chor',
         ]);
     }
+
+    // ────────────────────────────────────────────
+    //  Code exchange (provider-agnostic — unchanged)
+    // ────────────────────────────────────────────
 
     public function test_code_exchange_returns_token(): void
     {
@@ -110,12 +203,17 @@ class AuthenticationTest extends TestCase
         $response->assertStatus(429);
     }
 
+    // ────────────────────────────────────────────
+    //  Dev login
+    // ────────────────────────────────────────────
+
     public function test_dev_login_works_in_allowed_environments(): void
     {
         $response = $this->get('/auth/dev-login');
 
         $this->assertDatabaseHas('users', [
             'email' => 'alsokolov2@gmail.com',
+            'provider' => 'dev',
         ]);
 
         $response->assertRedirect();
@@ -128,6 +226,10 @@ class AuthenticationTest extends TestCase
             'slug' => 'chor',
         ]);
     }
+
+    // ────────────────────────────────────────────
+    //  Profile / auth guards
+    // ────────────────────────────────────────────
 
     public function test_user_can_get_profile_when_authenticated(): void
     {

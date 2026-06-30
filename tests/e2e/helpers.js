@@ -17,13 +17,13 @@ export function helpers(page) {
             await page.goto('/auth/dev-login');
 
             // Wait for the SPA to redirect away from the auth screen.
-            // The auth screen shows "Sign in with Google" / "Войти через Google".
-            // Once logged in, this text disappears.
+            // The auth screen shows login buttons; once logged in, they disappear.
             await page.waitForFunction(() => {
                 try {
                     const body = document.body.textContent || '';
                     const hasToken = !!localStorage.getItem('auth_token');
-                    const isAuthScreen = body.includes('Sign in with Google') || body.includes('Войти через Google');
+                    const isAuthScreen = body.includes('Sign in with Google') || body.includes('Войти через Google')
+                        || body.includes('Login with VK ID') || body.includes('Войти через VK ID');
                     return hasToken && !isAuthScreen;
                 } catch { return false; }
             }, { timeout: 15_000 });
