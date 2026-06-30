@@ -11,6 +11,9 @@ Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallbac
 Route::get('/auth/vkid', [AuthController::class, 'redirectToProvider'])->name('login.vkid');
 Route::get('/auth/vkid/callback', [AuthController::class, 'handleProviderCallback'])->name('login.vkid.callback');
 
+// VK ID manual linking (from Settings)
+Route::get('/auth/vkid/link', [AuthController::class, 'linkRedirect'])->name('login.vkid.link');
+
 if (app()->environment(['local', 'testing'])) {
     Route::get('/auth/dev-login', [AuthController::class, 'devLogin'])->name('login.dev');
 }
