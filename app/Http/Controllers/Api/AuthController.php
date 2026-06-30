@@ -18,34 +18,73 @@ use Laravel\Socialite\Two\InvalidStateException;
 class AuthController extends Controller
 {
     /**
-     * Redirect the user to the Google authentication page.
+     * Default OAuth driver when no specific driver is requested.
      */
-    public function redirectToGoogle(): RedirectResponse
+    private function defaultDriver(): string
     {
+        return config('auth.oauth_driver', 'vkid');
+    }
+
+    // ────────────────────────────────────────────
+    //  Generic provider-agnostic methods
+    // ────────────────────────────────────────────
+
+    /**
+     * Redirect to the configured OAuth provider.
+     */
+    public function redirectToProvider(Request $request, ?string $driver = null): RedirectResponse
+    {
+        $driver = $driver ?? $this->defaultDriver();
+
         /** @var RedirectResponse $response */
-        $response = Socialite::driver('google')->redirect();
+        $response = Socialite::driver($driver)->redirect();
 
         return $response;
     }
 
     /**
-     * Obtain the user information from Google.
+     * Handle OAuth provider callback.
+     *
+     * Links accounts by email when a user authenticates via a new provider.
      */
-    public function handleGoogleCallback(): RedirectResponse
+    public function handleProviderCallback(Request $request, ?string $driver = null): RedirectResponse
     {
-        try {
-            /** @var \Laravel\Socialite\Two\User $googleUser */
-            $googleUser = Socialite::driver('google')->user();
+        $driver = $driver ?? $this->defaultDriver();
 
-            $user = User::updateOrCreate([
-                'google_id' => $googleUser->getId(),
-            ], [
-                'name' => $googleUser->getName(),
-                'email' => $googleUser->getEmail(),
-                'avatar' => $googleUser->getAvatar(),
-                'google_token' => $googleUser->token,
-                'google_refresh_token' => $googleUser->refreshToken,
-            ]);
+        try {
+            /** @var \Laravel\Socialite\Two\User $socialUser */
+            $socialUser = Socialite::driver($driver)->user();
+
+            // 1. Find by provider + provider_id
+            $user = User::where('provider', $driver)
+                ->where('provider_id', $socialUser->getId())
+                ->first();
+
+            // 2. Not found by provider — try email match (account linking)
+            if (! $user && $socialUser->getEmail()) {
+                $existing = User::where('email', $socialUser->getEmail())->first();
+                if ($existing) {
+                    // Link new provider to existing account
+                    $existing->update([
+                        'provider' => $driver,
+                        'provider_id' => $socialUser->getId(),
+                        'name' => $socialUser->getName() ?? $existing->name,
+                        'avatar' => $socialUser->getAvatar() ?? $existing->avatar,
+                    ]);
+                    $user = $existing;
+                }
+            }
+
+            // 3. Brand new user
+            if (! $user) {
+                $user = User::create([
+                    'provider' => $driver,
+                    'provider_id' => $socialUser->getId(),
+                    'name' => $socialUser->getName(),
+                    'email' => $socialUser->getEmail(),
+                    'avatar' => $socialUser->getAvatar(),
+                ]);
+            }
 
             $this->seedDefaultCategories($user);
 
@@ -58,23 +97,50 @@ class AuthController extends Controller
                 'expires_at' => now()->addSeconds(60),
             ]);
 
-            // Redirect back to frontend with one-time auth code
             return redirect(url('/') . '?code=' . $code);
 
         } catch (InvalidStateException $e) {
-            \Log::warning('Google Auth: invalid state', ['error' => $e->getMessage()]);
+            \Log::warning("OAuth ({$driver}): invalid state", ['error' => $e->getMessage()]);
             return redirect('/?error=state_invalid');
         } catch (ClientException $e) {
-            \Log::warning('Google Auth: access denied or invalid grant', ['error' => $e->getMessage()]);
+            \Log::warning("OAuth ({$driver}): access denied or invalid grant", ['error' => $e->getMessage()]);
             return redirect('/?error=access_denied');
         } catch (ConnectException $e) {
-            \Log::error('Google Auth: network error', ['error' => $e->getMessage()]);
+            \Log::error("OAuth ({$driver}): network error", ['error' => $e->getMessage()]);
             return redirect('/?error=network_error');
         } catch (\Exception $e) {
-            \Log::error('Google Auth Error: '.$e->getMessage());
+            \Log::error("OAuth ({$driver}): " . $e->getMessage());
             return redirect('/?error=auth_failed');
         }
     }
+
+    // ────────────────────────────────────────────
+    //  Google OAuth (transitional — delegate to generic methods)
+    // ────────────────────────────────────────────
+
+    /**
+     * Redirect the user to the Google authentication page.
+     *
+     * @deprecated Use redirectToProvider for the default provider.
+     */
+    public function redirectToGoogle(): RedirectResponse
+    {
+        return $this->redirectToProvider(request(), 'google');
+    }
+
+    /**
+     * Obtain the user information from Google.
+     *
+     * @deprecated Use handleProviderCallback for the default provider.
+     */
+    public function handleGoogleCallback(): RedirectResponse
+    {
+        return $this->handleProviderCallback(request(), 'google');
+    }
+
+    // ────────────────────────────────────────────
+    //  Dev login
+    // ────────────────────────────────────────────
 
     /**
      * Fast login for development environments.
@@ -92,8 +158,9 @@ class AuthController extends Controller
             ['email' => $devEmail],
             [
                 'name' => 'AlSokolov',
-                'google_id' => 'dev_id_'.md5($devEmail),
-                'avatar' => 'https://www.gravatar.com/avatar/'.md5($devEmail).'?s=200&d=identicon',
+                'provider' => 'dev',
+                'provider_id' => 'dev_id_' . md5($devEmail),
+                'avatar' => 'https://www.gravatar.com/avatar/' . md5($devEmail) . '?s=200&d=identicon',
             ]
         );
 
@@ -108,6 +175,10 @@ class AuthController extends Controller
 
         return redirect(url('/') . '?code=' . $code);
     }
+
+    // ────────────────────────────────────────────
+    //  Token exchange (provider-agnostic — no changes needed)
+    // ────────────────────────────────────────────
 
     /**
      * Exchange a one-time auth code for a Sanctum token.
@@ -137,6 +208,10 @@ class AuthController extends Controller
 
         return response()->json(['token' => $token]);
     }
+
+    // ────────────────────────────────────────────
+    //  Helpers
+    // ────────────────────────────────────────────
 
     /**
      * Seed initial categories for a new user.
