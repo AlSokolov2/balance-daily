@@ -96,4 +96,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(AuthCode::class);
     }
+
+    /** @return HasMany<UserProvider, $this> */
+    public function providers(): HasMany
+    {
+        return $this->hasMany(UserProvider::class);
+    }
 }
