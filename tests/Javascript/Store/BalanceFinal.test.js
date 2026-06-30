@@ -92,8 +92,34 @@ describe('Balance Store - Final Push for 100%', () => {
         axios.post.mockResolvedValue({ data: { id: 5, title: 'New' } });
         await store.addTask({ title: 'New' });
         expect(store.tasks).toHaveLength(1);
-        
+
         store.recalculateAll(); // Just to hit the line
+    });
+
+    it('addTask with null dates sends null to API (fix for bug #115)', async () => {
+        const store = useBalanceStore();
+        axios.post.mockResolvedValue({ data: { id: 6, title: 'Bug 115', deadline: null, postpone_until: null } });
+
+        // This is what DesktopAddForm.vue sends after the fix
+        await store.addTask({
+            title: 'Bug 115',
+            category_slug: 'chor',
+            importance: 2,
+            repeat_type: 'none',
+            repeat_interval: 1,
+            repeat_days: [],
+            deadline: null,
+            postpone_until: null,
+            ha: false,
+            force_active: false,
+            notes: '',
+        });
+
+        // null values for date fields pass nullable|date validation
+        expect(axios.post).toHaveBeenCalledWith('tasks', expect.objectContaining({
+            deadline: null,
+            postpone_until: null,
+        }));
     });
 
     it('handles init failure', async () => {
