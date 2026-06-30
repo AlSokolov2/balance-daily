@@ -21,7 +21,7 @@ class AuthenticationTest extends TestCase
     {
         $response = $this->get('/auth/vkid');
         $response->assertRedirect();
-        $this->assertStringContainsString('oauth.vk.com', $response->getTargetUrl());
+        $this->assertStringContainsString('id.vk.ru', $response->getTargetUrl());
     }
 
     public function test_vkid_callback_creates_user(): void
