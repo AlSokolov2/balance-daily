@@ -87,7 +87,7 @@ class AuthController extends Controller
                     // Identity belongs to another user — migrate to the data owner.
                     // The current (VK) user is merged into the existing (Google) user
                     // that holds the actual tasks/categories/history.
-                    /** @var User $dataOwner */
+                    /** @var User|null $dataOwner */
                     $dataOwner = User::find($existingProvider->user_id);
 
                     if ($dataOwner) {

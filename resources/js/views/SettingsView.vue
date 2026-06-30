@@ -344,8 +344,12 @@
                                 {{ p.provider === 'vkid' ? 'VK' : 'G' }}
                             </div>
                             <div>
-                                <p class="text-sm font-bold text-[var(--color-text)] capitalize">{{ p.provider }}</p>
-                                <p class="text-[10px] text-[var(--color-secondary)]">{{ p.email || '—' }}</p>
+                                <p class="text-sm font-bold text-[var(--color-text)] capitalize">
+                                    {{ p.provider }}
+                                </p>
+                                <p class="text-[10px] text-[var(--color-secondary)]">
+                                    {{ p.email || '—' }}
+                                </p>
                             </div>
                         </div>
                         <span class="text-[10px] text-green-500 font-bold bg-green-500/10 px-2 py-1 rounded-lg">{{ $t('settings.accounts.connected') }}</span>
