@@ -82,6 +82,74 @@ class TaskIsolationTest extends TestCase
         ]);
     }
 
+    /**
+     * Bug #115 regression test: empty strings for datetime columns
+     * must be converted to null before reaching the database.
+     *
+     * Without ConvertEmptyStringsToNull middleware (removed since Laravel 11),
+     * empty strings reach MySQL and cause:
+     *   SQLSTATE[22007]: Incorrect datetime value: '' for column 'deadline'
+     *
+     * The fix (sanitizeDateFields in TaskController) converts '' → null.
+     */
+    public function test_empty_string_dates_are_converted_to_null_on_create(): void
+    {
+        $user = User::factory()->create();
+        Category::create(['slug' => 'chor', 'name' => 'CHOR', 'weight' => 0.1, 'user_id' => $user->id]);
+
+        $response = $this->actingAs($user)->postJson('/api/tasks', [
+            'title' => 'Task with empty dates',
+            'category_slug' => 'chor',
+            'importance' => 2,
+            'deadline' => '',
+            'postpone_until' => '',
+        ]);
+
+        // Fix in action: despite sending '', the backend sanitizes to null
+        $response->assertStatus(201);
+        $response->assertJsonPath('deadline', null);
+        $response->assertJsonPath('postpone_until', null);
+    }
+
+    public function test_create_task_with_null_dates_succeeds(): void
+    {
+        $user = User::factory()->create();
+        Category::create(['slug' => 'chor', 'name' => 'CHOR', 'weight' => 0.1, 'user_id' => $user->id]);
+
+        $response = $this->actingAs($user)->postJson('/api/tasks', [
+            'title' => 'Task with null dates',
+            'category_slug' => 'chor',
+            'importance' => 2,
+            'deadline' => null,
+            'postpone_until' => null,
+        ]);
+
+        $response->assertStatus(201);
+        $response->assertJsonPath('title', 'Task with null dates');
+        $response->assertJsonPath('deadline', null);
+        $response->assertJsonPath('postpone_until', null);
+        $this->assertNotNull($response->json('id'));
+    }
+
+    /**
+     * Same fix for update: empty strings must be converted to null.
+     */
+    public function test_empty_string_dates_are_converted_to_null_on_update(): void
+    {
+        $user = User::factory()->create();
+        Category::create(['slug' => 'chor', 'name' => 'CHOR', 'weight' => 0.1, 'user_id' => $user->id]);
+        $task = Task::create(['title' => 'Update Me', 'category_slug' => 'chor', 'importance' => 2, 'user_id' => $user->id]);
+
+        $response = $this->actingAs($user)->putJson("/api/tasks/{$task->id}", [
+            'deadline' => '',
+            'postpone_until' => '',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('deadline', null);
+        $response->assertJsonPath('postpone_until', null);
+    }
+
     public function test_user_cannot_create_task_with_nonexistent_category(): void
     {
         $user = User::factory()->create();

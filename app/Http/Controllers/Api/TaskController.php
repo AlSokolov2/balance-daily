@@ -29,6 +29,8 @@ class TaskController extends Controller
      */
     public function store(Request $request): Task
     {
+        $this->sanitizeDateFields($request);
+
         $validated = $request->validate([
             'title' => 'required|string',
             'category_slug' => ['required', 'string', Rule::exists('categories', 'slug')->where('user_id', auth()->id())],
@@ -76,6 +78,8 @@ class TaskController extends Controller
     {
         /** @var Task $task */
         $task = $this->user()->tasks()->findOrFail($id);
+
+        $this->sanitizeDateFields($request);
 
         $validated = $request->validate([
             'title' => 'sometimes|required|string',
@@ -153,5 +157,23 @@ class TaskController extends Controller
         $task->delete();
 
         return response()->noContent();
+    }
+
+    /**
+     * Convert empty strings to null for datetime fields.
+     *
+     * Without ConvertEmptyStringsToNull middleware (removed since Laravel 11),
+     * empty strings reach MySQL and cause "Incorrect datetime value: ''" errors
+     * under strict mode. This normalizes them before validation.
+     */
+    private function sanitizeDateFields(Request $request): void
+    {
+        $dateFields = ['deadline', 'postpone_until', 'hidden_until', 'last_completed_date', 'completed_at'];
+
+        foreach ($dateFields as $field) {
+            if ($request->has($field) && $request->input($field) === '') {
+                $request->merge([$field => null]);
+            }
+        }
     }
 }
