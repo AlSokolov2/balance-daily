@@ -228,6 +228,103 @@ class AuthenticationTest extends TestCase
     }
 
     // ────────────────────────────────────────────
+    //  Account linking edge cases
+    // ────────────────────────────────────────────
+
+    /**
+     * Returning VK user: when a user already has provider='vkid',
+     * they should be found directly by provider + provider_id,
+     * not via email matching.
+     */
+    public function test_vkid_callback_finds_existing_vkid_user_directly(): void
+    {
+        // Create a user who already logged in via VK before
+        User::create([
+            'name' => 'VK Return User',
+            'email' => 'returning@example.com',
+            'provider' => 'vkid',
+            'provider_id' => 'vk-existing-id',
+        ]);
+
+        $abstractUser = Mockery::mock('Laravel\Socialite\Two\User');
+        $abstractUser->shouldReceive('getId')->andReturn('vk-existing-id');
+        $abstractUser->shouldReceive('getName')->andReturn('VK Return User');
+        $abstractUser->shouldReceive('getEmail')->andReturn('returning@example.com');
+        $abstractUser->shouldReceive('getAvatar')->andReturn('https://vk.com/ava.jpg');
+        $abstractUser->token = 'vk-fake-token';
+
+        $provider = Mockery::mock('Laravel\Socialite\Two\AbstractProvider');
+        $provider->shouldReceive('user')->andReturn($abstractUser);
+
+        Socialite::shouldReceive('driver')->with('vkid')->andReturn($provider);
+
+        $this->get('/auth/vkid/callback');
+
+        // No duplicate user created
+        $this->assertDatabaseCount('users', 1);
+        $this->assertDatabaseHas('users', [
+            'email' => 'returning@example.com',
+            'provider' => 'vkid',
+            'provider_id' => 'vk-existing-id',
+        ]);
+    }
+
+    /**
+     * When Socialite callback fails with a general exception,
+     * user should be redirected with error=auth_failed.
+     */
+    public function test_vkid_callback_handles_generic_exception(): void
+    {
+        Socialite::shouldReceive('driver')->with('vkid')
+            ->andThrow(new \RuntimeException('Unknown error'));
+
+        $response = $this->get('/auth/vkid/callback');
+
+        $response->assertRedirect();
+        $this->assertStringContainsString('error=auth_failed', $response->getTargetUrl());
+    }
+
+    // ────────────────────────────────────────────
+    //  Error handling
+    // ────────────────────────────────────────────
+
+    public function test_vkid_callback_handles_invalid_state(): void
+    {
+        Socialite::shouldReceive('driver')->with('vkid')
+            ->andThrow(new \Laravel\Socialite\Two\InvalidStateException);
+
+        $response = $this->get('/auth/vkid/callback');
+
+        $response->assertRedirect();
+        $this->assertStringContainsString('error=state_invalid', $response->getTargetUrl());
+    }
+
+    public function test_vkid_callback_handles_client_exception(): void
+    {
+        $mockResponse = new \GuzzleHttp\Psr7\Response(401);
+        Socialite::shouldReceive('driver')->with('vkid')
+            ->andThrow(new \GuzzleHttp\Exception\ClientException('access denied', new \GuzzleHttp\Psr7\Request('GET', 'test'), $mockResponse));
+
+        $response = $this->get('/auth/vkid/callback');
+
+        $response->assertRedirect();
+        $this->assertStringContainsString('error=access_denied', $response->getTargetUrl());
+    }
+
+    // ────────────────────────────────────────────
+    //  Config / default driver
+    // ────────────────────────────────────────────
+
+    public function test_oauth_default_driver_is_vkid(): void
+    {
+        // /auth/vkid uses defaultDriver() which reads auth.oauth_driver
+        // Default is 'vkid'
+        $response = $this->get('/auth/vkid');
+        $response->assertRedirect();
+        $this->assertStringContainsString('id.vk.ru', $response->getTargetUrl());
+    }
+
+    // ────────────────────────────────────────────
     //  Profile / auth guards
     // ────────────────────────────────────────────
 
