@@ -71,6 +71,7 @@ class AuthController extends Controller
             session()->pull('oauth_link_driver');
 
             if ($linkUserId) {
+                /** @var User|null $currentUser */
                 $currentUser = User::find($linkUserId);
 
                 if (! $currentUser) {
@@ -167,6 +168,7 @@ class AuthController extends Controller
                 }
             }
 
+            /** @var User $user */
             Auth::login($user);
 
             $code = bin2hex(random_bytes(32));
