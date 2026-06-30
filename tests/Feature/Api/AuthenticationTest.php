@@ -231,6 +231,30 @@ class AuthenticationTest extends TestCase
         $this->assertStringContainsString('error=provider_already_linked', $response->getTargetUrl());
     }
 
+    public function test_link_redirect_missing_token(): void
+    {
+        $response = $this->get('/auth/vkid/link');
+        $response->assertRedirect();
+        $this->assertStringContainsString('error=missing_token', $response->getTargetUrl());
+    }
+
+    public function test_link_redirect_invalid_token(): void
+    {
+        $response = $this->get('/auth/vkid/link?token=nonexistent');
+        $response->assertRedirect();
+        $this->assertStringContainsString('error=invalid_or_expired_token', $response->getTargetUrl());
+    }
+
+    public function test_link_redirect_expired_token(): void
+    {
+        // Manually set an already-expired cache entry
+        cache(['auth_link_expired_token' => 1], 0);
+
+        $response = $this->get('/auth/vkid/link?token=expired_token');
+        $response->assertRedirect();
+        $this->assertStringContainsString('error=invalid_or_expired_token', $response->getTargetUrl());
+    }
+
     // ────────────────────────────────────────────
     //  Google OAuth (backward compatibility)
     // ────────────────────────────────────────────
