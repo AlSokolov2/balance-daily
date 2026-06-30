@@ -18,6 +18,11 @@ class UserProvider extends Model
         'refresh_token',
     ];
 
+    protected $hidden = [
+        'token',
+        'refresh_token',
+    ];
+
     protected $casts = [
         'token' => 'encrypted',
         'refresh_token' => 'encrypted',
