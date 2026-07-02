@@ -33,8 +33,10 @@
 import { ref } from 'vue';
 import { useBalanceStore } from '../stores/balance';
 import { useI18n } from 'vue-i18n';
+import { useToast } from '../composables/useToast';
 
 const { t } = useI18n();
+const toast = useToast();
 const emit = defineEmits(['open-advanced', 'task-added']);
 const store = useBalanceStore();
 const title = ref('');
@@ -63,6 +65,7 @@ const handleAddTask = async () => {
             notes: '',
         });
         title.value = '';
+        toast.show(t('common.saved'));
         emit('task-added');
     } catch {
         window.alert(t('app.alerts.add_error'));
