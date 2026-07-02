@@ -331,6 +331,7 @@ import { ref, onMounted, reactive } from 'vue';
 import { useBalanceStore } from '../stores/balance';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
+import { useToast } from '../composables/useToast';
 
 const props = defineProps({
     task: {
@@ -345,6 +346,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'saved']);
 const store = useBalanceStore();
 const { t } = useI18n();
+const toast = useToast();
 const notesTextarea = ref(null);
 const activeTab = ref('notes');
 const tabs = ['notes', 'setup', 'schedule', 'history'];
@@ -485,6 +487,7 @@ const handleSave = async () => {
         }
         
         emit('saved');
+        toast.show(t('common.saved'));
         emit('close');
     } catch {
         window.alert(t('edit_task.save_error'));

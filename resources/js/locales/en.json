@@ -6,7 +6,8 @@
             "cat": "Categories",
             "sub": "Subcategories",
             "notepad": "Notepad",
-            "data": "Data"
+            "data": "Data",
+            "accounts": "Accounts"
         },
         "general": {
             "appearance": "Appearance",
@@ -39,10 +40,15 @@
                 "30": "Rare (30 min)",
                 "0": "Manual (no auto-update)"
             }
+        },
+        "accounts": {
+            "connected": "Connected",
+            "link_google": "Link Google"
         }
     },
     "common": {
         "save": "Save",
+        "saved": "Saved",
         "add": "Add",
         "delete": "Delete",
         "cancel": "Cancel",

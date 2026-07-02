@@ -154,11 +154,14 @@ class AuthenticationTest extends TestCase
         /** @var User $user */
         $user = User::factory()->create();
 
+        // Default provider (vkid)
         $response = $this->actingAs($user)->postJson('/api/auth/link-token');
-
-        $response->assertStatus(200)
-            ->assertJsonStructure(['url']);
+        $response->assertStatus(200)->assertJsonStructure(['url']);
         $this->assertStringContainsString('/auth/vkid/link?token=', $response->json('url'));
+
+        // Explicit provider
+        $response = $this->actingAs($user)->postJson('/api/auth/link-token', ['provider' => 'google']);
+        $this->assertStringContainsString('/auth/google/link?token=', $response->json('url'));
     }
 
     public function test_vkid_callback_links_provider_via_session_intent(): void
@@ -203,32 +206,67 @@ class AuthenticationTest extends TestCase
         ]);
     }
 
-    public function test_vkid_callback_link_rejects_if_provider_already_linked_to_other(): void
+    /**
+     * When linking and the provider identity belongs to another user,
+     * the current user is merged into the data owner (the existing user).
+     * The empty current user is deleted, all data transferred.
+     */
+    public function test_vkid_callback_link_merges_when_provider_already_linked_to_other(): void
     {
-        $userA = User::create(['name' => 'A', 'email' => 'a@example.com']);
-        $userA->providers()->create(['provider' => 'vkid', 'provider_id' => 'shared-id']);
+        // Data owner: old Google user with tasks
+        $dataOwner = User::create(['name' => 'Data Owner', 'email' => 'owner@example.com']);
+        $dataOwner->providers()->create(['provider' => 'google', 'provider_id' => 'shared-id']);
+        $dataOwner->categories()->create(['slug' => 'custom', 'name' => 'Custom', 'weight' => 0.1, 'color' => '#fff']);
+        $dataOwner->tasks()->create(['title' => 'Important task', 'category_slug' => 'custom', 'importance' => 2]);
 
-        $userB = User::create(['name' => 'B', 'email' => 'b@example.com']);
+        // Current user: new VK user trying to link Google
+        $currentUser = User::create(['name' => 'VK User', 'email' => 'new@vk.com']);
+        $currentUser->providers()->create(['provider' => 'vkid', 'provider_id' => 'vk-1']);
 
         $abstractUser = Mockery::mock('Laravel\Socialite\Two\User');
         $abstractUser->shouldReceive('getId')->andReturn('shared-id');
-        $abstractUser->shouldReceive('getName')->andReturn('B');
-        $abstractUser->shouldReceive('getEmail')->andReturn('b2@example.com');
+        $abstractUser->shouldReceive('getName')->andReturn('VK User');
+        $abstractUser->shouldReceive('getEmail')->andReturn('merged@vk.com');
         $abstractUser->shouldReceive('getAvatar')->andReturn('');
         $abstractUser->token = 'tok';
 
         $provider = Mockery::mock('Laravel\Socialite\Two\AbstractProvider');
         $provider->shouldReceive('user')->andReturn($abstractUser);
 
-        Socialite::shouldReceive('driver')->with('vkid')->andReturn($provider);
+        Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
 
         $response = $this->withSession([
-            'oauth_link_user_id' => $userB->id,
-            'oauth_link_driver' => 'vkid',
-        ])->get('/auth/vkid/callback');
+            'oauth_link_user_id' => $currentUser->id,
+            'oauth_link_driver' => 'google',
+        ])->get('/auth/google/callback');
 
         $response->assertRedirect();
-        $this->assertStringContainsString('error=provider_already_linked', $response->getTargetUrl());
+        $this->assertStringContainsString('code=', $response->getTargetUrl());
+
+        // Current user should be deleted (merged into data owner)
+        $this->assertDatabaseMissing('users', ['id' => $currentUser->id]);
+
+        // Data owner now has VK provider and merged data
+        $this->assertDatabaseHas('user_providers', [
+            'user_id' => $dataOwner->id,
+            'provider' => 'vkid',
+            'provider_id' => 'vk-1',
+        ]);
+        $this->assertDatabaseHas('user_providers', [
+            'user_id' => $dataOwner->id,
+            'provider' => 'google',
+            'provider_id' => 'shared-id',
+        ]);
+
+        // Task and category transferred to data owner
+        $this->assertEquals(1, $dataOwner->tasks()->count());
+        $this->assertEquals(1, $dataOwner->categories()->where('slug', 'custom')->count());
+
+        // Email updated to linked provider's email
+        $this->assertDatabaseHas('users', [
+            'id' => $dataOwner->id,
+            'email' => 'merged@vk.com',
+        ]);
     }
 
     public function test_link_redirect_missing_token(): void

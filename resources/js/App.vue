@@ -31,6 +31,9 @@
             @open-advanced="openAdvancedAdd"
         />
 
+        <!-- Toast Notification -->
+        <ToastNotification />
+
         <!-- PWA Update Notification -->
         <div v-if="needRefresh" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-[100] cursor-pointer group" @click="updateServiceWorker(true)">
             <div class="bg-[var(--bg-card)]/80 backdrop-blur-xl border border-[var(--color-border)] rounded-full px-4 py-2 shadow-2xl flex items-center gap-3 animate-[slide-up_0.3s_ease-out] hover:scale-105 transition-all active:scale-95">
@@ -52,6 +55,7 @@ import { useI18n } from 'vue-i18n';
 
 import AuthScreen from './components/AuthScreen.vue';
 import MobileBottomNav from './components/MobileBottomNav.vue';
+import ToastNotification from './components/ToastNotification.vue';
 
 const { locale } = useI18n();
 const { offlineReady, needRefresh, updateServiceWorker } = useRegisterSW();

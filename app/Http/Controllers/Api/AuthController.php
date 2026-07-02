@@ -78,17 +78,49 @@ class AuthController extends Controller
                     return redirect('/?error=link_user_not_found');
                 }
 
-                // Check this provider identity isn't already linked elsewhere
-                $existing = UserProvider::where('provider', $driver)
+                // Check if this provider identity belongs to another user
+                $existingProvider = UserProvider::where('provider', $driver)
                     ->where('provider_id', $socialUser->getId())
                     ->first();
 
-                if ($existing && $existing->user_id !== $currentUser->id) {
-                    \Log::warning("OAuth ({$driver}): identity already linked to user {$existing->user_id}");
-                    return redirect('/?error=provider_already_linked');
+                if ($existingProvider && $existingProvider->user_id !== $currentUser->id) {
+                    // Identity belongs to another user — migrate to the data owner.
+                    // The current (VK) user is merged into the existing (Google) user
+                    // that holds the actual tasks/categories/history.
+                    /** @var User|null $dataOwner */
+                    $dataOwner = User::find($existingProvider->user_id);
+
+                    if ($dataOwner) {
+                        // Move VK provider from current user to data owner
+                        UserProvider::where('user_id', $currentUser->id)
+                            ->where('provider', $this->defaultDriver())
+                            ->update(['user_id' => $dataOwner->id]);
+
+                        // Move any tasks/categories/settings from current to data owner
+                        $currentUser->tasks()->update(['user_id' => $dataOwner->id]);
+                        $currentUser->categories()->update(['user_id' => $dataOwner->id]);
+                        $currentUser->settings()->update(['user_id' => $dataOwner->id]);
+                        $currentUser->subcatCoeffs()->update(['user_id' => $dataOwner->id]);
+
+                        // VK email becomes primary
+                        if ($socialUser->getEmail()) {
+                            $dataOwner->update([
+                                'email' => $socialUser->getEmail(),
+                                'name' => $dataOwner->name ?? $currentUser->name,
+                                'avatar' => $dataOwner->avatar ?? $currentUser->avatar,
+                            ]);
+                        }
+
+                        // Delete empty current user
+                        $currentUser->delete();
+
+                        $currentUser = $dataOwner;
+
+                        \Log::info("OAuth ({$driver}): merged user {$linkUserId} into {$dataOwner->id}");
+                    }
                 }
 
-                // Link/update this provider for the user
+                // Link/update this provider for the resolved user
                 UserProvider::updateOrCreate(
                     ['user_id' => $currentUser->id, 'provider' => $driver],
                     [
@@ -99,7 +131,7 @@ class AuthController extends Controller
                     ]
                 );
 
-                // VK becomes the primary email
+                // Link provider becomes primary email
                 if ($socialUser->getEmail()) {
                     $currentUser->update(['email' => $socialUser->getEmail()]);
                 }
@@ -210,7 +242,7 @@ class AuthController extends Controller
 
         cache(['auth_link_' . $token => $userId], 300); // 5 min TTL
 
-        $driver = $this->defaultDriver();
+        $driver = $request->input('provider', $this->defaultDriver());
 
         return response()->json([
             'url' => url("/auth/{$driver}/link?token={$token}"),
@@ -372,7 +404,11 @@ class AuthController extends Controller
      */
     public function me(Request $request): User
     {
-        return $this->user();
+        /** @var User $user */
+        $user = $this->user();
+        $user->load('providers');
+
+        return $user;
     }
 
     /**
