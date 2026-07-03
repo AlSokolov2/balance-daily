@@ -15,12 +15,7 @@
                     <slot name="header">
                         <h2 class="text-[var(--text-subtitle)] font-black text-[var(--color-text)]">{{ title }}</h2>
                     </slot>
-                    <button
-                        class="w-10 h-10 rounded-sm bg-[var(--bg-secondary)] flex items-center justify-center hover:opacity-80 transition-opacity border border-[var(--color-border)]"
-                        @click="$emit('close')"
-                    >
-                        <AppIcon name="close" :size="16" />
-                    </button>
+                    <BaseButton variant="secondary" size="sm" icon="close" @click="$emit('close')" />
                 </div>
 
                 <!-- Body -->
@@ -41,6 +36,7 @@
 <script setup>
 import { computed } from 'vue';
 import AppIcon from './AppIcon.vue';
+import BaseButton from './BaseButton.vue';
 
 defineProps({
     visible: { type: Boolean, default: false },

@@ -5,9 +5,7 @@
             <h2 class="text-lg font-bold tracking-tight text-[var(--color-text)] uppercase tracking-widest">
                 {{ $t('settings.tabs.notepad') }}
             </h2>
-            <button class="w-10 h-10 rounded-xl bg-[var(--bg-secondary)] flex items-center justify-center hover:opacity-80 transition-opacity border border-[var(--color-border)]" @click="router.push('/')">
-                <AppIcon name="close" :size="18" />
-            </button>
+            <BaseButton variant="secondary" size="sm" icon="close" @click="router.push('/')" />
         </div>
 
         <!-- Content -->
@@ -17,9 +15,9 @@
                 class="flex-1 w-full p-4 border border-[var(--color-border)] rounded-[24px] text-base mb-4 focus:ring-2 focus:ring-[var(--color-border)] outline-none transition-all bg-[var(--bg-card)] text-[var(--color-text)] resize-none custom-scrollbar shadow-sm" 
                 :placeholder="$t('settings_modal.notepad.placeholder')"
             />
-            <button class="shrink-0 w-full py-4 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] border border-[var(--color-border)] rounded-2xl font-bold text-sm shadow-md active:scale-95 transition-all" @click="saveNotepad">
+            <BaseButton variant="primary" size="md" class="w-full py-4 shrink-0" @click="saveNotepad">
                 {{ $t('settings_modal.notepad.save_button') }}
-            </button>
+            </BaseButton>
         </div>
     </div>
 </template>
@@ -31,6 +29,7 @@ import { useBalanceStore } from '../stores/balance';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 import AppIcon from '../components/AppIcon.vue';
+import BaseButton from '../components/BaseButton.vue';
 
 const { t } = useI18n();
 const store = useBalanceStore();

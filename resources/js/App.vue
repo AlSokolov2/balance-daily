@@ -118,16 +118,6 @@ onUnmounted(() => { window.removeEventListener('resize', updateDimensions); });
 <style>
 @reference "../css/app.css";
 
-button {
-    @apply transition-all duration-200 cursor-pointer font-bold border border-[var(--color-border)];
-    background: var(--btn-primary-bg);
-    color: var(--btn-primary-text);
-}
-button:hover {
-    @apply opacity-80;
-    background: var(--bg-secondary);
-    border-color: var(--color-secondary);
-}
 input[type="range"] { accent-color: var(--color-text); }
 
 @keyframes slide-up {

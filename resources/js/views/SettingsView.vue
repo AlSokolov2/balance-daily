@@ -5,25 +5,27 @@
             <h2 class="text-lg font-bold tracking-tight text-[var(--color-text)] uppercase tracking-widest">
                 {{ $t('settings.title') }}
             </h2>
-            <button class="w-10 h-10 rounded-xl bg-[var(--bg-secondary)] flex items-center justify-center hover:opacity-80 transition-opacity border border-[var(--color-border)]" @click="router.push('/')">
-                <svg
-                    class="w-5 h-5 text-[var(--color-text)]"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                ><path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12"
-                /></svg>
-            </button>
+            <BaseButton variant="secondary" size="sm" icon="close" @click="router.push('/')" />
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="px-5 pb-2 shrink-0">
+            <div class="flex gap-1 bg-[var(--bg-secondary)]/50 p-1 rounded-xl border border-[var(--color-border)]">
+                <button
+                    v-for="tab in tabs"
+                    :key="tab.key"
+                    :class="['flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border-none shadow-none', activeTab === tab.key ? 'bg-[var(--bg-card)] text-[var(--color-primary)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']"
+                    @click="activeTab = tab.key"
+                >
+                    {{ $t(tab.label) }}
+                </button>
+            </div>
         </div>
 
         <!-- Settings List -->
-        <div class="flex-1 overflow-y-auto p-5 pt-4 custom-scrollbar space-y-12 pb-20">
+        <div class="flex-1 overflow-y-auto p-5 pt-4 custom-scrollbar pb-20">
             <!-- Section: General -->
-            <section class="space-y-6">
+            <section v-if="activeTab === 'general'" class="space-y-6">
                 <h3 class="text-[11px] font-black text-[var(--color-primary)] uppercase tracking-[0.2em] px-1 mb-4">
                     {{ $t('settings.tabs.gen') }}
                 </h3>
@@ -32,17 +34,7 @@
                     <router-link to="/notepad" class="w-full p-4 bg-[var(--bg-secondary)]/50 border border-[var(--color-border)] rounded-2xl flex items-center justify-between hover:bg-[var(--bg-secondary)] transition-all">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl bg-[var(--bg-card)] border border-[var(--color-border)] flex items-center justify-center shadow-sm">
-                                <svg
-                                    class="w-5 h-5 text-[var(--color-primary)]"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                ><path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                /></svg>
+                                <AppIcon name="notepad" :size="18" class="text-[var(--color-primary)]" />
                             </div>
                             <div>
                                 <p class="text-sm font-bold text-[var(--color-text)]">
@@ -53,17 +45,7 @@
                                 </p>
                             </div>
                         </div>
-                        <svg
-                            class="w-5 h-5 text-[var(--color-secondary)]"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        ><path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M9 5l7 7-7 7"
-                        /></svg>
+                        <AppIcon name="chevron-right" :size="18" class="text-[var(--color-secondary)]" />
                     </router-link>
 
                     <div class="border-t border-[var(--color-border)] pt-6">
@@ -160,14 +142,14 @@
             </section>
 
             <!-- Section: Categories -->
-            <section class="space-y-4">
+            <section v-if="activeTab === 'categories'" class="space-y-4">
                 <div class="flex items-center justify-between px-1 mb-4">
                     <h3 class="text-[11px] font-black text-[var(--color-primary)] uppercase tracking-[0.2em]">
                         {{ $t('settings.tabs.cat') }}
                     </h3>
-                    <button class="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-widest bg-[var(--bg-secondary)] px-3 py-1.5 rounded-lg border border-[var(--color-border)]" @click="addCategory">
-                        + {{ $t('settings_modal.categories.add_button') }}
-                    </button>
+                    <BaseButton variant="secondary" size="sm" icon="plus" @click="addCategory">
+                        {{ $t('settings_modal.categories.add_button') }}
+                    </BaseButton>
                 </div>
 
                 <div class="space-y-2">
@@ -183,28 +165,18 @@
                         </div>
                         <div class="flex items-center gap-3">
                             <span class="text-xs font-black text-[var(--color-secondary)]">{{ c.weight }}%</span>
-                            <svg
-                                class="w-4 h-4 text-[var(--color-secondary)]"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            ><path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M9 5l7 7-7 7"
-                            /></svg>
+                            <AppIcon name="chevron-right" :size="14" class="text-[var(--color-secondary)]" />
                         </div>
                     </div>
                 </div>
                 
-                <button class="w-full py-4 mt-2 bg-[var(--btn-primary-bg)] text-[var(--btn-primary-text)] rounded-2xl font-black text-xs shadow-md border border-[var(--color-border)] uppercase tracking-widest" @click="saveCats">
+                <BaseButton variant="primary" size="md" class="w-full mt-2" @click="saveCats">
                     {{ $t('settings_modal.categories.save_button') }}
-                </button>
+                </BaseButton>
             </section>
 
             <!-- Section: Subcategories -->
-            <section class="space-y-4">
+            <section v-if="activeTab === 'subcategories'" class="space-y-4">
                 <h3 class="text-[11px] font-black text-[var(--color-primary)] uppercase tracking-[0.2em] px-1 mb-4">
                     {{ $t('settings.tabs.sub') }}
                 </h3>
@@ -222,14 +194,14 @@
                         >
                         <span class="text-xs font-bold text-[var(--color-secondary)] w-8">{{ Number(coeff).toFixed(1) }}</span>
                     </div>
-                    <button class="w-full py-4 bg-[var(--bg-secondary)] text-[var(--color-text)] rounded-2xl font-bold text-xs mt-6 border border-[var(--color-border)] uppercase tracking-widest" @click="saveCats">
+                    <BaseButton variant="secondary" size="md" class="w-full py-4 mt-6" @click="saveCats">
                         {{ $t('settings_modal.subcategories.save_all_button') }}
-                    </button>
+                    </BaseButton>
                 </div>
             </section>
 
             <!-- Section: Data -->
-            <section class="space-y-4">
+            <section v-if="activeTab === 'data'" class="space-y-4">
                 <h3 class="text-[11px] font-black text-[var(--color-primary)] uppercase tracking-[0.2em] px-1 mb-4">
                     {{ $t('settings.tabs.data') }}
                 </h3>
@@ -243,77 +215,24 @@
                     </div>
 
                     <div class="grid grid-cols-1 gap-3">
-                        <button class="w-full py-4 bg-[var(--bg-secondary)] text-[var(--color-text)] rounded-2xl font-bold text-sm flex items-center justify-center gap-3 border border-[var(--color-border)]" @click="store.sync(true)">
-                            <svg
-                                class="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            ><path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                            /></svg>
+                        <BaseButton variant="secondary" size="md" icon="sync" class="w-full py-4" @click="store.sync(true)">
                             {{ $t('settings_modal.data.sync_button') }}
-                        </button>
-                        <button class="w-full py-4 bg-[var(--bg-card)] border border-[var(--color-border)] text-[var(--color-text)] rounded-2xl font-bold text-sm flex items-center justify-center gap-3 shadow-sm" @click="exportData">
-                            <svg
-                                class="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            ><path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                            /></svg>
+                        </BaseButton>
+                        <BaseButton variant="secondary" size="md" icon="download" class="w-full py-4" @click="exportData">
                             {{ $t('settings_modal.data.export_button') }}
-                        </button>
-                        <button class="w-full py-4 bg-[var(--bg-card)] border border-[var(--color-border)] text-[var(--color-text)] rounded-2xl font-bold text-sm flex items-center justify-center gap-3 shadow-sm" @click="fileInput?.click()">
-                            <svg
-                                class="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            ><path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                            /></svg>
+                        </BaseButton>
+                        <BaseButton variant="secondary" size="md" icon="upload" class="w-full py-4" @click="fileInput?.click()">
                             {{ $t('settings_modal.data.import_button') }}
-                        </button>
+                        </BaseButton>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
                         <a href="https://github.com/AlSokolov2/balance-daily/issues/new?template=bug-report.yml" target="_blank" class="flex-1 py-3.5 bg-[var(--bg-secondary)] text-red-500 rounded-2xl font-black text-[9px] uppercase tracking-[0.15em] hover:opacity-80 transition-all flex items-center justify-center gap-2 border border-[var(--color-border)]">
-                            <svg
-                                class="w-3.5 h-3.5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            ><path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                            /></svg>
+                            <AppIcon name="danger" :size="14" />
                             {{ $t('settings_modal.data.bug_report') }}
                         </a>
                         <a href="https://github.com/AlSokolov2/balance-daily/issues/new?template=feature-request.yml" target="_blank" class="flex-1 py-3.5 bg-[var(--bg-secondary)] text-[var(--color-primary)] rounded-2xl font-black text-[9px] uppercase tracking-[0.15em] hover:opacity-80 transition-all flex items-center justify-center gap-2 border border-[var(--color-border)]">
-                            <svg
-                                class="w-3.5 h-3.5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            ><path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.364-6.364l-.707-.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M12 7a5 5 0 015 5 5 5 0 01-5 5 5 5 0 01-5-5 5 5 0 015-5z"
-                            /></svg>
+                            <AppIcon name="lightbulb" :size="14" />
                             {{ $t('settings_modal.data.suggest_feature') }}
                         </a>
                     </div>
@@ -328,7 +247,7 @@
             </section>
 
             <!-- Section: Linked Accounts -->
-            <section class="space-y-4">
+            <section v-if="activeTab === 'accounts'" class="space-y-4">
                 <h3 class="text-[11px] font-black text-[var(--color-primary)] uppercase tracking-[0.2em] px-1 mb-4">
                     {{ $t('settings.tabs.accounts') }}
                 </h3>
@@ -355,9 +274,9 @@
                         <span class="text-[10px] text-green-500 font-bold bg-green-500/10 px-2 py-1 rounded-lg">{{ $t('settings.accounts.connected') }}</span>
                     </div>
 
-                    <button
+                    <BaseButton
                         v-if="!hasGoogleLinked"
-                        class="w-full py-4 bg-[var(--bg-secondary)] text-[var(--color-text)] rounded-2xl font-bold text-sm flex items-center justify-center gap-3 border border-[var(--color-border)]"
+                        variant="secondary" size="md" class="w-full py-4"
                         @click="linkGoogle"
                     >
                         <svg class="w-4 h-4" viewBox="0 0 24 24">
@@ -367,7 +286,7 @@
                             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.73 1 4.15 3.13 3.04 6.22l2.83 2.12c.86-2.59 3.28-4.51 6.13-4.51z" />
                         </svg>
                         {{ $t('settings.accounts.link_google') }}
-                    </button>
+                    </BaseButton>
                 </div>
             </section>
         </div>
@@ -386,6 +305,17 @@ import { useRouter } from 'vue-router';
 import { useBalanceStore } from '../stores/balance';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
+import AppIcon from '../components/AppIcon.vue';
+import BaseButton from '../components/BaseButton.vue';
+
+const tabs = [
+    { key: 'general', label: 'settings.tabs.gen' },
+    { key: 'categories', label: 'settings.tabs.cat' },
+    { key: 'subcategories', label: 'settings.tabs.sub' },
+    { key: 'data', label: 'settings.tabs.data' },
+    { key: 'accounts', label: 'settings.tabs.accounts' },
+];
+const activeTab = ref('general');
 
 const { locale, t } = useI18n();
 const store = useBalanceStore();

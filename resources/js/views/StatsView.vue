@@ -11,9 +11,7 @@
                 </h2>
             </div>
             <!-- Back Button for Navigation -->
-            <button class="w-10 h-10 rounded-xl bg-[var(--bg-secondary)] flex items-center justify-center hover:opacity-80 transition-opacity border border-[var(--color-border)]" @click="router.push('/')">
-                <AppIcon name="close" :size="18" />
-            </button>
+            <BaseButton variant="secondary" size="sm" icon="close" @click="router.push('/')" />
         </div>
 
         <!-- Content -->
@@ -100,6 +98,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBalanceStore } from '../stores/balance';
 import AppIcon from '../components/AppIcon.vue';
+import BaseButton from '../components/BaseButton.vue';
 
 const store = useBalanceStore();
 const router = useRouter();
