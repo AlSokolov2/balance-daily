@@ -83,14 +83,14 @@
 
                     <div>
                         <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-3">{{ $t('settings.general.visual_style') }}</label>
-                        <div class="grid grid-cols-2 gap-2 bg-[var(--bg-secondary)] p-1 rounded-2xl border border-[var(--color-border)]">
+                        <div :class="['grid gap-2 bg-[var(--bg-secondary)] p-1 rounded-2xl border border-[var(--color-border)]', vizPlugins.length <= 2 ? 'grid-cols-2' : 'grid-cols-3']">
                             <button
-                                v-for="style in ['bubbles', 'treemap']"
-                                :key="style"
-                                :class="['py-3 rounded-xl text-xs font-bold transition-all', store.visualStyle === style ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']"
-                                @click="store.setVisualStyle(style)"
+                                v-for="p in vizPlugins"
+                                :key="p.name"
+                                :class="['py-3 rounded-xl text-xs font-bold transition-all', store.visualStyle === p.name ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']"
+                                @click="store.setVisualStyle(p.name)"
                             >
-                                {{ $t(`settings.general.visual_styles.${style}`) }}
+                                {{ p.label[store.locale] || p.label.en || p.name }}
                             </button>
                         </div>
                     </div>
@@ -347,6 +347,7 @@ import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 import AppIcon from '../components/AppIcon.vue';
 import BaseButton from '../components/BaseButton.vue';
+import { listPlugins } from '../plugins/vizPluginRegistry.js';
 
 const tabs = [
     { key: 'general', label: 'settings.tabs.gen' },
@@ -356,6 +357,7 @@ const tabs = [
     { key: 'accounts', label: 'settings.tabs.accounts' },
 ];
 const activeTab = ref('general');
+const vizPlugins = computed(() => listPlugins());
 
 const { locale, t } = useI18n();
 const store = useBalanceStore();
