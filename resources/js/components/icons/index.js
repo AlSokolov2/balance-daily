@@ -214,7 +214,7 @@ export const icons = {
     restore: {
         viewBox: '0 0 24 24',
         defaultStroke: 2,
-        paths: [{ d: 'M3 10h10a5 5 0 015 5v2m-5-7l-4 4 4 4' }],
+        paths: [{ d: 'M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3' }],
     },
 
     // ── Clipboard (used as subcategories tab icon in SettingsModal) ─
