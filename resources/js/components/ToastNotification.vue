@@ -6,19 +6,7 @@
         >
             <div class="bg-[var(--bg-card)]/80 backdrop-blur-xl border border-[var(--color-border)] rounded-full px-4 py-2 shadow-2xl flex items-center gap-3">
                 <div class="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center shrink-0 shadow-sm">
-                    <svg
-                        class="w-3.5 h-3.5 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="3"
-                            d="M5 13l4 4L19 7"
-                        />
-                    </svg>
+                    <AppIcon name="check" :size="14" class="text-white" />
                 </div>
                 <span class="text-xs font-bold text-[var(--color-text)] pr-1">{{ message }}</span>
             </div>
@@ -28,6 +16,7 @@
 
 <script setup>
 import { useToast } from '../composables/useToast';
+import AppIcon from './AppIcon.vue';
 
 const { message, visible } = useToast();
 </script>

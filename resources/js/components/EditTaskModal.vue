@@ -6,17 +6,7 @@
                 class="w-10 h-10 rounded-xl bg-[var(--bg-secondary)] flex items-center justify-center hover:opacity-80 transition-all border border-[var(--color-border)] shadow-none"
                 @click="$emit('close')"
             >
-                <svg
-                    class="w-5 h-5 text-[var(--color-text)]"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                ><path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2.5"
-                    d="M15 19l-7-7 7-7"
-                /></svg>
+                <AppIcon name="chevron-left" :size="20" />
             </button>
             
             <div class="flex-1 px-4 min-w-0">
@@ -108,34 +98,14 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 <div class="w-6 h-6 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500">
-                                    <svg
-                                        class="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    ><path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="3"
-                                        d="M5 13l4 4L19 7"
-                                    /></svg>
+                                    <AppIcon name="check" :size="16" />
                                 </div>
                                 <button
                                     class="w-6 h-6 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500 hover:bg-red-500/20"
                                     :title="$t('edit_task.delete_completion')"
                                     @click="deleteCompletion(comp.id)"
                                 >
-                                    <svg
-                                        class="w-3 h-3"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    ><path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="3"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    /></svg>
+                                    <AppIcon name="close" :size="12" />
                                 </button>
                             </div>
                         </div>
@@ -310,17 +280,7 @@
                 class="w-14 py-4 bg-[var(--bg-secondary)] text-red-500 rounded-2xl flex items-center justify-center hover:bg-red-500/10 transition-colors border border-[var(--color-border)] shadow-none" 
                 @click="handleDelete"
             >
-                <svg
-                    class="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                ><path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                /></svg>
+                <AppIcon name="trash" :size="24" />
             </button>
         </div>
     </div>
@@ -332,6 +292,7 @@ import { useBalanceStore } from '../stores/balance';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 import { useToast } from '../composables/useToast';
+import AppIcon from './AppIcon.vue';
 
 const props = defineProps({
     task: {

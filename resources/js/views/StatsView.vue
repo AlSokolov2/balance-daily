@@ -4,36 +4,14 @@
         <div class="flex items-center justify-between px-6 py-5 border-b border-[var(--color-border)] shrink-0">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500">
-                    <svg
-                        class="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    ><path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    /></svg>
+                    <AppIcon name="stats" :size="24" />
                 </div>
                 <h2 class="text-xl font-black text-[var(--color-text)] uppercase tracking-tight">
                     {{ $t('stats.title') }}
                 </h2>
             </div>
             <!-- Back Button for Navigation -->
-            <button class="w-10 h-10 rounded-xl bg-[var(--bg-secondary)] flex items-center justify-center hover:opacity-80 transition-opacity border border-[var(--color-border)]" @click="router.push('/')">
-                <svg
-                    class="w-5 h-5 text-[var(--color-text)]"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                ><path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12"
-                /></svg>
-            </button>
+            <BaseButton variant="secondary" size="sm" icon="close" @click="router.push('/')" />
         </div>
 
         <!-- Content -->
@@ -119,6 +97,8 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBalanceStore } from '../stores/balance';
+import AppIcon from '../components/AppIcon.vue';
+import BaseButton from '../components/BaseButton.vue';
 
 const store = useBalanceStore();
 const router = useRouter();
