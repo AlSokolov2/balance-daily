@@ -98,7 +98,7 @@
                     @touchmove="handleTouchMovePull"
                     @touchend="handleTouchEndPull"
                 >
-                    <div class="flex-1 overflow-y-auto p-3">
+                    <div class="flex-1 overflow-y-auto p-3 min-h-0">
                         <div v-if="!store.filteredTasks.length" class="text-center py-12 text-[var(--color-secondary)] text-sm">
                             {{ $t('app.no_tasks_in_category') }}
                         </div>
@@ -115,7 +115,7 @@
         </div>
 
         <!-- Desktop Content -->
-        <div v-else class="flex-1 flex flex-col h-full gap-3">
+        <div v-else class="flex-1 flex flex-col gap-3 min-h-0">
             <div
                 v-if="store.filterCat !== 'archive' && store.filterCat !== 'hidden'" 
                 class="flex-1 bg-[var(--bg-card)] rounded-3xl shadow-sm border border-[var(--color-border)] relative overflow-hidden flex flex-col min-h-0 min-w-0"
@@ -128,7 +128,7 @@
                 :class="store.filterCat === 'archive' || store.filterCat === 'hidden' ? 'flex-1' : 'max-h-[40vh] shrink-0'"
                 class="card bg-[var(--bg-card)] rounded-[16px] flex flex-col shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[var(--color-border)] min-h-[100px] overflow-hidden"
             >
-                <div class="flex-1 overflow-y-auto p-4">
+                <div class="flex-1 overflow-y-auto p-4 min-h-0">
                     <div v-if="!store.filteredTasks.length" class="text-center py-8 text-[var(--color-secondary)] text-sm">
                         {{ $t('app.no_tasks') }}
                     </div>

@@ -52,6 +52,10 @@ describe('UI State Reset Logic (Issue #48)', () => {
         const taskListCard = wrapper.find('.card');
         expect(taskListCard.classes()).toContain('flex-1');
         expect(taskListCard.classes()).not.toContain('max-h-[40vh]');
+
+        // Inner scrollable div must have min-h-0 to prevent overflow clipping (Issue #124)
+        const scrollableDiv = taskListCard.find('.overflow-y-auto');
+        expect(scrollableDiv.classes()).toContain('min-h-0');
     });
 
     it('collapses list and shows chart when switching back from archive to all', async () => {
