@@ -14,14 +14,13 @@
             <div class="task-title font-bold text-[15px] mb-0.5 text-[var(--color-text)]">
                 {{ task.title }}
                 
-                <span
+                <BaseBadge
                     v-for="badge in activeBadges"
                     :key="badge.text"
-                    class="badge"
-                    :class="badge.classes"
+                    size="sm"
                 >
                     {{ badge.text }}
-                </span>
+                </BaseBadge>
 
                 <span v-if="task.completed" class="badge-text">
                     {{ t('task.status.completed') }} {{ formatDate(task.completed_at) }}
@@ -47,30 +46,48 @@
         </div>
 
         <div class="task-actions flex gap-1 shrink-0">
-            <button v-if="canComplete" class="action-btn" @click="store.completeTask(task.id)">
-                ✓
-            </button>
-            <button
+            <BaseButton
                 v-if="canComplete"
-                class="action-btn"
+                variant="action"
+                size="sm"
+                icon="check"
+                @click="store.completeTask(task.id)"
+            />
+            <BaseButton
+                v-if="canComplete"
+                variant="action"
+                size="sm"
+                icon="archive"
                 :title="$t('task.archive')"
                 @click="store.archiveTask(task.id)"
-            >
-                📦
-            </button>
-            <button v-if="canRestore" class="action-btn" @click="store.restoreTask(task.id)">
-                ↩
-            </button>
-            <button v-if="canReturnNow" class="action-btn" @click="store.returnNow(task.id)">
-                ↩
-            </button>
+            />
+            <BaseButton
+                v-if="canRestore"
+                variant="action"
+                size="sm"
+                icon="restore"
+                @click="store.restoreTask(task.id)"
+            />
+            <BaseButton
+                v-if="canReturnNow"
+                variant="action"
+                size="sm"
+                icon="restore"
+                @click="store.returnNow(task.id)"
+            />
 
-            <button class="action-btn" @click="$emit('edit', task)">
-                ✎
-            </button>
-            <button class="action-btn" @click="$emit('delete', task.id)">
-                🗑
-            </button>
+            <BaseButton
+                variant="action"
+                size="sm"
+                icon="edit"
+                @click="$emit('edit', task)"
+            />
+            <BaseButton
+                variant="action"
+                size="sm"
+                icon="trash"
+                @click="$emit('delete', task.id)"
+            />
         </div>
     </div>
 </template>
@@ -79,6 +96,8 @@
 import { computed } from 'vue';
 import { useBalanceStore } from '../stores/balance';
 import { useI18n } from 'vue-i18n';
+import BaseButton from './BaseButton.vue';
+import BaseBadge from './BaseBadge.vue';
 
 const { t } = useI18n();
 const props = defineProps({
@@ -154,13 +173,7 @@ const formatDate = (d, includeTime = false) => {
 <style scoped>
 @reference "../../css/app.css";
 
-.badge {
-    @apply inline-block align-middle ml-1 px-2 py-px rounded-xl text-[9px] font-bold uppercase tracking-wider;
-}
 .badge-text {
     @apply ml-1 text-xs text-[var(--color-secondary)];
-}
-.action-btn {
-    @apply px-2.5 py-1.5 bg-[var(--bg-card)] text-[var(--color-text)] border border-[var(--color-border)] rounded-xl font-extrabold text-sm leading-none transition-all shadow-sm hover:bg-[var(--bg-secondary)] hover:border-[var(--color-secondary)] hover:-translate-y-px active:translate-y-0;
 }
 </style>

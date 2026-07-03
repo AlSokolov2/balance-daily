@@ -102,13 +102,15 @@
                         <div v-if="!store.filteredTasks.length" class="text-center py-12 text-[var(--color-secondary)] text-sm">
                             {{ $t('app.no_tasks_in_category') }}
                         </div>
-                        <TaskItem
-                            v-for="task in store.filteredTasks" 
-                            :key="task.id" 
-                            :task="task"
-                            @edit="handleEdit"
-                            @delete="deleteTask"
-                        />
+                        <TransitionGroup name="task-list" tag="div">
+                            <TaskItem
+                                v-for="task in store.filteredTasks"
+                                :key="task.id"
+                                :task="task"
+                                @edit="handleEdit"
+                                @delete="deleteTask"
+                            />
+                        </TransitionGroup>
                     </div>
                 </div>
             </div>
@@ -132,13 +134,15 @@
                     <div v-if="!store.filteredTasks.length" class="text-center py-8 text-[var(--color-secondary)] text-sm">
                         {{ $t('app.no_tasks') }}
                     </div>
-                    <TaskItem
-                        v-for="task in store.filteredTasks"
-                        :key="task.id"
-                        :task="task"
-                        @edit="handleEdit"
-                        @delete="deleteTask"
-                    />
+                    <TransitionGroup name="task-list" tag="div">
+                        <TaskItem
+                            v-for="task in store.filteredTasks"
+                            :key="task.id"
+                            :task="task"
+                            @edit="handleEdit"
+                            @delete="deleteTask"
+                        />
+                    </TransitionGroup>
                 </div>
             </div>
             
@@ -159,17 +163,7 @@
         <!-- Mobile Search Overlay (Keep here as it's part of the Main Chart context) -->
         <div v-if="isHandheld && isSearchVisible" class="fixed inset-x-2 bottom-20 z-[70] transition-all duration-300 transform animate-[slide-up_0.3s_ease-out]">
             <div class="bg-[var(--bg-card)] border border-[var(--color-border)] rounded-2xl shadow-2xl p-2 flex items-center gap-2">
-                <svg
-                    class="w-5 h-5 ml-2 text-[var(--color-secondary)]"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                ><path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                /></svg>
+                <AppIcon name="search" :size="18" class="ml-2 text-[var(--color-secondary)]" />
                 <input
                     ref="searchInputMobile"
                     v-model="store.searchQuery"
@@ -178,17 +172,7 @@
                     class="flex-1 bg-transparent border-none outline-none text-[15px] p-2 text-[var(--color-text)]"
                 >
                 <button class="p-2 text-[var(--color-secondary)] border-none bg-transparent" @click="toggleSearch">
-                    <svg
-                        class="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    ><path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12"
-                    /></svg>
+                    <AppIcon name="close" :size="24" />
                 </button>
             </div>
         </div>
@@ -207,6 +191,7 @@ import TaskItem from '../components/TaskItem.vue';
 import AppHeader from '../components/AppHeader.vue';
 import DesktopFilterBar from '../components/DesktopFilterBar.vue';
 import DesktopAddForm from '../components/DesktopAddForm.vue';
+import AppIcon from '../components/AppIcon.vue';
 
 const props = defineProps({
     isHandheld: Boolean,
@@ -311,5 +296,22 @@ defineExpose({ scrollToList });
 }
 .zoom-btn {
     @apply w-8 h-8 rounded-xl bg-[var(--bg-card)] text-[var(--color-text)] flex items-center justify-center text-lg active:scale-95 border border-[var(--color-border)];
+}
+
+/* Task list TransitionGroup animations */
+.task-list-enter-active,
+.task-list-leave-active {
+    transition: all 0.3s ease;
+}
+.task-list-enter-from {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+.task-list-leave-to {
+    opacity: 0;
+    transform: translateX(30px);
+}
+.task-list-move {
+    transition: transform 0.3s ease;
 }
 </style>
