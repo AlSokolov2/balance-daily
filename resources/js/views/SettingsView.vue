@@ -10,11 +10,11 @@
 
         <!-- Tab Navigation -->
         <div class="px-5 pb-2 shrink-0">
-            <div class="flex gap-1 bg-[var(--bg-secondary)]/50 p-1 rounded-xl border border-[var(--color-border)]">
+            <div class="flex gap-1 bg-[var(--bg-secondary)]/50 p-1 rounded-xl border border-[var(--color-border)] overflow-x-auto scrollbar-hide snap-x">
                 <button
                     v-for="tab in tabs"
                     :key="tab.key"
-                    :class="['flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border-none shadow-none', activeTab === tab.key ? 'bg-[var(--bg-card)] text-[var(--color-primary)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']"
+                    :class="['whitespace-nowrap px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border-none shadow-none snap-start', activeTab === tab.key ? 'bg-[var(--bg-card)] text-[var(--color-primary)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']"
                     @click="activeTab = tab.key"
                 >
                     {{ $t(tab.label) }}
