@@ -1,8 +1,19 @@
 <template>
     <!-- Состояние загрузки сессии -->
-    <div v-if="isInitializing" class="min-h-screen flex items-center justify-center bg-[var(--bg-app)]">
-        <div class="text-[var(--color-primary)] font-bold animate-pulse text-lg text-center">
-            {{ $t('auth.loading_app') }}
+    <div v-if="isInitializing" class="min-h-screen flex flex-col items-center justify-center gap-8 bg-[var(--bg-app)] p-8">
+        <div class="flex flex-col items-center gap-4">
+            <div class="w-20 h-20 bg-[var(--bg-card)] border border-[var(--color-border)] rounded-2xl flex items-center justify-center shadow-sm">
+                <AppIcon name="balance" :size="40" class="text-[var(--color-primary)]" />
+            </div>
+            <h1 class="text-xl font-black text-[var(--color-text)] tracking-tight">
+                {{ $t('app.title') }}
+            </h1>
+        </div>
+        <div class="w-full max-w-[280px] space-y-3">
+            <AppSkeleton variant="rect" height="52px" />
+            <AppSkeleton variant="text" />
+            <AppSkeleton variant="text" width="70%" />
+            <AppSkeleton variant="text" width="50%" />
         </div>
     </div>
 
@@ -56,6 +67,8 @@ import { useI18n } from 'vue-i18n';
 import AuthScreen from './components/AuthScreen.vue';
 import MobileBottomNav from './components/MobileBottomNav.vue';
 import ToastNotification from './components/ToastNotification.vue';
+import AppIcon from './components/AppIcon.vue';
+import AppSkeleton from './components/AppSkeleton.vue';
 
 const { locale } = useI18n();
 const { offlineReady, needRefresh, updateServiceWorker } = useRegisterSW();
