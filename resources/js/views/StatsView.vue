@@ -11,7 +11,12 @@
                 </h2>
             </div>
             <!-- Back Button for Navigation -->
-            <BaseButton variant="secondary" size="sm" icon="close" @click="router.push('/')" />
+            <BaseButton
+                variant="secondary"
+                size="sm"
+                icon="close"
+                @click="router.push('/')"
+            />
         </div>
 
         <!-- Content -->

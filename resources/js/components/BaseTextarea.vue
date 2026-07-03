@@ -10,7 +10,9 @@
             @focus="$emit('focus', $event)"
             @blur="$emit('blur', $event)"
         />
-        <p v-if="error" class="mt-1 text-[var(--text-caption)] text-[var(--color-danger)]">{{ error }}</p>
+        <p v-if="error" class="mt-1 text-[var(--text-caption)] text-[var(--color-danger)]">
+            {{ error }}
+        </p>
     </div>
 </template>
 

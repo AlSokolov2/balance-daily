@@ -1,41 +1,47 @@
 <template>
     <Teleport to="body">
         <Transition name="modal">
-        <div
-            v-if="visible"
-            class="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-2 sm:p-4"
-            @click.self="closeOnBackdrop && $emit('close')"
-        >
             <div
-                :class="panelClasses"
-                :style="{ maxWidth }"
+                v-if="visible"
+                class="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-2 sm:p-4"
+                @click.self="closeOnBackdrop && $emit('close')"
             >
-                <!-- Header -->
-                <div v-if="$slots.header || title" class="flex items-center justify-between p-5 pb-2">
-                    <slot name="header">
-                        <h2 class="text-[var(--text-subtitle)] font-black text-[var(--color-text)]">{{ title }}</h2>
-                    </slot>
-                    <BaseButton variant="secondary" size="sm" icon="close" @click="$emit('close')" />
-                </div>
+                <div
+                    :class="panelClasses"
+                    :style="{ maxWidth }"
+                >
+                    <!-- Header -->
+                    <div v-if="$slots.header || title" class="flex items-center justify-between p-5 pb-2">
+                        <slot name="header">
+                            <h2 class="text-[var(--text-subtitle)] font-black text-[var(--color-text)]">
+                                {{ title }}
+                            </h2>
+                        </slot>
+                        <BaseButton
+                            variant="secondary"
+                            size="sm"
+                            icon="close"
+                            @click="$emit('close')"
+                        />
+                    </div>
 
-                <!-- Body -->
-                <div class="flex-1 overflow-y-auto p-5 pt-0 custom-scrollbar min-h-0">
-                    <slot />
-                </div>
+                    <!-- Body -->
+                    <div class="flex-1 overflow-y-auto p-5 pt-0 custom-scrollbar min-h-0">
+                        <slot />
+                    </div>
 
-                <!-- Footer -->
-                <div v-if="$slots.footer" class="p-5 pt-0">
-                    <slot name="footer" />
+                    <!-- Footer -->
+                    <div v-if="$slots.footer" class="p-5 pt-0">
+                        <slot name="footer" />
+                    </div>
                 </div>
             </div>
-        </div>
         </Transition>
     </Teleport>
 </template>
 
 <script setup>
 import { computed } from 'vue';
-import AppIcon from './AppIcon.vue';
 import BaseButton from './BaseButton.vue';
 
 defineProps({

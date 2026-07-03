@@ -5,7 +5,12 @@
             <h2 class="text-lg font-bold tracking-tight text-[var(--color-text)] uppercase tracking-widest">
                 {{ $t('settings.tabs.notepad') }}
             </h2>
-            <BaseButton variant="secondary" size="sm" icon="close" @click="router.push('/')" />
+            <BaseButton
+                variant="secondary"
+                size="sm"
+                icon="close"
+                @click="router.push('/')"
+            />
         </div>
 
         <!-- Content -->
@@ -15,7 +20,12 @@
                 class="flex-1 w-full p-4 border border-[var(--color-border)] rounded-[24px] text-base mb-4 focus:ring-2 focus:ring-[var(--color-border)] outline-none transition-all bg-[var(--bg-card)] text-[var(--color-text)] resize-none custom-scrollbar shadow-sm" 
                 :placeholder="$t('settings_modal.notepad.placeholder')"
             />
-            <BaseButton variant="primary" size="md" class="w-full py-4 shrink-0" @click="saveNotepad">
+            <BaseButton
+                variant="primary"
+                size="md"
+                class="w-full py-4 shrink-0"
+                @click="saveNotepad"
+            >
                 {{ $t('settings_modal.notepad.save_button') }}
             </BaseButton>
         </div>
@@ -28,7 +38,6 @@ import { useRouter } from 'vue-router';
 import { useBalanceStore } from '../stores/balance';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
-import AppIcon from '../components/AppIcon.vue';
 import BaseButton from '../components/BaseButton.vue';
 
 const { t } = useI18n();

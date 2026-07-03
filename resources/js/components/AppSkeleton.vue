@@ -1,5 +1,10 @@
 <template>
-    <div v-if="count > 1" class="flex flex-col gap-2" role="status" aria-label="Loading">
+    <div
+        v-if="count > 1"
+        class="flex flex-col gap-2"
+        role="status"
+        aria-label="Loading"
+    >
         <div
             v-for="n in count"
             :key="n"

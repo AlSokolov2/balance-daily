@@ -46,7 +46,13 @@
         </div>
 
         <div class="task-actions flex gap-1 shrink-0">
-            <BaseButton v-if="canComplete" variant="action" size="sm" icon="check" @click="store.completeTask(task.id)" />
+            <BaseButton
+                v-if="canComplete"
+                variant="action"
+                size="sm"
+                icon="check"
+                @click="store.completeTask(task.id)"
+            />
             <BaseButton
                 v-if="canComplete"
                 variant="action"
@@ -55,11 +61,33 @@
                 :title="$t('task.archive')"
                 @click="store.archiveTask(task.id)"
             />
-            <BaseButton v-if="canRestore" variant="action" size="sm" icon="restore" @click="store.restoreTask(task.id)" />
-            <BaseButton v-if="canReturnNow" variant="action" size="sm" icon="restore" @click="store.returnNow(task.id)" />
+            <BaseButton
+                v-if="canRestore"
+                variant="action"
+                size="sm"
+                icon="restore"
+                @click="store.restoreTask(task.id)"
+            />
+            <BaseButton
+                v-if="canReturnNow"
+                variant="action"
+                size="sm"
+                icon="restore"
+                @click="store.returnNow(task.id)"
+            />
 
-            <BaseButton variant="action" size="sm" icon="edit" @click="$emit('edit', task)" />
-            <BaseButton variant="action" size="sm" icon="trash" @click="$emit('delete', task.id)" />
+            <BaseButton
+                variant="action"
+                size="sm"
+                icon="edit"
+                @click="$emit('edit', task)"
+            />
+            <BaseButton
+                variant="action"
+                size="sm"
+                icon="trash"
+                @click="$emit('delete', task.id)"
+            />
         </div>
     </div>
 </template>

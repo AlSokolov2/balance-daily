@@ -13,12 +13,14 @@
                 @input="$emit('update:modelValue', $event.target.value)"
                 @focus="$emit('focus', $event)"
                 @blur="$emit('blur', $event)"
-            />
+            >
             <span v-if="$slots.append" class="shrink-0 text-[var(--color-secondary)]">
                 <slot name="append" />
             </span>
         </div>
-        <p v-if="error" class="mt-1 text-[var(--text-caption)] text-[var(--color-danger)]">{{ error }}</p>
+        <p v-if="error" class="mt-1 text-[var(--text-caption)] text-[var(--color-danger)]">
+            {{ error }}
+        </p>
     </div>
 </template>
 
@@ -33,5 +35,5 @@ defineProps({
 
 defineEmits(['update:modelValue', 'focus', 'blur']);
 
-const wrapperClasses = `flex items-center gap-2 w-full px-3 py-2.5 bg-[var(--bg-secondary)] border rounded-md text-[var(--text-body)] transition-all outline-none focus-within:ring-2 focus-within:ring-[var(--color-border)] border-[var(--color-border)]`;
+const wrapperClasses = 'flex items-center gap-2 w-full px-3 py-2.5 bg-[var(--bg-secondary)] border rounded-md text-[var(--text-body)] transition-all outline-none focus-within:ring-2 focus-within:ring-[var(--color-border)] border-[var(--color-border)]';
 </script>

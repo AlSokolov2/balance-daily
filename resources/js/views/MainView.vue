@@ -103,13 +103,13 @@
                             {{ $t('app.no_tasks_in_category') }}
                         </div>
                         <TransitionGroup name="task-list" tag="div">
-                        <TaskItem
-                            v-for="task in store.filteredTasks"
-                            :key="task.id"
-                            :task="task"
-                            @edit="handleEdit"
-                            @delete="deleteTask"
-                        />
+                            <TaskItem
+                                v-for="task in store.filteredTasks"
+                                :key="task.id"
+                                :task="task"
+                                @edit="handleEdit"
+                                @delete="deleteTask"
+                            />
                         </TransitionGroup>
                     </div>
                 </div>
@@ -135,13 +135,13 @@
                         {{ $t('app.no_tasks') }}
                     </div>
                     <TransitionGroup name="task-list" tag="div">
-                    <TaskItem
-                        v-for="task in store.filteredTasks"
-                        :key="task.id"
-                        :task="task"
-                        @edit="handleEdit"
-                        @delete="deleteTask"
-                    />
+                        <TaskItem
+                            v-for="task in store.filteredTasks"
+                            :key="task.id"
+                            :task="task"
+                            @edit="handleEdit"
+                            @delete="deleteTask"
+                        />
                     </TransitionGroup>
                 </div>
             </div>

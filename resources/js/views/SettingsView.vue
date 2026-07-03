@@ -5,7 +5,12 @@
             <h2 class="text-lg font-bold tracking-tight text-[var(--color-text)] uppercase tracking-widest">
                 {{ $t('settings.title') }}
             </h2>
-            <BaseButton variant="secondary" size="sm" icon="close" @click="router.push('/')" />
+            <BaseButton
+                variant="secondary"
+                size="sm"
+                icon="close"
+                @click="router.push('/')"
+            />
         </div>
 
         <!-- Tab Navigation -->
@@ -147,7 +152,12 @@
                     <h3 class="text-[11px] font-black text-[var(--color-primary)] uppercase tracking-[0.2em]">
                         {{ $t('settings.tabs.cat') }}
                     </h3>
-                    <BaseButton variant="secondary" size="sm" icon="plus" @click="addCategory">
+                    <BaseButton
+                        variant="secondary"
+                        size="sm"
+                        icon="plus"
+                        @click="addCategory"
+                    >
                         {{ $t('settings_modal.categories.add_button') }}
                     </BaseButton>
                 </div>
@@ -170,7 +180,12 @@
                     </div>
                 </div>
                 
-                <BaseButton variant="primary" size="md" class="w-full mt-2" @click="saveCats">
+                <BaseButton
+                    variant="primary"
+                    size="md"
+                    class="w-full mt-2"
+                    @click="saveCats"
+                >
                     {{ $t('settings_modal.categories.save_button') }}
                 </BaseButton>
             </section>
@@ -194,7 +209,12 @@
                         >
                         <span class="text-xs font-bold text-[var(--color-secondary)] w-8">{{ Number(coeff).toFixed(1) }}</span>
                     </div>
-                    <BaseButton variant="secondary" size="md" class="w-full py-4 mt-6" @click="saveCats">
+                    <BaseButton
+                        variant="secondary"
+                        size="md"
+                        class="w-full py-4 mt-6"
+                        @click="saveCats"
+                    >
                         {{ $t('settings_modal.subcategories.save_all_button') }}
                     </BaseButton>
                 </div>
@@ -215,13 +235,31 @@
                     </div>
 
                     <div class="grid grid-cols-1 gap-3">
-                        <BaseButton variant="secondary" size="md" icon="sync" class="w-full py-4" @click="store.sync(true)">
+                        <BaseButton
+                            variant="secondary"
+                            size="md"
+                            icon="sync"
+                            class="w-full py-4"
+                            @click="store.sync(true)"
+                        >
                             {{ $t('settings_modal.data.sync_button') }}
                         </BaseButton>
-                        <BaseButton variant="secondary" size="md" icon="download" class="w-full py-4" @click="exportData">
+                        <BaseButton
+                            variant="secondary"
+                            size="md"
+                            icon="download"
+                            class="w-full py-4"
+                            @click="exportData"
+                        >
                             {{ $t('settings_modal.data.export_button') }}
                         </BaseButton>
-                        <BaseButton variant="secondary" size="md" icon="upload" class="w-full py-4" @click="fileInput?.click()">
+                        <BaseButton
+                            variant="secondary"
+                            size="md"
+                            icon="upload"
+                            class="w-full py-4"
+                            @click="fileInput?.click()"
+                        >
                             {{ $t('settings_modal.data.import_button') }}
                         </BaseButton>
                     </div>
@@ -276,7 +314,9 @@
 
                     <BaseButton
                         v-if="!hasGoogleLinked"
-                        variant="secondary" size="md" class="w-full py-4"
+                        variant="secondary"
+                        size="md"
+                        class="w-full py-4"
                         @click="linkGoogle"
                     >
                         <svg class="w-4 h-4" viewBox="0 0 24 24">

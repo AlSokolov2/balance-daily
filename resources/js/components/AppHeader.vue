@@ -12,7 +12,12 @@
             >
                 <button class="w-10 h-10 flex items-center justify-center shrink-0 text-[var(--color-text)] hover:opacity-80 transition-opacity" @click="emit('toggle-search')">
                     <AppIcon v-if="!isSearchVisible" name="search" :size="18" />
-                    <AppIcon v-else name="close" :size="16" class="text-[var(--color-secondary)]" />
+                    <AppIcon
+                        v-else
+                        name="close"
+                        :size="16"
+                        class="text-[var(--color-secondary)]"
+                    />
                 </button>
                 <input
                     v-if="isSearchVisible" 
