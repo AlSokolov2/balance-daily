@@ -203,6 +203,20 @@ export const icons = {
         ],
     },
 
+    // ── TaskItem action icons ──────────────────────────────────
+
+    archive: {
+        viewBox: '0 0 24 24',
+        defaultStroke: 2,
+        paths: [{ d: 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4' }],
+    },
+
+    restore: {
+        viewBox: '0 0 24 24',
+        defaultStroke: 2,
+        paths: [{ d: 'M3 10h10a5 5 0 015 5v2m-5-7l-4 4 4 4' }],
+    },
+
     // ── Clipboard (used as subcategories tab icon in SettingsModal) ─
 
     clipboard: {

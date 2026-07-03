@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import TaskItem from '../../../resources/js/components/TaskItem.vue';
+import BaseBadge from '../../../resources/js/components/BaseBadge.vue';
+import BaseButton from '../../../resources/js/components/BaseButton.vue';
 
 describe('TaskItem Component', () => {
     beforeEach(() => {
@@ -25,7 +27,7 @@ describe('TaskItem Component', () => {
         });
 
         expect(wrapper.text()).toContain('Test Task');
-        const badge = wrapper.find('.badge');
+        const badge = wrapper.findComponent(BaseBadge);
         expect(badge.exists()).toBe(true);
         expect(badge.text()).toContain('task.status.missed');
     });
@@ -35,7 +37,10 @@ describe('TaskItem Component', () => {
             props: { task: mockTask }
         });
 
-        const editBtn = wrapper.findAll('.action-btn').find(b => b.text() === '✎');
+        // Find the edit button — BaseButton with icon="edit"
+        const buttons = wrapper.findAllComponents(BaseButton);
+        const editBtn = buttons.find(b => b.props('icon') === 'edit');
+        expect(editBtn).toBeTruthy();
         await editBtn.trigger('click');
 
         expect(wrapper.emitted()).toHaveProperty('edit');

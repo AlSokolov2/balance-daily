@@ -1,5 +1,6 @@
 <template>
     <Teleport to="body">
+        <Transition name="modal">
         <div
             v-if="visible"
             class="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-2 sm:p-4"
@@ -33,6 +34,7 @@
                 </div>
             </div>
         </div>
+        </Transition>
     </Teleport>
 </template>
 
@@ -53,3 +55,22 @@ const panelClasses = computed(() =>
     'bg-[var(--bg-card)] rounded-md w-full h-[80vh] flex flex-col overflow-hidden shadow-lg border border-[var(--color-border)] relative'
 );
 </script>
+
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+    transition: all 0.25s ease;
+}
+.modal-enter-from {
+    opacity: 0;
+}
+.modal-enter-from > :deep(div) {
+    transform: scale(0.95) translateY(10px);
+}
+.modal-leave-to {
+    opacity: 0;
+}
+.modal-leave-to > :deep(div) {
+    transform: scale(0.95) translateY(10px);
+}
+</style>

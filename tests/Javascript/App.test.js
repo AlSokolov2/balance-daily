@@ -11,10 +11,6 @@ vi.mock('./components/BubbleChart.vue', () => ({
 vi.mock('./components/EditTaskModal.vue', () => ({
     default: { template: '<div class="modal-mock"></div>' }
 }));
-vi.mock('./components/SettingsModal.vue', () => ({
-    default: { template: '<div class="settings-mock"></div>' }
-}));
-
 describe('App Component - Handheld & Orientation', () => {
     beforeEach(() => {
         setActivePinia(createPinia());
