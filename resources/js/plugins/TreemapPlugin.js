@@ -1,7 +1,6 @@
 /**
  * Treemap chart visualization plugin.
  */
-import { defineAsyncComponent } from 'vue';
 import { registerPlugin } from './vizPluginRegistry.js';
 
 registerPlugin({

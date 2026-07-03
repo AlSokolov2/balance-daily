@@ -244,7 +244,7 @@ export const useBalanceStore = defineStore('balance', {
                 if (t.completed || !t.reminder_times?.length) return;
                 if (t.hidden_until && new Date(t.hidden_until) > now) return;
                 if (t.reminder_times.includes(ct)) {
-                    try { new Notification(t.title, { body: t.subcategory || t.notes || '', icon: '/favicon.svg', tag: `rem-${t.id}-${ct}` }); } catch {}
+                    try { new Notification(t.title, { body: t.subcategory || t.notes || '', icon: '/favicon.svg', tag: `rem-${t.id}-${ct}` }); } catch { /* noop */ }
                 }
             });
         },

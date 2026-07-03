@@ -32,7 +32,7 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent, computed, ref, onErrorCaptured, watch } from 'vue';
+import { defineAsyncComponent, computed, ref, onErrorCaptured } from 'vue';
 import { useBalanceStore } from '../stores/balance';
 import { getPlugin } from '../plugins/vizPluginRegistry.js';
 import '../plugins/BubblePlugin.js';
