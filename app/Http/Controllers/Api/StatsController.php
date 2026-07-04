@@ -241,7 +241,7 @@ class StatsController extends Controller
             'weekly' => $weekly,
             'day_of_week' => $dayOfWeek,
             'hour_of_day' => $hourOfDay,
-            'subcategory' => $subcategoryData,
+            'subcategory' => $subcategoryData->toArray(),
         ];
     }
 
@@ -249,7 +249,7 @@ class StatsController extends Controller
      * Calculate annual summary for 365-day period.
      *
      * @param  \Illuminate\Database\Eloquent\Collection<int, TaskCompletion>  $completions
-     * @param  \Illuminate\Support\Collection  $categoryBalance
+     * @param  \Illuminate\Support\Collection<int, \stdClass>  $categoryBalance
      * @param  array{current: int, longest: int}  $streakData
      * @return array{total: int, top_categories: array<int, array{slug: string, count: int}>, top_subcategories: array<int, array{name: string, count: int}>, best_streak: int, best_day: int, best_hour: int}
      */
