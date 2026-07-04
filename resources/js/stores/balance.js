@@ -7,7 +7,7 @@
 import { defineStore } from 'pinia';
 import { initAuth, logoutAuth, googleAuthUrl, vkAuthUrl } from './auth.js';
 import { useSettingsStore } from './settings.js';
-import { setVisualStyle, setTreemapScale, setTreemapMode } from './ui.js';
+import { useUiStore } from './ui.js';
 import {
     fetchAll, fetchStats, sync, mergeCollection,
     addTask, deleteTask, updateTask, completeTask, archiveTask, restoreTask, returnNow,
@@ -27,9 +27,6 @@ export const useBalanceStore = defineStore('balance', {
         notepadText: '',
         lastSync: localStorage.getItem('last_sync') || null,
         stats: null,
-        visualStyle: localStorage.getItem('visual_style') || 'bubbles',
-        treemapScale: parseFloat(localStorage.getItem('treemap_scale')) || 1.2,
-        treemapMode: localStorage.getItem('treemap_mode') || 'nested',
         bubbleZoom: 1,
         notificationsEnabled: localStorage.getItem('notifications_enabled') === 'true',
         filterCat: 'all',
@@ -48,6 +45,11 @@ export const useBalanceStore = defineStore('balance', {
         theme() { return useSettingsStore().theme; },
         locale() { return useSettingsStore().locale; },
         pulseInterval() { return useSettingsStore().pulseInterval; },
+
+        // ── Proxy to ui store ──
+        visualStyle() { return useUiStore().visualStyle; },
+        treemapScale() { return useUiStore().treemapScale; },
+        treemapMode() { return useUiStore().treemapMode; },
 
         allSubcats: (state) => Object.keys(state.subcatCoeffs),
         allTasksOrdered: (state) => {
@@ -136,9 +138,9 @@ export const useBalanceStore = defineStore('balance', {
         async setTheme(t) { await useSettingsStore().setTheme(t); },
         async setLocale(l) { await useSettingsStore().setLocale(l); },
         async setPulseInterval(m) { await useSettingsStore().setPulseInterval(m); this.startPulse(); },
-        setVisualStyle(s) { setVisualStyle(this, s); },
-        setTreemapScale(s) { setTreemapScale(this, s); },
-        setTreemapMode(m) { setTreemapMode(this, m); },
+        setVisualStyle(s) { useUiStore().setVisualStyle(s); },
+        setTreemapScale(s) { useUiStore().setTreemapScale(s); },
+        setTreemapMode(m) { useUiStore().setTreemapMode(m); },
 
         // ── Push ──
 
