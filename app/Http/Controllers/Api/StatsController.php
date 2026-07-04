@@ -56,6 +56,9 @@ class StatsController extends Controller
         // 5. System Status Block
         $status = $this->calculateStatus((int) $user->id, $now, $todayCount);
 
+        // 6. Trends
+        $trends = $this->calculateTrends((int) $user->id, $completions, $now);
+
         return response()->json([
             'heatmap' => $heatmap,
             'category_balance' => $categoryBalance,
@@ -66,6 +69,7 @@ class StatsController extends Controller
                 'longest_streak' => $streakData['longest'],
             ],
             'status' => $status,
+            'trends' => $trends,
         ]);
     }
 
@@ -163,6 +167,70 @@ class StatsController extends Controller
             'completed_today' => $todayCount,
             'completion_rate' => $completionRate,
             'categories_health' => $categoriesHealth,
+        ];
+    }
+
+    /**
+     * Calculate trends: weekly completions, day-of-week breakdown,
+     * hour-of-day heatmap, and subcategory performance.
+     *
+     * @param  \Illuminate\Database\Eloquent\Collection<int, TaskCompletion>  $completions
+     * @return array{weekly: array<int, array{week_start: string, count: int}>, day_of_week: array<int, array{day: int, count: int}>, hour_of_day: array<int, array{hour: int, count: int}>, subcategory: array<int, array{name: string, count: int}>}
+     */
+    private function calculateTrends(int $userId, $completions, Carbon $now): array
+    {
+        // 1. Weekly completions (last 12 weeks)
+        $weekly = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $weekStart = $now->copy()->subWeeks($i)->startOfWeek(Carbon::MONDAY);
+            $weekEnd = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
+            $count = $completions->filter(fn ($c) =>
+                $c->completed_at->between($weekStart, $weekEnd)
+            )->count();
+            $weekly[] = [
+                'week_start' => $weekStart->toDateString(),
+                'count' => $count,
+            ];
+        }
+
+        // 2. Day-of-week breakdown (0=Sun..6=Sat, last 90 days)
+        $dayOfWeek = [];
+        for ($d = 0; $d < 7; $d++) {
+            $dayCompletions = $completions->filter(fn ($c) => (int) $c->completed_at->dayOfWeek === $d);
+            $dayOfWeek[] = [
+                'day' => $d,
+                'count' => $dayCompletions->count(),
+            ];
+        }
+
+        // 3. Hour-of-day breakdown (0..23, last 90 days)
+        $hourOfDay = [];
+        for ($h = 0; $h < 24; $h++) {
+            $hourCompletions = $completions->filter(fn ($c) => (int) $c->completed_at->hour === $h);
+            $hourOfDay[] = [
+                'hour' => $h,
+                'count' => $hourCompletions->count(),
+            ];
+        }
+
+        // 4. Subcategory performance (last 90 days)
+        $subcategoryData = DB::table('task_completions')
+            ->where('task_completions.user_id', $userId)
+            ->where('task_completions.completed_at', '>=', $now->copy()->subDays(90)->startOfDay())
+            ->join('tasks', 'task_completions.task_id', '=', 'tasks.id')
+            ->whereNotNull('tasks.subcategory')
+            ->where('tasks.subcategory', '!=', '')
+            ->select('tasks.subcategory as name', DB::raw('count(*) as count'))
+            ->groupBy('tasks.subcategory')
+            ->orderByDesc('count')
+            ->limit(10)
+            ->get();
+
+        return [
+            'weekly' => $weekly,
+            'day_of_week' => $dayOfWeek,
+            'hour_of_day' => $hourOfDay,
+            'subcategory' => $subcategoryData,
         ];
     }
 

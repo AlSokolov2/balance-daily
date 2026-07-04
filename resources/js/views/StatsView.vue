@@ -216,6 +216,151 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Trends Section -->
+                <div v-if="store.stats.trends" class="space-y-8">
+                    <div class="flex items-center justify-between px-1">
+                        <h3 class="text-xs font-black text-[var(--color-text)] uppercase tracking-widest">
+                            {{ $t('stats.trends.title') }}
+                        </h3>
+                    </div>
+
+                    <!-- Weekly Activity Line Chart -->
+                    <div class="bg-[var(--bg-card)] p-5 rounded-[24px] border border-[var(--color-border)] shadow-sm">
+                        <h4 class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3 px-1">
+                            {{ $t('stats.trends.weekly.title') }}
+                        </h4>
+                        <svg viewBox="0 0 300 100" class="w-full h-auto" preserveAspectRatio="xMidYMid meet">
+                            <!-- Grid lines -->
+                            <line
+                                v-for="y in 4"
+                                :key="'grid-' + y"
+                                :x1="0" :y1="y * 20" :x2="300" :y2="y * 20"
+                                stroke="var(--color-border)" stroke-width="0.3" opacity="0.5"
+                            />
+                            <!-- Line -->
+                            <polyline
+                                :points="weeklyLinePoints"
+                                fill="none"
+                                stroke="#3B82F6"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            />
+                            <!-- Dots -->
+                            <circle
+                                v-for="(pt, i) in weeklyPoints"
+                                :key="'dot-' + i"
+                                :cx="pt.x"
+                                :cy="pt.y"
+                                r="2.5"
+                                fill="#3B82F6"
+                            />
+                            <!-- Labels -->
+                            <text
+                                v-for="(pt, i) in weeklyPoints"
+                                :key="'lbl-' + i"
+                                :x="pt.x"
+                                :y="98"
+                                text-anchor="middle"
+                                class="text-[7px]"
+                                fill="var(--color-secondary)"
+                            >{{ pt.label }}</text>
+                        </svg>
+                        <div class="flex justify-between mt-1 px-1">
+                            <span class="text-[9px] text-[var(--color-secondary)] font-bold">{{ weeklyMin }}</span>
+                            <span class="text-[9px] text-[var(--color-secondary)] font-bold">{{ weeklyMax }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Day-of-week + Hour-of-day row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Day-of-week bars -->
+                        <div class="bg-[var(--bg-card)] p-5 rounded-[24px] border border-[var(--color-border)] shadow-sm">
+                            <h4 class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3 px-1">
+                                {{ $t('stats.trends.day_of_week.title') }}
+                            </h4>
+                            <svg viewBox="0 0 200 80" class="w-full h-auto" preserveAspectRatio="xMidYMid meet">
+                                <rect
+                                    v-for="(bar, i) in dayOfWeekData"
+                                    :key="'dow-' + i"
+                                    :x="bar.x"
+                                    :y="bar.y"
+                                    :width="bar.w"
+                                    :height="bar.h"
+                                    :rx="2"
+                                    :fill="bar.count > 0 ? '#3B82F6' : 'var(--color-border)'"
+                                    :opacity="bar.count > 0 ? 0.3 + (bar.ratio * 0.7) : 0.2"
+                                />
+                                <text
+                                    v-for="(bar, i) in dayOfWeekData"
+                                    :key="'dowl-' + i"
+                                    :x="bar.x + bar.w / 2"
+                                    :y="78"
+                                    text-anchor="middle"
+                                    class="text-[7px] font-bold"
+                                    fill="var(--color-secondary)"
+                                >{{ bar.label }}</text>
+                            </svg>
+                        </div>
+
+                        <!-- Hour-of-day heatmap -->
+                        <div class="bg-[var(--bg-card)] p-5 rounded-[24px] border border-[var(--color-border)] shadow-sm">
+                            <h4 class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3 px-1">
+                                {{ $t('stats.trends.hour_of_day.title') }}
+                            </h4>
+                            <svg viewBox="0 0 240 60" class="w-full h-auto" preserveAspectRatio="xMidYMid meet">
+                                <rect
+                                    v-for="(cell, i) in hourOfDayData"
+                                    :key="'hod-' + i"
+                                    :x="cell.x"
+                                    :y="cell.y"
+                                    :width="cell.w"
+                                    :height="cell.h"
+                                    :rx="1.5"
+                                    :fill="cell.count > 0 ? '#3B82F6' : 'var(--color-border)'"
+                                    :opacity="cell.opacity"
+                                />
+                                <!-- Labels for every 3 hours -->
+                                <text
+                                    v-for="label in hourLabels"
+                                    :key="'hl-' + label.hour"
+                                    :x="label.x + 4"
+                                    :y="58"
+                                    text-anchor="middle"
+                                    class="text-[6px] font-bold"
+                                    fill="var(--color-secondary)"
+                                >{{ label.text }}</text>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Subcategory Performance -->
+                    <div class="bg-[var(--bg-card)] p-5 rounded-[24px] border border-[var(--color-border)] shadow-sm">
+                        <h4 class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3 px-1">
+                            {{ $t('stats.trends.subcategory.title') }}
+                        </h4>
+                        <div v-if="!store.stats.trends.subcategory.length" class="text-center py-4 text-xs text-[var(--color-secondary)] italic">
+                            {{ $t('stats.trends.subcategory.no_data') }}
+                        </div>
+                        <div v-else class="space-y-3">
+                            <div
+                                v-for="item in store.stats.trends.subcategory"
+                                :key="item.name"
+                                class="flex items-center gap-3"
+                            >
+                                <span class="text-[11px] font-bold text-[var(--color-text)] w-24 truncate shrink-0">{{ item.name }}</span>
+                                <div class="flex-1 h-2 bg-[var(--bg-secondary)] rounded-full overflow-hidden">
+                                    <div
+                                        class="h-full rounded-full bg-blue-500/60"
+                                        :style="{ width: `${(item.count / subcategoryMax) * 100}%` }"
+                                    />
+                                </div>
+                                <span class="text-[10px] font-bold text-[var(--color-secondary)] w-6 text-right shrink-0">{{ item.count }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </template>
         </div>
     </div>
@@ -329,6 +474,98 @@ const sortedBalance = computed(() => [...(store.stats?.category_balance || [])].
 const maxBalance = computed(() => Math.max(...(store.stats?.category_balance.map(b => b.count) || [1])));
 const getCatName = (slug) => store.categories.find(c => c.slug === slug)?.name || slug;
 const getCatColor = (slug) => store.categories.find(c => c.slug === slug)?.color || '#8e8e93';
+
+// ── Trends charts ──
+
+const weeklyPoints = computed(() => {
+    const weekly = store.stats?.trends?.weekly || [];
+    if (!weekly.length) return [];
+    const max = Math.max(...weekly.map(w => w.count), 1);
+    const chartWidth = 300;
+    const chartHeight = 80;
+    const stepX = chartWidth / (weekly.length - 1 || 1);
+
+    return weekly.map((w, i) => ({
+        x: i * stepX,
+        y: chartHeight - (w.count / max) * chartHeight,
+        label: w.week_start.substring(5), // MM-DD
+        count: w.count,
+    }));
+});
+
+const weeklyLinePoints = computed(() =>
+    weeklyPoints.value.map(p => `${p.x},${p.y}`).join(' ')
+);
+
+const weeklyMin = computed(() => {
+    const weekly = store.stats?.trends?.weekly || [];
+    return weekly.length ? Math.min(...weekly.map(w => w.count)) : 0;
+});
+
+const weeklyMax = computed(() => {
+    const weekly = store.stats?.trends?.weekly || [];
+    return weekly.length ? Math.max(...weekly.map(w => w.count)) : 0;
+});
+
+const dayOfWeekData = computed(() => {
+    const days = store.stats?.trends?.day_of_week || [];
+    if (!days.length) return [];
+    const dayLabels = ['stats.trends.day_of_week.sun', 'stats.trends.day_of_week.mon', 'stats.trends.day_of_week.tue', 'stats.trends.day_of_week.wed', 'stats.trends.day_of_week.thu', 'stats.trends.day_of_week.fri', 'stats.trends.day_of_week.sat'];
+    const max = Math.max(...days.map(d => d.count), 1);
+    const chartWidth = 200;
+    const chartHeight = 60;
+    const barW = (chartWidth / 7) - 4;
+
+    return days.map((d, i) => {
+        const h = Math.max(2, (d.count / max) * chartHeight);
+        return {
+            x: i * (chartWidth / 7) + 2,
+            y: chartHeight - h,
+            w: barW,
+            h: h,
+            count: d.count,
+            ratio: max > 0 ? d.count / max : 0,
+            label: t(dayLabels[d.day || i]),
+        };
+    });
+});
+
+const hourOfDayData = computed(() => {
+    const hours = store.stats?.trends?.hour_of_day || [];
+    if (!hours.length) return [];
+    const max = Math.max(...hours.map(h => h.count), 1);
+    const cols = 12;
+    const rows = 2;
+    const cellW = 240 / cols;
+    const cellH = 40 / rows;
+    const gap = 1;
+
+    return hours.map((h) => {
+        const col = h.hour % cols;
+        const row = Math.floor(h.hour / cols);
+        return {
+            x: col * cellW + gap / 2,
+            y: row * cellH + gap / 2,
+            w: cellW - gap,
+            h: cellH - gap,
+            count: h.count,
+            opacity: h.count > 0 ? 0.15 + (h.count / max) * 0.85 : 0.08,
+        };
+    });
+});
+
+const hourLabels = computed(() => {
+    return [0, 3, 6, 9, 12, 15, 18, 21].map(h => ({
+        hour: h,
+        x: (h % 12) * (240 / 12),
+        text: `${String(h).padStart(2, '0')}:00`,
+    }));
+});
+
+const subcategoryMax = computed(() => {
+    const sub = store.stats?.trends?.subcategory || [];
+    return Math.max(...sub.map(s => s.count), 1);
+});
 
 const formatDateLocale = (dateStr) => {
     if (!dateStr) return '';

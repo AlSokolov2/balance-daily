@@ -225,6 +225,30 @@
             "needs_attention": "Needs attention",
             "all_good": "All good",
             "no_active_tasks": "No active tasks"
+        },
+        "trends": {
+            "title": "Trends",
+            "weekly": {
+                "title": "Weekly Activity",
+                "count": "comp."
+            },
+            "day_of_week": {
+                "title": "By Day of Week",
+                "sun": "Su",
+                "mon": "Mo",
+                "tue": "Tu",
+                "wed": "We",
+                "thu": "Th",
+                "fri": "Fr",
+                "sat": "Sa"
+            },
+            "hour_of_day": {
+                "title": "By Time of Day"
+            },
+            "subcategory": {
+                "title": "Subcategories",
+                "no_data": "No subcategory data"
+            }
         }
     }
 }
