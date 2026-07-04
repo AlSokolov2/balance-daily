@@ -270,6 +270,7 @@
                                 fill="none"
                                 stroke="#3B82F6"
                                 stroke-width="2"
+                                vector-effect="non-scaling-stroke"
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
                             />
@@ -279,7 +280,7 @@
                                 :key="'dot-' + i"
                                 :cx="pt.x"
                                 :cy="pt.y"
-                                r="2.5"
+                                r="1.5"
                                 fill="#3B82F6"
                             />
                             <!-- Labels -->
@@ -293,20 +294,16 @@
                                 fill="var(--color-secondary)"
                             >{{ pt.label }}</text>
                         </svg>
-                        <div class="flex justify-between mt-1 px-1">
-                            <span class="text-[9px] text-[var(--color-secondary)] font-bold">{{ weeklyMin }}</span>
-                            <span class="text-[9px] text-[var(--color-secondary)] font-bold">{{ weeklyMax }}</span>
-                        </div>
                     </div>
 
                     <!-- Day-of-week + Hour-of-day row -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Day-of-week bars -->
-                        <div class="bg-[var(--bg-card)] p-5 rounded-[24px] border border-[var(--color-border)] shadow-sm">
+                        <div class="bg-[var(--bg-card)] p-5 rounded-[24px] border border-[var(--color-border)] shadow-sm flex flex-col">
                             <h4 class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3 px-1">
                                 {{ $t('stats.trends.day_of_week.title') }}
                             </h4>
-                            <svg viewBox="0 0 200 80" class="w-full h-auto" preserveAspectRatio="xMidYMid meet">
+                            <svg viewBox="0 0 200 80" class="w-full h-auto mt-auto" preserveAspectRatio="xMidYMid meet">
                                 <rect
                                     v-for="(bar, i) in dayOfWeekData"
                                     :key="'dow-' + i"
@@ -330,31 +327,30 @@
                             </svg>
                         </div>
 
-                        <!-- Hour-of-day heatmap -->
-                        <div class="bg-[var(--bg-card)] p-5 rounded-[24px] border border-[var(--color-border)] shadow-sm">
+                        <!-- Hour-of-day bars -->
+                        <div class="bg-[var(--bg-card)] p-5 rounded-[24px] border border-[var(--color-border)] shadow-sm flex flex-col">
                             <h4 class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3 px-1">
                                 {{ $t('stats.trends.hour_of_day.title') }}
                             </h4>
-                            <svg viewBox="0 0 240 60" class="w-full h-auto" preserveAspectRatio="xMidYMid meet">
+                            <svg viewBox="0 0 240 80" class="w-full h-auto mt-auto" preserveAspectRatio="xMidYMid meet">
                                 <rect
-                                    v-for="(cell, i) in hourOfDayData"
+                                    v-for="(bar, i) in hourOfDayData"
                                     :key="'hod-' + i"
-                                    :x="cell.x"
-                                    :y="cell.y"
-                                    :width="cell.w"
-                                    :height="cell.h"
-                                    :rx="1.5"
-                                    :fill="cell.count > 0 ? '#3B82F6' : 'var(--color-border)'"
-                                    :opacity="cell.opacity"
+                                    :x="bar.x"
+                                    :y="bar.y"
+                                    :width="bar.w"
+                                    :height="bar.h"
+                                    :rx="1"
+                                    :fill="bar.count > 0 ? '#3B82F6' : 'var(--color-border)'"
+                                    :opacity="bar.count > 0 ? 0.3 + (bar.ratio * 0.7) : 0.2"
                                 />
-                                <!-- Labels for every 3 hours -->
                                 <text
                                     v-for="label in hourLabels"
                                     :key="'hl-' + label.hour"
-                                    :x="label.x + 4"
-                                    :y="58"
+                                    :x="label.x"
+                                    :y="78"
                                     text-anchor="middle"
-                                    class="text-[6px] font-bold"
+                                    class="text-[7px] font-bold"
                                     fill="var(--color-secondary)"
                                 >{{ label.text }}</text>
                             </svg>
@@ -598,10 +594,12 @@ const weeklyPoints = computed(() => {
     const max = Math.max(...weekly.map(w => w.count), 1);
     const chartWidth = 300;
     const chartHeight = 80;
-    const stepX = chartWidth / (weekly.length - 1 || 1);
+    const margin = 18;
+    const area = chartWidth - margin * 2;
+    const stepX = weekly.length > 1 ? area / (weekly.length - 1) : 0;
 
     return weekly.map((w, i) => ({
-        x: i * stepX,
+        x: margin + i * stepX,
         y: chartHeight - (w.count / max) * chartHeight,
         label: w.week_start.substring(5), // MM-DD
         count: w.count,
@@ -649,22 +647,19 @@ const hourOfDayData = computed(() => {
     const hours = store.stats?.trends?.hour_of_day || [];
     if (!hours.length) return [];
     const max = Math.max(...hours.map(h => h.count), 1);
-    const cols = 12;
-    const rows = 2;
-    const cellW = 240 / cols;
-    const cellH = 40 / rows;
-    const gap = 1;
+    const chartWidth = 240;
+    const chartHeight = 60;
+    const barW = (chartWidth / 24) - 1;
 
     return hours.map((h) => {
-        const col = h.hour % cols;
-        const row = Math.floor(h.hour / cols);
+        const barH = Math.max(1, (h.count / max) * chartHeight);
         return {
-            x: col * cellW + gap / 2,
-            y: row * cellH + gap / 2,
-            w: cellW - gap,
-            h: cellH - gap,
+            x: h.hour * (chartWidth / 24) + 0.5,
+            y: chartHeight - barH,
+            w: barW,
+            h: barH,
             count: h.count,
-            opacity: h.count > 0 ? 0.15 + (h.count / max) * 0.85 : 0.08,
+            ratio: max > 0 ? h.count / max : 0,
         };
     });
 });
@@ -672,7 +667,7 @@ const hourOfDayData = computed(() => {
 const hourLabels = computed(() => {
     return [0, 3, 6, 9, 12, 15, 18, 21].map(h => ({
         hour: h,
-        x: (h % 12) * (240 / 12),
+        x: h * (240 / 24) + (240 / 24) / 2,
         text: `${String(h).padStart(2, '0')}:00`,
     }));
 });
