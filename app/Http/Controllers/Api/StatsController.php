@@ -21,6 +21,11 @@ class StatsController extends Controller
         $user = $this->user();
         $now = Carbon::now();
 
+        // Optional date filter: return completions for a specific date
+        if ($request->has('date')) {
+            return $this->completionsByDate($request->input('date'), (int) $user->id);
+        }
+
         // Fetch completions once
         /** @var \Illuminate\Database\Eloquent\Collection<int, TaskCompletion> $completions */
         $completions = TaskCompletion::where('user_id', $user->id)
@@ -182,6 +187,35 @@ class StatsController extends Controller
         $hideTime = $now->copy()->setTime($h, $m);
 
         return $now->lt($hideTime);
+    }
+
+    /**
+     * Get tasks completed on a specific date with their titles.
+     */
+    private function completionsByDate(string $date, int $userId): JsonResponse
+    {
+        $dateObj = Carbon::parse($date);
+
+        $completions = TaskCompletion::where('task_completions.user_id', $userId)
+            ->whereDate('task_completions.completed_at', $dateObj)
+            ->join('tasks', 'task_completions.task_id', '=', 'tasks.id')
+            ->select(
+                'task_completions.id',
+                'task_completions.task_id',
+                'task_completions.completed_at',
+                'tasks.title',
+                'tasks.category_slug'
+            )
+            ->orderBy('task_completions.completed_at', 'desc')
+            ->get();
+
+        $count = $completions->count();
+
+        return response()->json([
+            'date' => $dateObj->toDateString(),
+            'count' => $count,
+            'completions' => $completions,
+        ]);
     }
 
     /**

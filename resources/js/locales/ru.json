@@ -206,7 +206,8 @@
         "heatmap": {
             "title": "Активность",
             "subtitle": "Последние 90 дней",
-            "completions": "выполнений"
+            "completions": "выполнений",
+            "no_completions": "Нет выполнений в этот день"
         },
         "balance": {
             "title": "Баланс категорий (30 дней)",

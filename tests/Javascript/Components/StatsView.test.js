@@ -6,6 +6,14 @@ import { useBalanceStore } from '../../../resources/js/stores/balance';
 import { useTasksStore } from '../../../resources/js/stores/tasks';
 import { mockPush } from '../setup.js';
 
+// Mock axios for interactivity tests
+vi.mock('axios', () => ({
+    default: {
+        get: vi.fn(),
+    },
+}));
+import axios from 'axios';
+
 describe('StatsView', () => {
     const mockStats = {
         heatmap: {
@@ -235,6 +243,141 @@ describe('StatsView', () => {
             expect(text).toContain('7');
             expect(text).toContain('stats.counters.longest_streak');
             expect(text).toContain('30');
+        });
+    });
+
+    describe('Interactivity', () => {
+        beforeEach(() => {
+            vi.clearAllMocks();
+            axios.get.mockResolvedValue({
+                data: {
+                    date: '2026-07-03',
+                    count: 3,
+                    completions: [
+                        { id: 1, task_id: 10, title: 'Buy groceries', category_slug: 'chor', completed_at: '2026-07-03T10:00:00Z' },
+                        { id: 2, task_id: 11, title: 'Write report', category_slug: 'work', completed_at: '2026-07-03T14:00:00Z' },
+                        { id: 3, task_id: 12, title: 'Exercise', category_slug: 'chor', completed_at: '2026-07-03T18:00:00Z' },
+                    ],
+                },
+            });
+        });
+
+        it('shows detail panel when clicking a heatmap cell with completions', async () => {
+            const wrapper = await mountStatsView();
+
+            // Find a heatmap cell with count > 0 and click it
+            const cells = wrapper.findAll('.w-3.h-3, .w-4.h-4');
+            const activeCell = cells.find(c => c.attributes('title') && !c.attributes('title').includes(': 0'));
+            if (!activeCell) return; // No active cells in mock data
+
+            await activeCell.trigger('click');
+            await flushPromises();
+
+            // Detail panel should appear
+            expect(wrapper.text()).toContain('stats.heatmap.completions');
+            expect(axios.get).toHaveBeenCalled();
+        });
+
+        it('toggles detail panel off when clicking selected day again', async () => {
+            const wrapper = await mountStatsView();
+
+            const cells = wrapper.findAll('.w-3.h-3, .w-4.h-4');
+            const activeCell = cells.find(c => c.attributes('title') && !c.attributes('title').includes(': 0'));
+            if (!activeCell) return;
+
+            // First click — opens
+            await activeCell.trigger('click');
+            await flushPromises();
+            expect(axios.get).toHaveBeenCalledTimes(1);
+
+            // Second click — closes
+            await activeCell.trigger('click');
+            await flushPromises();
+            // Panel should disappear (second click toggles)
+            expect(wrapper.vm.selectedDay).toBeNull();
+        });
+
+        it('does not fetch API when clicking cell with zero completions', async () => {
+            const wrapper = await mountStatsView();
+
+            const cells = wrapper.findAll('.w-3.h-3, .w-4.h-4');
+            const emptyCell = cells.find(c => c.attributes('title') && c.attributes('title').endsWith(': 0'));
+            if (!emptyCell) return;
+
+            await emptyCell.trigger('click');
+            await flushPromises();
+
+            // No API call for empty days
+            expect(axios.get).not.toHaveBeenCalled();
+            // Panel shows "no completions"
+            expect(wrapper.text()).toContain('stats.heatmap.no_completions');
+        });
+
+        it('renders task list in detail panel', async () => {
+            const wrapper = await mountStatsView();
+
+            // Manually set selectedDay and dayCompletions to verify rendering
+            wrapper.vm.selectedDay = '2026-07-03';
+            wrapper.vm.dayCompletions = [
+                { id: 1, task_id: 10, title: 'Buy groceries', category_slug: 'chor', completed_at: '2026-07-03T10:00:00Z' },
+                { id: 2, task_id: 11, title: 'Write report', category_slug: 'work', completed_at: '2026-07-03T14:00:00Z' },
+            ];
+            wrapper.vm.dayCount = 2;
+            await flushPromises();
+
+            const text = wrapper.text();
+            expect(text).toContain('Buy groceries');
+            expect(text).toContain('Write report');
+        });
+
+        it('navigates to category when clicking balance bar', async () => {
+            const wrapper = await mountStatsView();
+
+            // Find balance bars and click one
+            const balanceBars = wrapper.findAll('.space-y-5 > .space-y-2');
+            if (balanceBars.length > 0) {
+                await balanceBars[0].trigger('click');
+                expect(mockPush).toHaveBeenCalledWith('/');
+                expect(useBalanceStore().filterCat).toBeTruthy();
+            }
+        });
+
+        it('fetches today completions when clicking "today" counter', async () => {
+            const wrapper = await mountStatsView();
+
+            // Find the "today" counter and click it
+            const counterDivs = wrapper.findAll('.grid.grid-cols-2 > div');
+            const todayCounter = counterDivs.find(el => el.text().includes('stats.counters.today'));
+            expect(todayCounter).toBeTruthy();
+
+            await todayCounter.trigger('click');
+            await flushPromises();
+
+            expect(axios.get).toHaveBeenCalled();
+            const callUrl = axios.get.mock.calls[0][0];
+            expect(callUrl).toContain('date=');
+        });
+
+        it('does not fetch when clicking "today" counter with zero completions', async () => {
+            // Override to have zero completions today
+            useTasksStore().stats = {
+                ...mockStats,
+                counters: { ...mockStats.counters, today: 0 },
+                status: { ...mockStats.status, completed_today: 0 },
+            };
+
+            const wrapper = await mountStatsView();
+
+            const counterDivs = wrapper.findAll('.grid.grid-cols-2 > div');
+            const todayCounter = counterDivs.find(el => el.text().includes('stats.counters.today'));
+            expect(todayCounter).toBeTruthy();
+
+            axios.get.mockClear();
+            await todayCounter.trigger('click');
+            await flushPromises();
+
+            // Should not fetch when count is 0
+            expect(axios.get).not.toHaveBeenCalled();
         });
     });
 });

@@ -207,7 +207,8 @@
         "heatmap": {
             "title": "Activity",
             "subtitle": "Last 90 days",
-            "completions": "completions"
+            "completions": "completions",
+            "no_completions": "No completions on this day"
         },
         "balance": {
             "title": "Category Balance (30 days)",

@@ -10,7 +10,6 @@
                     {{ $t('stats.title') }}
                 </h2>
             </div>
-            <!-- Back Button for Navigation -->
             <BaseButton
                 variant="secondary"
                 size="sm"
@@ -44,7 +43,8 @@
                             v-for="card in statusCards"
                             :key="card.key"
                             class="bg-[var(--bg-card)] p-3 rounded-2xl border text-center"
-                            :class="card.borderClass"
+                            :class="[card.borderClass, card.clickable ? 'cursor-pointer hover:scale-105 transition-transform' : '']"
+                            @click="card.clickable ? handleCounterClick(card.key) : null"
                         >
                             <p class="text-2xl font-black" :class="card.colorClass">
                                 {{ card.value }}
@@ -99,7 +99,12 @@
 
                 <!-- Counters Grid -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div v-for="(val, key) in counters" :key="key" class="bg-[var(--bg-card)] p-4 rounded-3xl border border-[var(--color-border)] shadow-sm">
+                    <div
+                        v-for="(val, key) in counters"
+                        :key="key"
+                        class="bg-[var(--bg-card)] p-4 rounded-3xl border border-[var(--color-border)] shadow-sm cursor-pointer hover:scale-105 transition-transform"
+                        @click="handleCounterClick(key)"
+                    >
                         <p class="text-[9px] font-black text-[var(--color-secondary)] uppercase tracking-widest mb-1">
                             {{ $t(`stats.counters.${key}`) }}
                         </p>
@@ -122,13 +127,59 @@
                             <div v-for="week in heatmapWeeks" :key="week[0].date" class="flex flex-col gap-1">
                                 <div
                                     v-for="day in week"
-                                    :key="day.date" 
-                                    class="w-3 h-3 sm:w-4 sm:h-4 rounded-sm transition-all hover:scale-125 hover:z-10 cursor-help"
-                                    :class="getHeatmapClass(day.count)"
+                                    :key="day.date"
+                                    class="w-3 h-3 sm:w-4 sm:h-4 rounded-sm transition-all hover:scale-125 hover:z-10 cursor-pointer"
+                                    :class="[getHeatmapClass(day.count), selectedDay === day.date ? 'ring-2 ring-[var(--color-text)] ring-offset-1' : '']"
                                     :title="`${day.date}: ${day.count} ${$t('stats.heatmap.completions')}`"
+                                    @click="handleHeatmapClick(day)"
                                 />
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Selected day detail panel -->
+                    <div
+                        v-if="selectedDay"
+                        class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)] shadow-sm"
+                    >
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <span class="text-sm font-black text-[var(--color-text)]">{{ formatDateLocale(selectedDay) }}</span>
+                                <span class="text-[10px] text-[var(--color-secondary)] ml-2">
+                                    {{ dayCount }} {{ $t('stats.heatmap.completions') }}
+                                </span>
+                            </div>
+                            <button
+                                class="w-6 h-6 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--color-secondary)] hover:text-[var(--color-text)]"
+                                @click="selectedDay = null"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <div v-if="dayLoading" class="flex justify-center py-4">
+                            <div class="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                        </div>
+
+                        <div v-else-if="dayCompletions.length" class="space-y-2">
+                            <div
+                                v-for="c in dayCompletions"
+                                :key="c.id"
+                                class="flex items-center justify-between p-2 bg-[var(--bg-secondary)]/50 rounded-xl"
+                            >
+                                <span class="text-sm font-bold text-[var(--color-text)] truncate flex-1 mr-3">{{ c.title }}</span>
+                                <button
+                                    class="shrink-0 px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide border border-[var(--color-border)] text-[var(--color-secondary)] hover:text-[var(--color-text)] bg-[var(--bg-card)]"
+                                    @click="goToCategory(c.category_slug)"
+                                >
+                                    {{ getCatName(c.category_slug) }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <p v-else class="text-center py-3 text-xs text-[var(--color-secondary)] italic">
+                            {{ $t('stats.heatmap.no_completions') }}
+                        </p>
                     </div>
                 </div>
 
@@ -142,15 +193,20 @@
                             {{ $t('stats.balance.no_data') }}
                         </div>
                         <div v-else class="space-y-5">
-                            <div v-for="item in sortedBalance" :key="item.category_slug" class="space-y-2">
+                            <div
+                                v-for="item in sortedBalance"
+                                :key="item.category_slug"
+                                class="space-y-2 cursor-pointer group"
+                                @click="goToCategory(item.category_slug)"
+                            >
                                 <div class="flex items-center justify-between text-[11px] font-bold">
-                                    <span class="text-[var(--color-text)]">{{ getCatName(item.category_slug) }}</span>
+                                    <span class="text-[var(--color-text)] group-hover:text-[var(--color-primary)] transition-colors">{{ getCatName(item.category_slug) }}</span>
                                     <span class="text-[var(--color-secondary)]">{{ item.count }}</span>
                                 </div>
                                 <div class="h-2 w-full bg-[var(--bg-secondary)] rounded-full overflow-hidden">
                                     <div
-                                        class="h-full rounded-full transition-all duration-1000"
-                                        :style="{ 
+                                        class="h-full rounded-full transition-all duration-1000 group-hover:opacity-80"
+                                        :style="{
                                             width: `${(item.count / maxBalance) * 100}%`,
                                             backgroundColor: getCatColor(item.category_slug)
                                         }"
@@ -170,6 +226,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBalanceStore } from '../stores/balance';
 import { useI18n } from 'vue-i18n';
+import axios from 'axios';
 import AppIcon from '../components/AppIcon.vue';
 import BaseButton from '../components/BaseButton.vue';
 
@@ -177,6 +234,11 @@ const store = useBalanceStore();
 const router = useRouter();
 const { t } = useI18n();
 const loading = ref(true);
+
+const selectedDay = ref(null);
+const dayCompletions = ref([]);
+const dayLoading = ref(false);
+const dayCount = ref(0);
 
 onMounted(async () => {
     await store.fetchStats();
@@ -189,12 +251,12 @@ const statusCards = computed(() => {
     const s = store.stats?.status;
     if (!s) return [];
     const cards = [
-        { key: 'active_tasks', value: s.active_tasks, label: t('stats.status.active_tasks'), colorClass: 'text-blue-500', borderClass: 'border-[var(--color-border)]' },
-        { key: 'overdue_tasks', value: s.overdue_tasks, label: t('stats.status.overdue_tasks'), colorClass: s.overdue_tasks > 0 ? 'text-red-500' : 'text-[var(--color-secondary)]', borderClass: s.overdue_tasks > 0 ? 'border-red-500/30' : 'border-[var(--color-border)]' },
-        { key: 'postponed_tasks', value: s.postponed_tasks, label: t('stats.status.postponed_tasks'), colorClass: 'text-amber-500', borderClass: 'border-[var(--color-border)]' },
-        { key: 'hidden_tasks', value: s.hidden_tasks, label: t('stats.status.hidden_tasks'), colorClass: 'text-[var(--color-secondary)]', borderClass: 'border-[var(--color-border)]' },
-        { key: 'completed_today', value: s.completed_today, label: t('stats.status.completed_today'), colorClass: 'text-green-500', borderClass: s.completed_today > 0 ? 'border-green-500/30' : 'border-[var(--color-border)]' },
-        { key: 'completion_rate', value: `${Math.round(s.completion_rate * 100)}%`, label: t('stats.status.completion_rate'), colorClass: rateColorClass.value, borderClass: 'border-[var(--color-border)]' },
+        { key: 'active_tasks', value: s.active_tasks, label: t('stats.status.active_tasks'), colorClass: 'text-blue-500', borderClass: 'border-[var(--color-border)]', clickable: false },
+        { key: 'overdue_tasks', value: s.overdue_tasks, label: t('stats.status.overdue_tasks'), colorClass: s.overdue_tasks > 0 ? 'text-red-500' : 'text-[var(--color-secondary)]', borderClass: s.overdue_tasks > 0 ? 'border-red-500/30' : 'border-[var(--color-border)]', clickable: false },
+        { key: 'postponed_tasks', value: s.postponed_tasks, label: t('stats.status.postponed_tasks'), colorClass: 'text-amber-500', borderClass: 'border-[var(--color-border)]', clickable: false },
+        { key: 'hidden_tasks', value: s.hidden_tasks, label: t('stats.status.hidden_tasks'), colorClass: 'text-[var(--color-secondary)]', borderClass: 'border-[var(--color-border)]', clickable: false },
+        { key: 'completed_today', value: s.completed_today, label: t('stats.status.completed_today'), colorClass: 'text-green-500', borderClass: s.completed_today > 0 ? 'border-green-500/30' : 'border-[var(--color-border)]', clickable: s.completed_today > 0 },
+        { key: 'completion_rate', value: `${Math.round(s.completion_rate * 100)}%`, label: t('stats.status.completion_rate'), colorClass: rateColorClass.value, borderClass: 'border-[var(--color-border)]', clickable: false },
     ];
     return cards;
 });
@@ -239,7 +301,7 @@ const heatmapWeeks = computed(() => {
     const weeks = [];
     const now = new Date();
     const startDate = new Date();
-    startDate.setDate(now.getDate() - 90); 
+    startDate.setDate(now.getDate() - 90);
     const dayOfWeek = startDate.getDay();
     const diff = startDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
     const gridStart = new Date(startDate.setDate(diff));
@@ -267,6 +329,56 @@ const sortedBalance = computed(() => [...(store.stats?.category_balance || [])].
 const maxBalance = computed(() => Math.max(...(store.stats?.category_balance.map(b => b.count) || [1])));
 const getCatName = (slug) => store.categories.find(c => c.slug === slug)?.name || slug;
 const getCatColor = (slug) => store.categories.find(c => c.slug === slug)?.color || '#8e8e93';
+
+const formatDateLocale = (dateStr) => {
+    if (!dateStr) return '';
+    const locale = store.locale === 'ru' ? 'ru-RU' : 'en-US';
+    return new Date(dateStr).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
+const handleHeatmapClick = async (day) => {
+    if (selectedDay.value === day.date) {
+        selectedDay.value = null;
+        return;
+    }
+    selectedDay.value = day.date;
+    dayCount.value = day.count;
+
+    if (day.count > 0) {
+        dayLoading.value = true;
+        try {
+            const res = await axios.get(`stats?date=${day.date}`);
+            dayCompletions.value = res.data.completions || [];
+        } catch {
+            dayCompletions.value = [];
+        } finally {
+            dayLoading.value = false;
+        }
+    } else {
+        dayCompletions.value = [];
+    }
+};
+
+const handleCounterClick = async (key) => {
+    if (key === 'today' && counters.value.today > 0) {
+        const today = new Date().toISOString().split('T')[0];
+        if (selectedDay.value === today) {
+            selectedDay.value = null;
+            return;
+        }
+        selectedDay.value = today;
+        dayCount.value = counters.value.today;
+        dayLoading.value = true;
+        try {
+            const res = await axios.get(`stats?date=${today}`);
+            dayCompletions.value = res.data.completions || [];
+        } catch {
+            dayCompletions.value = [];
+        } finally {
+            dayLoading.value = false;
+        }
+    }
+};
 </script>
 
 <style scoped>
