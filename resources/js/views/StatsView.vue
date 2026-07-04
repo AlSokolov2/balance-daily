@@ -261,8 +261,13 @@
                             <line
                                 v-for="y in 4"
                                 :key="'grid-' + y"
-                                :x1="0" :y1="y * 20" :x2="300" :y2="y * 20"
-                                stroke="var(--color-border)" stroke-width="0.3" opacity="0.5"
+                                :x1="0"
+                                :y1="y * 20"
+                                :x2="300"
+                                :y2="y * 20"
+                                stroke="var(--color-border)"
+                                stroke-width="0.3"
+                                opacity="0.5"
                             />
                             <!-- Line -->
                             <polyline
@@ -391,27 +396,45 @@
                     </h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)] text-center">
-                            <p class="text-2xl font-black text-blue-500">{{ store.stats.annual.total }}</p>
-                            <p class="text-[9px] font-bold text-[var(--color-secondary)] uppercase tracking-wide mt-1">{{ $t('stats.annual.total') }}</p>
+                            <p class="text-2xl font-black text-blue-500">
+                                {{ store.stats.annual.total }}
+                            </p>
+                            <p class="text-[9px] font-bold text-[var(--color-secondary)] uppercase tracking-wide mt-1">
+                                {{ $t('stats.annual.total') }}
+                            </p>
                         </div>
                         <div class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)] text-center">
-                            <p class="text-2xl font-black text-green-500">{{ store.stats.annual.best_streak }}</p>
-                            <p class="text-[9px] font-bold text-[var(--color-secondary)] uppercase tracking-wide mt-1">{{ $t('stats.annual.best_streak') }}</p>
+                            <p class="text-2xl font-black text-green-500">
+                                {{ store.stats.annual.best_streak }}
+                            </p>
+                            <p class="text-[9px] font-bold text-[var(--color-secondary)] uppercase tracking-wide mt-1">
+                                {{ $t('stats.annual.best_streak') }}
+                            </p>
                         </div>
                         <div class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)] text-center">
-                            <p class="text-lg font-black text-[var(--color-text)]">{{ getDayLabel(store.stats.annual.best_day) }}</p>
-                            <p class="text-[9px] font-bold text-[var(--color-secondary)] uppercase tracking-wide mt-1">{{ $t('stats.annual.best_day') }}</p>
+                            <p class="text-lg font-black text-[var(--color-text)]">
+                                {{ getDayLabel(store.stats.annual.best_day) }}
+                            </p>
+                            <p class="text-[9px] font-bold text-[var(--color-secondary)] uppercase tracking-wide mt-1">
+                                {{ $t('stats.annual.best_day') }}
+                            </p>
                         </div>
                         <div class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)] text-center">
-                            <p class="text-lg font-black text-[var(--color-text)]">{{ getHourLabel(store.stats.annual.best_hour) }}</p>
-                            <p class="text-[9px] font-bold text-[var(--color-secondary)] uppercase tracking-wide mt-1">{{ $t('stats.annual.best_hour') }}</p>
+                            <p class="text-lg font-black text-[var(--color-text)]">
+                                {{ getHourLabel(store.stats.annual.best_hour) }}
+                            </p>
+                            <p class="text-[9px] font-bold text-[var(--color-secondary)] uppercase tracking-wide mt-1">
+                                {{ $t('stats.annual.best_hour') }}
+                            </p>
                         </div>
                     </div>
 
                     <!-- Top categories & subcategories -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div v-if="store.stats.annual.top_categories.length" class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)]">
-                            <p class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3">{{ $t('stats.annual.top_categories') }}</p>
+                            <p class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3">
+                                {{ $t('stats.annual.top_categories') }}
+                            </p>
                             <div class="space-y-2">
                                 <div
                                     v-for="(cat, i) in store.stats.annual.top_categories"
@@ -425,7 +448,9 @@
                             </div>
                         </div>
                         <div v-if="store.stats.annual.top_subcategories.length" class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)]">
-                            <p class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3">{{ $t('stats.annual.top_subcategories') }}</p>
+                            <p class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3">
+                                {{ $t('stats.annual.top_subcategories') }}
+                            </p>
                             <div class="space-y-2">
                                 <div
                                     v-for="(sub, i) in store.stats.annual.top_subcategories"
@@ -610,15 +635,6 @@ const weeklyLinePoints = computed(() =>
     weeklyPoints.value.map(p => `${p.x},${p.y}`).join(' ')
 );
 
-const weeklyMin = computed(() => {
-    const weekly = store.stats?.trends?.weekly || [];
-    return weekly.length ? Math.min(...weekly.map(w => w.count)) : 0;
-});
-
-const weeklyMax = computed(() => {
-    const weekly = store.stats?.trends?.weekly || [];
-    return weekly.length ? Math.max(...weekly.map(w => w.count)) : 0;
-});
 
 const dayOfWeekData = computed(() => {
     const days = store.stats?.trends?.day_of_week || [];
