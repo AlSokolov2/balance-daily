@@ -207,11 +207,64 @@
         "heatmap": {
             "title": "Activity",
             "subtitle": "Last 90 days",
-            "completions": "completions"
+            "completions": "completions",
+            "no_completions": "No completions on this day"
         },
         "balance": {
             "title": "Category Balance (30 days)",
             "no_data": "Not enough data for balance analysis"
+        },
+        "status": {
+            "title": "System Status",
+            "active_tasks": "Active tasks",
+            "overdue_tasks": "Overdue",
+            "postponed_tasks": "Postponed",
+            "hidden_tasks": "Hidden",
+            "completed_today": "Completed today",
+            "completion_rate": "Productivity",
+            "needs_attention": "Needs attention",
+            "all_good": "All good",
+            "no_active_tasks": "No active tasks"
+        },
+        "trends": {
+            "title": "Trends",
+            "weekly": {
+                "title": "Weekly Activity",
+                "count": "comp."
+            },
+            "day_of_week": {
+                "title": "By Day of Week",
+                "sun": "Su",
+                "mon": "Mo",
+                "tue": "Tu",
+                "wed": "We",
+                "thu": "Th",
+                "fri": "Fr",
+                "sat": "Sa"
+            },
+            "hour_of_day": {
+                "title": "By Time of Day"
+            },
+            "subcategory": {
+                "title": "Subcategories",
+                "no_data": "No subcategory data"
+            }
+        },
+        "annual": {
+            "title": "Annual Summary",
+            "total": "Total completed",
+            "top_categories": "Top categories",
+            "top_subcategories": "Top subcategories",
+            "best_streak": "Best streak",
+            "best_day": "Best day",
+            "best_hour": "Best hour",
+            "days": "days"
+        },
+        "export": "Export JSON",
+        "period": {
+            "90": "90 days",
+            "180": "180 days",
+            "365": "Year"
         }
     }
 }

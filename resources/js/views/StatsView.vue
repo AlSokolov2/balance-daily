@@ -10,7 +10,6 @@
                     {{ $t('stats.title') }}
                 </h2>
             </div>
-            <!-- Back Button for Navigation -->
             <BaseButton
                 variant="secondary"
                 size="sm"
@@ -30,9 +29,82 @@
             </div>
 
             <template v-else-if="store.stats">
+                <!-- System Status Block -->
+                <div v-if="store.stats.status" class="space-y-4">
+                    <div class="flex items-center justify-between px-1">
+                        <h3 class="text-xs font-black text-[var(--color-text)] uppercase tracking-widest">
+                            {{ $t('stats.status.title') }}
+                        </h3>
+                    </div>
+
+                    <!-- Status cards row -->
+                    <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
+                        <div
+                            v-for="card in statusCards"
+                            :key="card.key"
+                            class="bg-[var(--bg-card)] p-3 rounded-2xl border text-center"
+                            :class="[card.borderClass, card.clickable ? 'cursor-pointer hover:scale-105 transition-transform' : '']"
+                            @click="card.clickable ? handleCounterClick(card.key) : null"
+                        >
+                            <p class="text-2xl font-black" :class="card.colorClass">
+                                {{ card.value }}
+                            </p>
+                            <p class="text-[9px] font-bold text-[var(--color-secondary)] uppercase tracking-wide mt-0.5">
+                                {{ card.label }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Completion rate bar -->
+                    <div class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)]">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest">
+                                {{ $t('stats.status.completion_rate') }}
+                            </span>
+                            <span class="text-sm font-black" :class="rateColorClass">
+                                {{ Math.round(store.stats.status.completion_rate * 100) }}%
+                            </span>
+                        </div>
+                        <div class="h-2 w-full bg-[var(--bg-secondary)] rounded-full overflow-hidden">
+                            <div
+                                class="h-full rounded-full transition-all duration-700"
+                                :class="rateBarClass"
+                                :style="{ width: `${Math.round(store.stats.status.completion_rate * 100)}%` }"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Categories health -->
+                    <div class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)]">
+                        <p class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3">
+                            {{ $t('stats.status.needs_attention') }}
+                        </p>
+                        <div v-if="attentionCategories.length" class="flex flex-wrap gap-2">
+                            <button
+                                v-for="cat in attentionCategories"
+                                :key="cat.slug"
+                                class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all hover:scale-105 cursor-pointer"
+                                :style="{ backgroundColor: cat.color + '18', borderColor: cat.color + '40', color: cat.color }"
+                                @click="goToCategory(cat.slug)"
+                            >
+                                {{ cat.name }}
+                                <span class="opacity-60 ml-1">({{ cat.active }})</span>
+                            </button>
+                        </div>
+                        <p v-else class="text-xs text-[var(--color-secondary)] italic">
+                            {{ store.stats.status.active_tasks ? $t('stats.status.all_good') : $t('stats.status.no_active_tasks') }}
+                        </p>
+                    </div>
+                </div>
+
                 <!-- Counters Grid -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div v-for="(val, key) in counters" :key="key" class="bg-[var(--bg-card)] p-4 rounded-3xl border border-[var(--color-border)] shadow-sm">
+                    <div
+                        v-for="(val, key) in counters"
+                        :key="key"
+                        class="bg-[var(--bg-card)] p-4 rounded-3xl border border-[var(--color-border)] shadow-sm cursor-pointer hover:scale-105 transition-transform"
+                        @click="handleCounterClick(key)"
+                    >
                         <p class="text-[9px] font-black text-[var(--color-secondary)] uppercase tracking-widest mb-1">
                             {{ $t(`stats.counters.${key}`) }}
                         </p>
@@ -43,25 +115,97 @@
                 </div>
 
                 <!-- Heatmap Section -->
-                <div class="space-y-4">
+                <div class="space-y-4 relative">
+                    <!-- Inline loading overlay for period switch -->
+                    <div
+                        v-if="periodLoading"
+                        class="absolute inset-0 z-10 flex items-center justify-center bg-[var(--bg-app)]/60 rounded-[24px] backdrop-blur-sm"
+                    >
+                        <div class="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    </div>
                     <div class="flex items-center justify-between px-1">
-                        <h3 class="text-xs font-black text-[var(--color-text)] uppercase tracking-widest">
-                            {{ $t('stats.heatmap.title') }}
-                        </h3>
-                        <span class="text-[10px] text-[var(--color-secondary)] font-bold italic">{{ $t('stats.heatmap.subtitle') }}</span>
+                        <div class="flex items-center gap-3">
+                            <h3 class="text-xs font-black text-[var(--color-text)] uppercase tracking-widest">
+                                {{ $t('stats.heatmap.title') }}
+                            </h3>
+                            <!-- Period switcher pills -->
+                            <div class="flex gap-1 bg-[var(--bg-secondary)]/50 p-0.5 rounded-lg">
+                                <button
+                                    v-for="p in periods"
+                                    :key="p"
+                                    :class="['px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide transition-all border-none cursor-pointer',
+                                             currentPeriod === p ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']"
+                                    @click="changePeriod(p)"
+                                >
+                                    {{ $t(`stats.period.${p}`) }}
+                                </button>
+                            </div>
+                        </div>
+                        <button
+                            class="text-[9px] font-bold text-[var(--color-secondary)] hover:text-[var(--color-text)] uppercase tracking-widest bg-transparent border border-[var(--color-border)] px-2 py-1 rounded-lg cursor-pointer transition-colors"
+                            @click="exportStats"
+                        >
+                            {{ $t('stats.export') }}
+                        </button>
                     </div>
                     <div class="bg-[var(--bg-card)] p-4 rounded-[24px] border border-[var(--color-border)] overflow-x-auto scrollbar-hide shadow-sm">
                         <div class="flex gap-1 min-w-max">
                             <div v-for="week in heatmapWeeks" :key="week[0].date" class="flex flex-col gap-1">
                                 <div
                                     v-for="day in week"
-                                    :key="day.date" 
-                                    class="w-3 h-3 sm:w-4 sm:h-4 rounded-sm transition-all hover:scale-125 hover:z-10 cursor-help"
-                                    :class="getHeatmapClass(day.count)"
+                                    :key="day.date"
+                                    class="w-3 h-3 sm:w-4 sm:h-4 rounded-sm transition-all hover:scale-125 hover:z-10 cursor-pointer"
+                                    :class="[getHeatmapClass(day.count), selectedDay === day.date ? 'ring-2 ring-[var(--color-text)] ring-offset-1' : '']"
                                     :title="`${day.date}: ${day.count} ${$t('stats.heatmap.completions')}`"
+                                    @click="handleHeatmapClick(day)"
                                 />
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Selected day detail panel -->
+                    <div
+                        v-if="selectedDay"
+                        class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)] shadow-sm"
+                    >
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <span class="text-sm font-black text-[var(--color-text)]">{{ formatDateLocale(selectedDay) }}</span>
+                                <span class="text-[10px] text-[var(--color-secondary)] ml-2">
+                                    {{ dayCount }} {{ $t('stats.heatmap.completions') }}
+                                </span>
+                            </div>
+                            <button
+                                class="w-6 h-6 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--color-secondary)] hover:text-[var(--color-text)]"
+                                @click="selectedDay = null"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <div v-if="dayLoading" class="flex justify-center py-4">
+                            <div class="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                        </div>
+
+                        <div v-else-if="dayCompletions.length" class="space-y-2">
+                            <div
+                                v-for="c in dayCompletions"
+                                :key="c.id"
+                                class="flex items-center justify-between p-2 bg-[var(--bg-secondary)]/50 rounded-xl"
+                            >
+                                <span class="text-sm font-bold text-[var(--color-text)] truncate flex-1 mr-3">{{ c.title }}</span>
+                                <button
+                                    class="shrink-0 px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide border border-[var(--color-border)] text-[var(--color-secondary)] hover:text-[var(--color-text)] bg-[var(--bg-card)]"
+                                    @click="goToCategory(c.category_slug)"
+                                >
+                                    {{ getCatName(c.category_slug) }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <p v-else class="text-center py-3 text-xs text-[var(--color-secondary)] italic">
+                            {{ $t('stats.heatmap.no_completions') }}
+                        </p>
                     </div>
                 </div>
 
@@ -75,19 +219,247 @@
                             {{ $t('stats.balance.no_data') }}
                         </div>
                         <div v-else class="space-y-5">
-                            <div v-for="item in sortedBalance" :key="item.category_slug" class="space-y-2">
+                            <div
+                                v-for="item in sortedBalance"
+                                :key="item.category_slug"
+                                class="space-y-2 cursor-pointer group"
+                                @click="goToCategory(item.category_slug)"
+                            >
                                 <div class="flex items-center justify-between text-[11px] font-bold">
-                                    <span class="text-[var(--color-text)]">{{ getCatName(item.category_slug) }}</span>
+                                    <span class="text-[var(--color-text)] group-hover:text-[var(--color-primary)] transition-colors">{{ getCatName(item.category_slug) }}</span>
                                     <span class="text-[var(--color-secondary)]">{{ item.count }}</span>
                                 </div>
                                 <div class="h-2 w-full bg-[var(--bg-secondary)] rounded-full overflow-hidden">
                                     <div
-                                        class="h-full rounded-full transition-all duration-1000"
-                                        :style="{ 
+                                        class="h-full rounded-full transition-all duration-1000 group-hover:opacity-80"
+                                        :style="{
                                             width: `${(item.count / maxBalance) * 100}%`,
                                             backgroundColor: getCatColor(item.category_slug)
                                         }"
                                     />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trends Section -->
+                <div v-if="store.stats.trends" class="space-y-8">
+                    <div class="flex items-center justify-between px-1">
+                        <h3 class="text-xs font-black text-[var(--color-text)] uppercase tracking-widest">
+                            {{ $t('stats.trends.title') }}
+                        </h3>
+                    </div>
+
+                    <!-- Weekly Activity Line Chart -->
+                    <div class="bg-[var(--bg-card)] p-5 rounded-[24px] border border-[var(--color-border)] shadow-sm">
+                        <h4 class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3 px-1">
+                            {{ $t('stats.trends.weekly.title') }}
+                        </h4>
+                        <svg viewBox="0 0 300 100" class="w-full h-auto" preserveAspectRatio="xMidYMid meet">
+                            <!-- Grid lines -->
+                            <line
+                                v-for="y in 4"
+                                :key="'grid-' + y"
+                                :x1="0"
+                                :y1="y * 20"
+                                :x2="300"
+                                :y2="y * 20"
+                                stroke="var(--color-border)"
+                                stroke-width="0.3"
+                                opacity="0.5"
+                            />
+                            <!-- Line -->
+                            <polyline
+                                :points="weeklyLinePoints"
+                                fill="none"
+                                stroke="#3B82F6"
+                                stroke-width="2"
+                                vector-effect="non-scaling-stroke"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            />
+                            <!-- Dots -->
+                            <circle
+                                v-for="(pt, i) in weeklyPoints"
+                                :key="'dot-' + i"
+                                :cx="pt.x"
+                                :cy="pt.y"
+                                r="1.5"
+                                fill="#3B82F6"
+                            />
+                            <!-- Labels -->
+                            <text
+                                v-for="(pt, i) in weeklyPoints"
+                                :key="'lbl-' + i"
+                                :x="pt.x"
+                                :y="98"
+                                text-anchor="middle"
+                                class="text-[7px]"
+                                fill="var(--color-secondary)"
+                            >{{ pt.label }}</text>
+                        </svg>
+                    </div>
+
+                    <!-- Day-of-week + Hour-of-day row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Day-of-week bars -->
+                        <div class="bg-[var(--bg-card)] p-5 rounded-[24px] border border-[var(--color-border)] shadow-sm flex flex-col">
+                            <h4 class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3 px-1">
+                                {{ $t('stats.trends.day_of_week.title') }}
+                            </h4>
+                            <svg viewBox="0 0 200 80" class="w-full h-auto mt-auto" preserveAspectRatio="xMidYMid meet">
+                                <rect
+                                    v-for="(bar, i) in dayOfWeekData"
+                                    :key="'dow-' + i"
+                                    :x="bar.x"
+                                    :y="bar.y"
+                                    :width="bar.w"
+                                    :height="bar.h"
+                                    :rx="2"
+                                    :fill="bar.count > 0 ? '#3B82F6' : 'var(--color-border)'"
+                                    :opacity="bar.count > 0 ? 0.3 + (bar.ratio * 0.7) : 0.2"
+                                />
+                                <text
+                                    v-for="(bar, i) in dayOfWeekData"
+                                    :key="'dowl-' + i"
+                                    :x="bar.x + bar.w / 2"
+                                    :y="78"
+                                    text-anchor="middle"
+                                    class="text-[7px] font-bold"
+                                    fill="var(--color-secondary)"
+                                >{{ bar.label }}</text>
+                            </svg>
+                        </div>
+
+                        <!-- Hour-of-day bars -->
+                        <div class="bg-[var(--bg-card)] p-5 rounded-[24px] border border-[var(--color-border)] shadow-sm flex flex-col">
+                            <h4 class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3 px-1">
+                                {{ $t('stats.trends.hour_of_day.title') }}
+                            </h4>
+                            <svg viewBox="0 0 240 80" class="w-full h-auto mt-auto" preserveAspectRatio="xMidYMid meet">
+                                <rect
+                                    v-for="(bar, i) in hourOfDayData"
+                                    :key="'hod-' + i"
+                                    :x="bar.x"
+                                    :y="bar.y"
+                                    :width="bar.w"
+                                    :height="bar.h"
+                                    :rx="1"
+                                    :fill="bar.count > 0 ? '#3B82F6' : 'var(--color-border)'"
+                                    :opacity="bar.count > 0 ? 0.3 + (bar.ratio * 0.7) : 0.2"
+                                />
+                                <text
+                                    v-for="label in hourLabels"
+                                    :key="'hl-' + label.hour"
+                                    :x="label.x"
+                                    :y="78"
+                                    text-anchor="middle"
+                                    class="text-[7px] font-bold"
+                                    fill="var(--color-secondary)"
+                                >{{ label.text }}</text>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Subcategory Performance -->
+                    <div class="bg-[var(--bg-card)] p-5 rounded-[24px] border border-[var(--color-border)] shadow-sm">
+                        <h4 class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3 px-1">
+                            {{ $t('stats.trends.subcategory.title') }}
+                        </h4>
+                        <div v-if="!store.stats.trends.subcategory.length" class="text-center py-4 text-xs text-[var(--color-secondary)] italic">
+                            {{ $t('stats.trends.subcategory.no_data') }}
+                        </div>
+                        <div v-else class="space-y-3">
+                            <div
+                                v-for="item in store.stats.trends.subcategory"
+                                :key="item.name"
+                                class="flex items-center gap-3"
+                            >
+                                <span class="text-[11px] font-bold text-[var(--color-text)] w-24 truncate shrink-0">{{ item.name }}</span>
+                                <div class="flex-1 h-2 bg-[var(--bg-secondary)] rounded-full overflow-hidden">
+                                    <div
+                                        class="h-full rounded-full bg-blue-500/60"
+                                        :style="{ width: `${(item.count / subcategoryMax) * 100}%` }"
+                                    />
+                                </div>
+                                <span class="text-[10px] font-bold text-[var(--color-secondary)] w-6 text-right shrink-0">{{ item.count }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Annual Summary -->
+                <div v-if="store.stats.annual" class="space-y-4">
+                    <h3 class="text-xs font-black text-[var(--color-text)] uppercase tracking-widest px-1">
+                        {{ $t('stats.annual.title') }}
+                    </h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)] text-center">
+                            <p class="text-2xl font-black text-blue-500">
+                                {{ store.stats.annual.total }}
+                            </p>
+                            <p class="text-[9px] font-bold text-[var(--color-secondary)] uppercase tracking-wide mt-1">
+                                {{ $t('stats.annual.total') }}
+                            </p>
+                        </div>
+                        <div class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)] text-center">
+                            <p class="text-2xl font-black text-green-500">
+                                {{ store.stats.annual.best_streak }}
+                            </p>
+                            <p class="text-[9px] font-bold text-[var(--color-secondary)] uppercase tracking-wide mt-1">
+                                {{ $t('stats.annual.best_streak') }}
+                            </p>
+                        </div>
+                        <div class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)] text-center">
+                            <p class="text-lg font-black text-[var(--color-text)]">
+                                {{ getDayLabel(store.stats.annual.best_day) }}
+                            </p>
+                            <p class="text-[9px] font-bold text-[var(--color-secondary)] uppercase tracking-wide mt-1">
+                                {{ $t('stats.annual.best_day') }}
+                            </p>
+                        </div>
+                        <div class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)] text-center">
+                            <p class="text-lg font-black text-[var(--color-text)]">
+                                {{ getHourLabel(store.stats.annual.best_hour) }}
+                            </p>
+                            <p class="text-[9px] font-bold text-[var(--color-secondary)] uppercase tracking-wide mt-1">
+                                {{ $t('stats.annual.best_hour') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Top categories & subcategories -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div v-if="store.stats.annual.top_categories.length" class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)]">
+                            <p class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3">
+                                {{ $t('stats.annual.top_categories') }}
+                            </p>
+                            <div class="space-y-2">
+                                <div
+                                    v-for="(cat, i) in store.stats.annual.top_categories"
+                                    :key="cat.category_slug"
+                                    class="flex items-center gap-2"
+                                >
+                                    <span class="text-lg font-black text-[var(--color-secondary)] w-5">{{ i + 1 }}</span>
+                                    <span class="text-sm font-bold text-[var(--color-text)]">{{ getCatName(cat.category_slug) }}</span>
+                                    <span class="ml-auto text-xs font-bold text-[var(--color-secondary)]">{{ cat.count }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="store.stats.annual.top_subcategories.length" class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)]">
+                            <p class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3">
+                                {{ $t('stats.annual.top_subcategories') }}
+                            </p>
+                            <div class="space-y-2">
+                                <div
+                                    v-for="(sub, i) in store.stats.annual.top_subcategories"
+                                    :key="sub.name"
+                                    class="flex items-center gap-2"
+                                >
+                                    <span class="text-lg font-black text-[var(--color-secondary)] w-5">{{ i + 1 }}</span>
+                                    <span class="text-sm font-bold text-[var(--color-text)]">{{ sub.name }}</span>
+                                    <span class="ml-auto text-xs font-bold text-[var(--color-secondary)]">{{ sub.count }}</span>
                                 </div>
                             </div>
                         </div>
@@ -102,26 +474,115 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBalanceStore } from '../stores/balance';
+import { useI18n } from 'vue-i18n';
+import axios from 'axios';
 import AppIcon from '../components/AppIcon.vue';
 import BaseButton from '../components/BaseButton.vue';
 
 const store = useBalanceStore();
 const router = useRouter();
+const { t } = useI18n();
 const loading = ref(true);
 
-onMounted(async () => {
-    await store.fetchStats();
+const selectedDay = ref(null);
+const dayCompletions = ref([]);
+const dayLoading = ref(false);
+const dayCount = ref(0);
+
+const periods = [90, 180, 365];
+const currentPeriod = ref(90);
+const periodLoading = ref(false);
+
+const fetchStatsData = async () => {
+    loading.value = true;
+    await store.fetchStats({ period: currentPeriod.value });
     loading.value = false;
+};
+
+const changePeriod = async (p) => {
+    currentPeriod.value = p;
+    selectedDay.value = null;
+    periodLoading.value = true;
+    await store.fetchStats({ period: p });
+    periodLoading.value = false;
+};
+
+const exportStats = () => {
+    if (!store.stats) return;
+    const blob = new Blob([JSON.stringify(store.stats, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `balance-daily-stats-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+};
+
+const dayLabelKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+const getDayLabel = (d) => t(`stats.trends.day_of_week.${dayLabelKeys[d] || 'sun'}`);
+const getHourLabel = (h) => `${String(h).padStart(2, '0')}:00`;
+
+onMounted(async () => {
+    await fetchStatsData();
 });
 
 const counters = computed(() => store.stats?.counters || {});
+
+const statusCards = computed(() => {
+    const s = store.stats?.status;
+    if (!s) return [];
+    const cards = [
+        { key: 'active_tasks', value: s.active_tasks, label: t('stats.status.active_tasks'), colorClass: 'text-blue-500', borderClass: 'border-[var(--color-border)]', clickable: false },
+        { key: 'overdue_tasks', value: s.overdue_tasks, label: t('stats.status.overdue_tasks'), colorClass: s.overdue_tasks > 0 ? 'text-red-500' : 'text-[var(--color-secondary)]', borderClass: s.overdue_tasks > 0 ? 'border-red-500/30' : 'border-[var(--color-border)]', clickable: false },
+        { key: 'postponed_tasks', value: s.postponed_tasks, label: t('stats.status.postponed_tasks'), colorClass: 'text-amber-500', borderClass: 'border-[var(--color-border)]', clickable: false },
+        { key: 'hidden_tasks', value: s.hidden_tasks, label: t('stats.status.hidden_tasks'), colorClass: 'text-[var(--color-secondary)]', borderClass: 'border-[var(--color-border)]', clickable: false },
+        { key: 'completed_today', value: s.completed_today, label: t('stats.status.completed_today'), colorClass: 'text-green-500', borderClass: s.completed_today > 0 ? 'border-green-500/30' : 'border-[var(--color-border)]', clickable: s.completed_today > 0 },
+        { key: 'completion_rate', value: `${Math.round(s.completion_rate * 100)}%`, label: t('stats.status.completion_rate'), colorClass: rateColorClass.value, borderClass: 'border-[var(--color-border)]', clickable: false },
+    ];
+    return cards;
+});
+
+const rateColorClass = computed(() => {
+    const r = store.stats?.status?.completion_rate ?? 0;
+    if (r >= 0.5) return 'text-green-500';
+    if (r >= 0.25) return 'text-amber-500';
+    return 'text-red-500';
+});
+
+const rateBarClass = computed(() => {
+    const r = store.stats?.status?.completion_rate ?? 0;
+    if (r >= 0.5) return 'bg-green-500';
+    if (r >= 0.25) return 'bg-amber-500';
+    return 'bg-red-500';
+});
+
+const attentionCategories = computed(() => {
+    const health = store.stats?.status?.categories_health;
+    if (!health) return [];
+    return Object.entries(health)
+        .filter(([, h]) => h.needs_attention)
+        .map(([slug, h]) => {
+            const cat = store.categories.find(c => c.slug === slug);
+            return {
+                slug,
+                name: cat?.name || slug,
+                color: cat?.color || '#8e8e93',
+                active: h.active,
+            };
+        });
+});
+
+const goToCategory = (slug) => {
+    store.filterCat = slug;
+    router.push('/');
+};
 
 const heatmapWeeks = computed(() => {
     if (!store.stats?.heatmap) return [];
     const weeks = [];
     const now = new Date();
     const startDate = new Date();
-    startDate.setDate(now.getDate() - 90); 
+    startDate.setDate(now.getDate() - currentPeriod.value);
     const dayOfWeek = startDate.getDay();
     const diff = startDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
     const gridStart = new Date(startDate.setDate(diff));
@@ -149,6 +610,138 @@ const sortedBalance = computed(() => [...(store.stats?.category_balance || [])].
 const maxBalance = computed(() => Math.max(...(store.stats?.category_balance.map(b => b.count) || [1])));
 const getCatName = (slug) => store.categories.find(c => c.slug === slug)?.name || slug;
 const getCatColor = (slug) => store.categories.find(c => c.slug === slug)?.color || '#8e8e93';
+
+// ── Trends charts ──
+
+const weeklyPoints = computed(() => {
+    const weekly = store.stats?.trends?.weekly || [];
+    if (!weekly.length) return [];
+    const max = Math.max(...weekly.map(w => w.count), 1);
+    const chartWidth = 300;
+    const chartHeight = 80;
+    const margin = 18;
+    const area = chartWidth - margin * 2;
+    const stepX = weekly.length > 1 ? area / (weekly.length - 1) : 0;
+
+    return weekly.map((w, i) => ({
+        x: margin + i * stepX,
+        y: chartHeight - (w.count / max) * chartHeight,
+        label: w.week_start.substring(5), // MM-DD
+        count: w.count,
+    }));
+});
+
+const weeklyLinePoints = computed(() =>
+    weeklyPoints.value.map(p => `${p.x},${p.y}`).join(' ')
+);
+
+
+const dayOfWeekData = computed(() => {
+    const days = store.stats?.trends?.day_of_week || [];
+    if (!days.length) return [];
+    const dayLabels = ['stats.trends.day_of_week.sun', 'stats.trends.day_of_week.mon', 'stats.trends.day_of_week.tue', 'stats.trends.day_of_week.wed', 'stats.trends.day_of_week.thu', 'stats.trends.day_of_week.fri', 'stats.trends.day_of_week.sat'];
+    const max = Math.max(...days.map(d => d.count), 1);
+    const chartWidth = 200;
+    const chartHeight = 60;
+    const barW = (chartWidth / 7) - 4;
+
+    return days.map((d, i) => {
+        const h = Math.max(2, (d.count / max) * chartHeight);
+        return {
+            x: i * (chartWidth / 7) + 2,
+            y: chartHeight - h,
+            w: barW,
+            h: h,
+            count: d.count,
+            ratio: max > 0 ? d.count / max : 0,
+            label: t(dayLabels[d.day || i]),
+        };
+    });
+});
+
+const hourOfDayData = computed(() => {
+    const hours = store.stats?.trends?.hour_of_day || [];
+    if (!hours.length) return [];
+    const max = Math.max(...hours.map(h => h.count), 1);
+    const chartWidth = 240;
+    const chartHeight = 60;
+    const barW = (chartWidth / 24) - 1;
+
+    return hours.map((h) => {
+        const barH = Math.max(1, (h.count / max) * chartHeight);
+        return {
+            x: h.hour * (chartWidth / 24) + 0.5,
+            y: chartHeight - barH,
+            w: barW,
+            h: barH,
+            count: h.count,
+            ratio: max > 0 ? h.count / max : 0,
+        };
+    });
+});
+
+const hourLabels = computed(() => {
+    return [0, 3, 6, 9, 12, 15, 18, 21].map(h => ({
+        hour: h,
+        x: h * (240 / 24) + (240 / 24) / 2,
+        text: `${String(h).padStart(2, '0')}:00`,
+    }));
+});
+
+const subcategoryMax = computed(() => {
+    const sub = store.stats?.trends?.subcategory || [];
+    return Math.max(...sub.map(s => s.count), 1);
+});
+
+const formatDateLocale = (dateStr) => {
+    if (!dateStr) return '';
+    const locale = store.locale === 'ru' ? 'ru-RU' : 'en-US';
+    return new Date(dateStr).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
+const handleHeatmapClick = async (day) => {
+    if (selectedDay.value === day.date) {
+        selectedDay.value = null;
+        return;
+    }
+    selectedDay.value = day.date;
+    dayCount.value = day.count;
+
+    if (day.count > 0) {
+        dayLoading.value = true;
+        try {
+            const res = await axios.get(`stats?date=${day.date}`);
+            dayCompletions.value = res.data.completions || [];
+        } catch {
+            dayCompletions.value = [];
+        } finally {
+            dayLoading.value = false;
+        }
+    } else {
+        dayCompletions.value = [];
+    }
+};
+
+const handleCounterClick = async (key) => {
+    if (key === 'today' && counters.value.today > 0) {
+        const today = new Date().toISOString().split('T')[0];
+        if (selectedDay.value === today) {
+            selectedDay.value = null;
+            return;
+        }
+        selectedDay.value = today;
+        dayCount.value = counters.value.today;
+        dayLoading.value = true;
+        try {
+            const res = await axios.get(`stats?date=${today}`);
+            dayCompletions.value = res.data.completions || [];
+        } catch {
+            dayCompletions.value = [];
+        } finally {
+            dayLoading.value = false;
+        }
+    }
+};
 </script>
 
 <style scoped>

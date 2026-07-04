@@ -206,11 +206,64 @@
         "heatmap": {
             "title": "Активность",
             "subtitle": "Последние 90 дней",
-            "completions": "выполнений"
+            "completions": "выполнений",
+            "no_completions": "Нет выполнений в этот день"
         },
         "balance": {
             "title": "Баланс категорий (30 дней)",
             "no_data": "Недостаточно данных для анализа баланса"
+        },
+        "status": {
+            "title": "Состояние системы",
+            "active_tasks": "Активных задач",
+            "overdue_tasks": "Просрочено",
+            "postponed_tasks": "Отложено",
+            "hidden_tasks": "Скрыто",
+            "completed_today": "Выполнено сегодня",
+            "completion_rate": "Продуктивность",
+            "needs_attention": "Требует внимания",
+            "all_good": "Всё хорошо",
+            "no_active_tasks": "Нет активных задач"
+        },
+        "trends": {
+            "title": "Тренды",
+            "weekly": {
+                "title": "Активность по неделям",
+                "count": "вып."
+            },
+            "day_of_week": {
+                "title": "По дням недели",
+                "sun": "Вс",
+                "mon": "Пн",
+                "tue": "Вт",
+                "wed": "Ср",
+                "thu": "Чт",
+                "fri": "Пт",
+                "sat": "Сб"
+            },
+            "hour_of_day": {
+                "title": "По времени суток"
+            },
+            "subcategory": {
+                "title": "Подкатегории",
+                "no_data": "Нет данных по подкатегориям"
+            }
+        },
+        "annual": {
+            "title": "Итоги года",
+            "total": "Всего выполнено",
+            "top_categories": "Топ категорий",
+            "top_subcategories": "Топ подкатегорий",
+            "best_streak": "Лучшая серия",
+            "best_day": "Лучший день",
+            "best_hour": "Лучшее время",
+            "days": "дней"
+        },
+        "export": "Экспорт JSON",
+        "period": {
+            "90": "90 дней",
+            "180": "180 дней",
+            "365": "Год"
         }
     }
 }

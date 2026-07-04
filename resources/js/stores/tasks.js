@@ -56,10 +56,10 @@ export const useTasksStore = defineStore('tasks', {
             await this.sync(true);
         },
 
-        async fetchStats() {
+        async fetchStats(params = {}) {
             if (!useAuthStore().token) return;
             try {
-                const res = await axios.get('stats');
+                const res = await axios.get('stats', { params });
                 this.stats = res.data;
             } catch (e) {
                 console.error('Fetch stats error:', e);

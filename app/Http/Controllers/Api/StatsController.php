@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
+use App\Models\Task;
 use App\Models\TaskCompletion;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -19,10 +21,18 @@ class StatsController extends Controller
         $user = $this->user();
         $now = Carbon::now();
 
-        // Fetch completions once
+        // Optional date filter: return completions for a specific date
+        if ($request->has('date')) {
+            return $this->completionsByDate($request->input('date'), (int) $user->id);
+        }
+
+        // Period: 90 (default), 180, or 365 days
+        $period = min(max((int) $request->input('period', 90), 30), 365);
+
+        // Fetch completions once for the requested period
         /** @var \Illuminate\Database\Eloquent\Collection<int, TaskCompletion> $completions */
         $completions = TaskCompletion::where('user_id', $user->id)
-            ->where('completed_at', '>=', $now->copy()->subDays(90)->startOfDay())
+            ->where('completed_at', '>=', $now->copy()->subDays($period)->startOfDay())
             ->orderBy('completed_at', 'asc')
             ->get();
 
@@ -46,6 +56,18 @@ class StatsController extends Controller
         // 4. General Activity Streak
         $streakData = $this->calculateGeneralStreak((int) $user->id);
 
+        // 5. System Status Block
+        $status = $this->calculateStatus((int) $user->id, $now, $todayCount);
+
+        // 6. Trends
+        $trends = $this->calculateTrends((int) $user->id, $completions, $now);
+
+        // 7. Annual summary (only for 365d)
+        $annual = null;
+        if ($period >= 365) {
+            $annual = $this->calculateAnnualSummary($completions, $categoryBalance, $streakData);
+        }
+
         return response()->json([
             'heatmap' => $heatmap,
             'category_balance' => $categoryBalance,
@@ -55,6 +77,274 @@ class StatsController extends Controller
                 'current_streak' => $streakData['current'],
                 'longest_streak' => $streakData['longest'],
             ],
+            'status' => $status,
+            'trends' => $trends,
+            'period' => $period,
+            'annual' => $annual,
+        ]);
+    }
+
+    /**
+     * Calculate system status: active tasks, overdue, postponed, hidden,
+     * completion rate, and per-category health.
+     *
+     * @return array{active_tasks: int, overdue_tasks: int, postponed_tasks: int, hidden_tasks: int, completed_today: int, completion_rate: float, categories_health: array<string, array{active: int, completed_today: int, needs_attention: bool}>}
+     */
+    private function calculateStatus(int $userId, Carbon $now, int $todayCount): array
+    {
+        /** @var \Illuminate\Database\Eloquent\Collection<int, Task> $allTasks */
+        $allTasks = Task::where('user_id', $userId)
+            ->where('completed', false)
+            ->get();
+
+        /** @var \Illuminate\Database\Eloquent\Collection<int, Category> $categories */
+        $categories = Category::where('user_id', $userId)->get();
+        $catsMap = $categories->keyBy('slug');
+
+        $activeTasks = 0;
+        $overdueTasks = 0;
+        $postponedTasks = 0;
+        $hiddenTasks = 0;
+        $perCatActive = [];
+        $perCatCompletedToday = [];
+
+        // Init per-category counters
+        foreach ($categories as $cat) {
+            $perCatActive[$cat->slug] = 0;
+            $perCatCompletedToday[$cat->slug] = 0;
+        }
+
+        foreach ($allTasks as $task) {
+            $isHidden = $task->hidden_until && $task->hidden_until > $now;
+            $isPostponed = ($task->postpone_until && $task->postpone_until > $now)
+                || (! $task->force_active && $this->isCategoryPostponedNow($catsMap->get($task->category_slug), $now));
+
+            if ($isHidden) {
+                $hiddenTasks++;
+                continue; // Hidden tasks are not counted as active
+            }
+
+            $activeTasks++;
+
+            if ($task->deadline && $task->deadline < $now) {
+                $overdueTasks++;
+            }
+
+            if ($isPostponed) {
+                $postponedTasks++;
+            }
+
+            // Per-category counts
+            $slug = $task->category_slug;
+            if (isset($perCatActive[$slug])) {
+                $perCatActive[$slug]++;
+            }
+        }
+
+        // Count completions today per category
+        $catCompletionsToday = TaskCompletion::where('task_completions.user_id', $userId)
+            ->where('task_completions.completed_at', '>=', $now->copy()->startOfDay())
+            ->join('tasks', 'task_completions.task_id', '=', 'tasks.id')
+            ->select('tasks.category_slug', DB::raw('count(*) as count'))
+            ->groupBy('tasks.category_slug')
+            ->pluck('count', 'category_slug');
+
+        foreach ($catCompletionsToday as $slug => $count) {
+            if (isset($perCatCompletedToday[$slug])) {
+                $perCatCompletedToday[$slug] = (int) $count;
+            }
+        }
+
+        // Build categories_health
+        $categoriesHealth = [];
+        foreach ($categories as $cat) {
+            $categoriesHealth[$cat->slug] = [
+                'active' => $perCatActive[$cat->slug] ?? 0,
+                'completed_today' => $perCatCompletedToday[$cat->slug] ?? 0,
+                'needs_attention' => ($perCatActive[$cat->slug] ?? 0) > 0
+                    && ($perCatCompletedToday[$cat->slug] ?? 0) === 0,
+            ];
+        }
+
+        $completionRate = ($activeTasks + $todayCount) > 0
+            ? round($todayCount / ($activeTasks + $todayCount), 2)
+            : 0.0;
+
+        return [
+            'active_tasks' => $activeTasks,
+            'overdue_tasks' => $overdueTasks,
+            'postponed_tasks' => $postponedTasks,
+            'hidden_tasks' => $hiddenTasks,
+            'completed_today' => $todayCount,
+            'completion_rate' => $completionRate,
+            'categories_health' => $categoriesHealth,
+        ];
+    }
+
+    /**
+     * Calculate trends: weekly completions, day-of-week breakdown,
+     * hour-of-day heatmap, and subcategory performance.
+     *
+     * @param  \Illuminate\Database\Eloquent\Collection<int, TaskCompletion>  $completions
+     * @return array{weekly: array<int, array{week_start: string, count: int}>, day_of_week: array<int, array{day: int, count: int}>, hour_of_day: array<int, array{hour: int, count: int}>, subcategory: array<int, array{name: string, count: int}>}
+     */
+    private function calculateTrends(int $userId, $completions, Carbon $now): array
+    {
+        // 1. Weekly completions (last 12 weeks)
+        $weekly = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $weekStart = $now->copy()->subWeeks($i)->startOfWeek(Carbon::MONDAY);
+            $weekEnd = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
+            $count = $completions->filter(fn ($c) =>
+                $c->completed_at->between($weekStart, $weekEnd)
+            )->count();
+            $weekly[] = [
+                'week_start' => $weekStart->toDateString(),
+                'count' => $count,
+            ];
+        }
+
+        // 2. Day-of-week breakdown (0=Sun..6=Sat, last 90 days)
+        $dayOfWeek = [];
+        for ($d = 0; $d < 7; $d++) {
+            $dayCompletions = $completions->filter(fn ($c) => (int) $c->completed_at->dayOfWeek === $d);
+            $dayOfWeek[] = [
+                'day' => $d,
+                'count' => $dayCompletions->count(),
+            ];
+        }
+
+        // 3. Hour-of-day breakdown (0..23, last 90 days)
+        $hourOfDay = [];
+        for ($h = 0; $h < 24; $h++) {
+            $hourCompletions = $completions->filter(fn ($c) => (int) $c->completed_at->hour === $h);
+            $hourOfDay[] = [
+                'hour' => $h,
+                'count' => $hourCompletions->count(),
+            ];
+        }
+
+        // 4. Subcategory performance (last 90 days)
+        $subcategoryData = DB::table('task_completions')
+            ->where('task_completions.user_id', $userId)
+            ->where('task_completions.completed_at', '>=', $now->copy()->subDays(90)->startOfDay())
+            ->join('tasks', 'task_completions.task_id', '=', 'tasks.id')
+            ->whereNotNull('tasks.subcategory')
+            ->where('tasks.subcategory', '!=', '')
+            ->select('tasks.subcategory as name', DB::raw('count(*) as count'))
+            ->groupBy('tasks.subcategory')
+            ->orderByDesc('count')
+            ->limit(10)
+            ->get();
+
+        return [
+            'weekly' => $weekly,
+            'day_of_week' => $dayOfWeek,
+            'hour_of_day' => $hourOfDay,
+            'subcategory' => $subcategoryData->toArray(),
+        ];
+    }
+
+    /**
+     * Calculate annual summary for 365-day period.
+     *
+     * @param  \Illuminate\Database\Eloquent\Collection<int, TaskCompletion>  $completions
+     * @param  \Illuminate\Support\Collection<int, \stdClass>  $categoryBalance
+     * @param  array{current: int, longest: int}  $streakData
+     * @return array{total: int, top_categories: array<int, array{slug: string, count: int}>, top_subcategories: array<int, array{name: string, count: int}>, best_streak: int, best_day: int, best_hour: int}
+     */
+    private function calculateAnnualSummary($completions, $categoryBalance, array $streakData): array
+    {
+        // Top categories (sorted by count)
+        $topCategories = $categoryBalance->sortByDesc('count')->take(3)->values()->toArray();
+
+        // Top subcategories via a single DB query (avoid N+1 on task relation)
+        $subcatData = DB::table('task_completions')
+            ->where('task_completions.user_id', $this->user()->id)
+            ->where('task_completions.completed_at', '>=', now()->subDays(365)->startOfDay())
+            ->join('tasks', 'task_completions.task_id', '=', 'tasks.id')
+            ->whereNotNull('tasks.subcategory')
+            ->where('tasks.subcategory', '!=', '')
+            ->select('tasks.subcategory as name', DB::raw('count(*) as count'))
+            ->groupBy('tasks.subcategory')
+            ->orderByDesc('count')
+            ->limit(3)
+            ->get()
+            ->toArray();
+
+        // Best day of week
+        $dayCounts = array_fill(0, 7, 0);
+        foreach ($completions as $c) {
+            $dayCounts[$c->completed_at->dayOfWeek]++;
+        }
+        $bestDay = (int) array_search(max($dayCounts), $dayCounts);
+
+        // Best hour
+        $hourCounts = array_fill(0, 24, 0);
+        foreach ($completions as $c) {
+            $hourCounts[$c->completed_at->hour]++;
+        }
+        $bestHour = (int) array_search(max($hourCounts), $hourCounts);
+
+        return [
+            'total' => $completions->count(),
+            'top_categories' => $topCategories,
+            'top_subcategories' => $subcatData,
+            'best_streak' => $streakData['longest'],
+            'best_day' => $bestDay,
+            'best_hour' => $bestHour,
+        ];
+    }
+
+    /**
+     * Check if a category is currently hidden by its hide_until time.
+     * hide_until is stored as "HH:MM" string and applies to the current day.
+     */
+    private function isCategoryPostponedNow(?Category $cat, Carbon $now): bool
+    {
+        if (! $cat || ! $cat->hide_until) {
+            return false;
+        }
+
+        $parts = explode(':', $cat->hide_until);
+        if (count($parts) !== 2) {
+            return false;
+        }
+
+        $h = (int) $parts[0];
+        $m = (int) $parts[1];
+
+        $hideTime = $now->copy()->setTime($h, $m);
+
+        return $now->lt($hideTime);
+    }
+
+    /**
+     * Get tasks completed on a specific date with their titles.
+     */
+    private function completionsByDate(string $date, int $userId): JsonResponse
+    {
+        $dateObj = Carbon::parse($date);
+
+        $completions = TaskCompletion::where('task_completions.user_id', $userId)
+            ->whereDate('task_completions.completed_at', $dateObj)
+            ->join('tasks', 'task_completions.task_id', '=', 'tasks.id')
+            ->select(
+                'task_completions.id',
+                'task_completions.task_id',
+                'task_completions.completed_at',
+                'tasks.title',
+                'tasks.category_slug'
+            )
+            ->orderBy('task_completions.completed_at', 'desc')
+            ->get();
+
+        $count = $completions->count();
+
+        return response()->json([
+            'date' => $dateObj->toDateString(),
+            'count' => $count,
+            'completions' => $completions,
         ]);
     }
 
