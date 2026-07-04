@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useBalanceStore } from '../../../resources/js/stores/balance';
+import { useAuthStore } from '../../../resources/js/stores/auth';
+import { useSettingsStore } from '../../../resources/js/stores/settings';
+import { useTasksStore } from '../../../resources/js/stores/tasks';
 import { calcPriority } from '../../../resources/js/utils/priority-engine';
 import axios from 'axios';
 
@@ -12,7 +15,7 @@ describe('Balance Store - Prioritization Engine', () => {
         vi.clearAllMocks();
         // Setup base state
         const store = useBalanceStore();
-        store.categories = [
+        useTasksStore().categories = [
             { slug: 'work', name: 'Work', weight: 0.5, color: '#ff0000' },
             { slug: 'life', name: 'Life', weight: 0.5, color: '#00ff00' }
         ];
@@ -28,7 +31,7 @@ describe('Balance Store - Prioritization Engine', () => {
 
     it('boosts category weight if no tasks completed today', () => {
         const store = useBalanceStore();
-        store.tasks = [
+        useTasksStore().tasks = [
             { id: 1, title: 'T1', category_slug: 'work', importance: 2, completed: false }
         ];
         
@@ -58,7 +61,7 @@ describe('Balance Store - Prioritization Engine', () => {
             last_completed_date: lastCompleted.toISOString()
         };
         
-        store.tasks = [task];
+        useTasksStore().tasks = [task];
         store.recalculateAll();
         
         expect(store.tasks[0].missed_count).toBe(1);
@@ -91,7 +94,7 @@ describe('Balance Store - Prioritization Engine', () => {
         axios.get.mockResolvedValueOnce({ data: mockUser }); // /api/user
         axios.get.mockResolvedValue({ data: [] }); // fetchAll calls
         
-        store.token = 'fake-token';
+        useAuthStore().token = 'fake-token';
         await store.init();
         
         expect(store.user).toEqual(mockUser);
@@ -110,7 +113,7 @@ describe('Balance Store - Prioritization Engine', () => {
             repeat_interval: 1, 
             completed: false 
         };
-        store.tasks = [task];
+        useTasksStore().tasks = [task];
         
         axios.put.mockImplementation((url, data) => Promise.resolve({ data }));
 
@@ -133,8 +136,9 @@ describe('Balance Store - Prioritization Engine', () => {
 
     it('clears state on logout', async () => {
         const store = useBalanceStore();
-        store.token = 'fake-token';
-        store.user = { id: 1 };
+        const auth = useAuthStore();
+        auth.token = 'fake-token';
+        auth.user = { id: 1 };
         
         axios.post.mockResolvedValueOnce({}); // /api/logout
         axios.get.mockResolvedValue({ data: [] }); // fetchAll
@@ -195,35 +199,37 @@ describe('Balance Store - Prioritization Engine', () => {
 
         it('recalculates priorities every minute', () => {
             const store = useBalanceStore();
-            store.pulseInterval = 1; // Explicitly set to 1 minute
-            const spy = vi.spyOn(store, 'recalculateAll');
-            
+            const tasks = useTasksStore();
+            useSettingsStore().pulseInterval = 1;
+            const spy = vi.spyOn(tasks, 'recalculateAll');
+
             store.startPulse();
-            
+
             vi.advanceTimersByTime(61000); // 1 minute + margin
             expect(spy).toHaveBeenCalledTimes(1);
-            
+
             vi.advanceTimersByTime(60000);
             expect(spy).toHaveBeenCalledTimes(2);
         });
 
         it('triggers fetchAll when date changes during pulse', async () => {
             const store = useBalanceStore();
-            store.pulseInterval = 1; // Explicitly set to 1 minute
-            const spyFetch = vi.spyOn(store, 'fetchAll');
-            const spyRecalc = vi.spyOn(store, 'recalculateAll');
-            
-            store.lastPulse = 'Mon Jan 01 2026';
+            const tasks = useTasksStore();
+            useSettingsStore().pulseInterval = 1;
+            const spyFetch = vi.spyOn(tasks, 'fetchAll');
+            const spyRecalc = vi.spyOn(tasks, 'recalculateAll');
+
+            tasks.lastPulse = 'Mon Jan 01 2026';
             store.startPulse();
 
             // Mock date change to next day
             vi.setSystemTime(new Date('2026-01-02T12:00:00Z'));
-            
+
             vi.advanceTimersByTime(61000);
-            
+
             expect(spyFetch).toHaveBeenCalled();
             // recalculateAll is called inside fetchAll, so we don't expect it to be called directly in the interval
-            expect(spyRecalc).not.toHaveBeenCalled(); 
+            expect(spyRecalc).not.toHaveBeenCalled();
         });
     });
 });

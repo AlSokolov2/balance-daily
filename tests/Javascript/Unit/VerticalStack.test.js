@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { useBalanceStore } from '../../../resources/js/stores/balance';
+import { useTasksStore } from '../../../resources/js/stores/tasks';
 
 describe('Balance Store - Vertical Stack Getters', () => {
     beforeEach(() => {
@@ -11,7 +12,7 @@ describe('Balance Store - Vertical Stack Getters', () => {
         const store = useBalanceStore();
         
         // Mock tasks
-        store.tasks = [
+        useTasksStore().tasks = [
             { id: 1, title: 'Active Task', ha: false, completed: false },
             { id: 2, title: 'Routine Task', ha: true, completed: false },
             { id: 3, title: 'Postponed Task', ha: false, completed: false, postpone_until: '2099-01-01' },

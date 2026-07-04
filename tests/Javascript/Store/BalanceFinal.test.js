@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { useBalanceStore } from '../../../resources/js/stores/balance';
+import { useTasksStore } from '../../../resources/js/stores/tasks';
+import { useAuthStore } from '../../../resources/js/stores/auth';
 import { calcPriority } from '../../../resources/js/utils/priority-engine';
 import axios from 'axios';
 
@@ -29,7 +31,7 @@ describe('Balance Store - Final Push for 100%', () => {
     it('completeTask handles recurring tasks', async () => {
         const store = useBalanceStore();
         const task = { id: 1, repeat_type: 'interval', repeat_interval: 1, completed: false };
-        store.tasks = [task];
+        useTasksStore().tasks = [task];
         axios.put.mockResolvedValue({ data: { ...task, hidden_until: 'tomorrow' } });
 
         await store.completeTask(1);
@@ -40,7 +42,7 @@ describe('Balance Store - Final Push for 100%', () => {
     it('completeTask handles simple tasks', async () => {
         const store = useBalanceStore();
         const task = { id: 2, repeat_type: 'none', completed: false };
-        store.tasks = [task];
+        useTasksStore().tasks = [task];
         axios.put.mockResolvedValue({ data: { ...task, completed: true } });
 
         await store.completeTask(2);
@@ -79,7 +81,7 @@ describe('Balance Store - Final Push for 100%', () => {
 
     it('isCategoryPostponed and isEffectivelyPostponed full coverage', () => {
         const store = useBalanceStore();
-        store.categories = [{ slug: 'work', hide_until: '23:59' }];
+        useTasksStore().categories = [{ slug: 'work', hide_until: '23:59' }];
         expect(store.isCategoryPostponed('work')).toBe(true);
         expect(store.isCategoryPostponed('non-existent')).toBe(false);
 
@@ -124,7 +126,7 @@ describe('Balance Store - Final Push for 100%', () => {
 
     it('handles init failure', async () => {
         const store = useBalanceStore();
-        store.token = 'bad-token';
+        useAuthStore().token = 'bad-token';
         axios.get.mockRejectedValue(new Error('Auth failed'));
         const logoutSpy = vi.spyOn(store, 'logout');
         
@@ -154,7 +156,7 @@ describe('Balance Store - Final Push for 100%', () => {
         const store = useBalanceStore();
         
         // allTasksOrdered with empty
-        store.tasks = null; 
+        useTasksStore().tasks = null; 
         expect(store.allTasksOrdered).toEqual([]);
 
         // bubbleTasks with specific filters
@@ -165,17 +167,17 @@ describe('Balance Store - Final Push for 100%', () => {
 
         // filteredTasks hidden
         store.filterCat = 'hidden';
-        store.tasks = [{ id: 1, hidden_until: '2099-01-01', completed: false }];
+        useTasksStore().tasks = [{ id: 1, hidden_until: '2099-01-01', completed: false }];
         expect(store.filteredTasks).toHaveLength(1);
 
         // filteredTasks search
         store.filterCat = 'all';
         store.searchQuery = 'findme';
-        store.tasks = [{ id: 2, title: 'FindMe', completed: false }];
+        useTasksStore().tasks = [{ id: 2, title: 'FindMe', completed: false }];
         expect(store.filteredTasks).toHaveLength(1);
 
         // counts without category
-        store.tasks = [{ id: 3, completed: false, category_slug: null }];
+        useTasksStore().tasks = [{ id: 3, completed: false, category_slug: null }];
         expect(store.counts.all).toBe(1);
     });
 });

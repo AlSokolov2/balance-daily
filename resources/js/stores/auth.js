@@ -1,80 +1,73 @@
 /**
- * Auth module — init and logout logic extracted from balance store.
- * Not a Pinia store — just functions that operate on a store instance.
+ * Auth store — token, user, OAuth URLs.
+ * Orchestration (sync, pulse, tasks cleanup) stays in balance wrappers.
  *
  * @see #129 — Split monolith store
  */
+import { defineStore } from 'pinia';
 import axios from 'axios';
 
-/**
- * Exchange OAuth code, load user, trigger sync.
- * @param {Object} store — balance store instance
- */
-export async function initAuth(store) {
-    const urlParams = new window.URLSearchParams(window.location.search);
-    const codeFromUrl = urlParams.get('code');
-    if (codeFromUrl) {
-        window.history.replaceState({}, document.title, window.location.pathname);
-        try {
-            const res = await axios.post('auth/exchange-code', { code: codeFromUrl });
-            store.token = res.data.token;
-            localStorage.setItem('auth_token', store.token);
-        } catch (e) {
-            console.error('Code exchange error:', e);
-        }
-    }
+export const useAuthStore = defineStore('auth', {
+    state: () => ({
+        token: localStorage.getItem('auth_token') || null,
+        user: null,
+    }),
 
-    if (store.token) {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${store.token}`;
-        try {
-            const res = await axios.get('user');
-            store.user = res.data;
-            await store.sync();
-            store.startPulse();
-        } catch (e) {
-            console.error('Init error:', e);
-            await store.logout();
-        }
-    }
-}
+    getters: {
+        isAuthenticated: (state) => !!state.token,
+        googleAuthUrl: () => (window.apiBaseUrl || '').replace(/\/$/, '') + '/auth/google',
+        vkAuthUrl: () => (window.apiBaseUrl || '').replace(/\/$/, '') + '/auth/vkid',
+    },
 
-/**
- * Clear all state, revoke token.
- * @param {Object} store — balance store instance
- */
-export async function logoutAuth(store) {
-    store.stopPulse();
-    if (store.token) {
-        try { await axios.post('logout'); } catch (e) { console.error('Logout error:', e); }
-    }
-    store.token = null;
-    store.user = null;
-    store.lastSync = null;
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('last_sync');
-    delete axios.defaults.headers.common['Authorization'];
-    store.tasks = [];
-    store.categories = [];
-    store.subcatCoeffs = {};
-    await store.sync(true);
-}
+    actions: {
+        /**
+         * Exchange OAuth code, load user. Does NOT call sync/startPulse —
+         * that is orchestrated by the balance store wrapper.
+         */
+        async init() {
+            const urlParams = new window.URLSearchParams(window.location.search);
+            const codeFromUrl = urlParams.get('code');
+            if (codeFromUrl) {
+                window.history.replaceState({}, document.title, window.location.pathname);
+                try {
+                    const res = await axios.post('auth/exchange-code', { code: codeFromUrl });
+                    this.token = res.data.token;
+                    localStorage.setItem('auth_token', this.token);
+                } catch (e) {
+                    console.error('Code exchange error:', e);
+                }
+            }
 
-/**
- * Google OAuth URL.
- */
-export function googleAuthUrl() {
-    return (window.apiBaseUrl || '').replace(/\/$/, '') + '/auth/google';
-}
+            if (this.token) {
+                axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
+                const res = await axios.get('user');
+                this.user = res.data;
+            }
+        },
 
-/**
- * VK ID OAuth URL.
- */
-export function vkAuthUrl() {
-    return (window.apiBaseUrl || '').replace(/\/$/, '') + '/auth/vkid';
-}
+        /**
+         * Revoke token, clear auth state. Does NOT clean tasks/pulse —
+         * that is orchestrated by the balance store wrapper.
+         */
+        async logout() {
+            if (this.token) {
+                try {
+                    await axios.post('logout');
+                } catch (e) {
+                    console.error('Logout error:', e);
+                }
+            }
+            this.token = null;
+            this.user = null;
+            localStorage.removeItem('auth_token');
+            delete axios.defaults.headers.common['Authorization'];
+        },
+    },
+});
 
 /**
  * URL-safe base64 → Uint8Array (for Web Push).
+ * Plain utility — not part of auth state.
  */
 export function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);

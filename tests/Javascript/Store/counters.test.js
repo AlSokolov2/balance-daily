@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { useBalanceStore } from '../../../resources/js/stores/balance';
+import { useTasksStore } from '../../../resources/js/stores/tasks';
 
 describe('Balance Store - Counters', () => {
     beforeEach(() => {
@@ -13,7 +14,7 @@ describe('Balance Store - Counters', () => {
         const tomorrow = new Date(now);
         tomorrow.setDate(tomorrow.getDate() + 1);
 
-        store.tasks = [
+        useTasksStore().tasks = [
             { id: 1, completed: false, category_slug: 'work' },
             { id: 2, completed: false, category_slug: 'work' },
             { id: 3, completed: true, category_slug: 'work' },
@@ -32,7 +33,7 @@ describe('Balance Store - Counters', () => {
 
     it('returns zero counts when tasks are empty', () => {
         const store = useBalanceStore();
-        store.tasks = [];
+        useTasksStore().tasks = [];
         
         const counts = store.counts;
         expect(counts.all).toBe(0);

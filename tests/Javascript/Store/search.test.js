@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useBalanceStore } from '../../../resources/js/stores/balance';
+import { useTasksStore } from '../../../resources/js/stores/tasks';
 
 describe('Balance Store - Search Logic', () => {
     beforeEach(() => {
@@ -9,7 +10,7 @@ describe('Balance Store - Search Logic', () => {
 
     it('filters tasks by title', () => {
         const store = useBalanceStore();
-        store.tasks = [
+        useTasksStore().tasks = [
             { id: 1, title: 'Buy milk', category_slug: 'all' },
             { id: 2, title: 'Clean room', category_slug: 'all' },
             { id: 3, title: 'Feed cat', category_slug: 'all' }
@@ -22,7 +23,7 @@ describe('Balance Store - Search Logic', () => {
 
     it('filters tasks by notes', () => {
         const store = useBalanceStore();
-        store.tasks = [
+        useTasksStore().tasks = [
             { id: 1, title: 'Task 1', notes: 'Important thing', category_slug: 'all' },
             { id: 2, title: 'Task 2', notes: 'Normal thing', category_slug: 'all' }
         ];
@@ -34,7 +35,7 @@ describe('Balance Store - Search Logic', () => {
 
     it('is case insensitive', () => {
         const store = useBalanceStore();
-        store.tasks = [
+        useTasksStore().tasks = [
             { id: 1, title: 'APPLE', category_slug: 'all' },
             { id: 2, title: 'banana', category_slug: 'all' }
         ];
@@ -46,7 +47,7 @@ describe('Balance Store - Search Logic', () => {
 
     it('returns all tasks when query is empty', () => {
         const store = useBalanceStore();
-        store.tasks = [
+        useTasksStore().tasks = [
             { id: 1, title: 'A', category_slug: 'all' },
             { id: 2, title: 'B', category_slug: 'all' }
         ];

@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import EditTaskModal from '../../../resources/js/components/EditTaskModal.vue';
 import { useBalanceStore } from '../../../resources/js/stores/balance';
+import { useTasksStore } from '../../../resources/js/stores/tasks';
 
 describe('EditTaskModal Component', () => {
     const mockTask = {
@@ -17,7 +18,7 @@ describe('EditTaskModal Component', () => {
     beforeEach(() => {
         setActivePinia(createPinia());
         const store = useBalanceStore();
-        store.categories = [
+        useTasksStore().categories = [
             { slug: 'work', name: 'Work' }
         ];
     });

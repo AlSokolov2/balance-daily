@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { useBalanceStore } from '../../../resources/js/stores/balance';
+import { useAuthStore } from '../../../resources/js/stores/auth';
+import { useSettingsStore } from '../../../resources/js/stores/settings';
+import { useTasksStore } from '../../../resources/js/stores/tasks';
 import axios from 'axios';
 import { hexToRgba } from '../../../resources/js/utils/colors';
 import { recalculateTasks, isCategoryPostponed } from '../../../resources/js/utils/priority-engine';
@@ -46,15 +49,16 @@ describe('Balance Store Coverage Booster', () => {
 
     it('covers isAuthenticated getter', () => {
         const store = useBalanceStore();
-        store.token = null;
+        const auth = useAuthStore();
+        auth.token = null;
         expect(store.isAuthenticated).toBe(false);
-        store.token = 'abc';
+        auth.token = 'abc';
         expect(store.isAuthenticated).toBe(true);
     });
 
     it('covers sorting logic in filteredTasks for hidden and archive', () => {
         const store = useBalanceStore();
-        store.tasks = [
+        useTasksStore().tasks = [
             { id: 1, category_slug: 'work', completed: false, hidden_until: new Date(Date.now() + 100000).toISOString() },
             { id: 2, category_slug: 'work', completed: false, hidden_until: new Date(Date.now() + 200000).toISOString() },
             { id: 3, category_slug: 'work', completed: true, completed_at: new Date(Date.now() - 100000).toISOString() },
@@ -78,11 +82,11 @@ describe('Balance Store Coverage Booster', () => {
     it('covers getters edge cases (part 3)', () => {
         const store = useBalanceStore();
         // allTasksOrdered
-        store.tasks = null;
+        useTasksStore().tasks = null;
         expect(store.allTasksOrdered).toEqual([]);
         
         // counts for hidden and archive categories
-        store.tasks = [
+        useTasksStore().tasks = [
             { id: 1, category_slug: 'work', completed: false, hidden_until: new Date(Date.now() + 86400000).toISOString() },
             { id: 2, category_slug: 'work', completed: true, completed_at: new Date().toISOString() }
         ];
@@ -91,7 +95,7 @@ describe('Balance Store Coverage Booster', () => {
         
         // bubbleTasks with specific category and special filters
         store.filterCat = 'work';
-        store.tasks = [{ id: 3, category_slug: 'work', completed: false, calculatedPriority: 10 }];
+        useTasksStore().tasks = [{ id: 3, category_slug: 'work', completed: false, calculatedPriority: 10 }];
         expect(store.bubbleTasks.length).toBe(1);
 
         store.filterCat = 'archive';
@@ -102,14 +106,15 @@ describe('Balance Store Coverage Booster', () => {
 
     it('covers logout method', async () => {
         const store = useBalanceStore();
-        store.token = 'abc';
+        const auth = useAuthStore();
+        auth.token = 'abc';
         axios.post.mockResolvedValueOnce({});
-        
+
         await store.logout();
         expect(store.token).toBeNull();
 
         // Logout error coverage
-        store.token = 'def';
+        auth.token = 'def';
         axios.post.mockRejectedValueOnce(new Error('Logout failed'));
         const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
         await store.logout();
@@ -119,8 +124,8 @@ describe('Balance Store Coverage Booster', () => {
 
     it('covers sync branches (forceFull false, existing tasks)', async () => {
         const store = useBalanceStore();
-        store.tasks = [{ id: 1 }];
-        store.lastSync = '2026-01-01';
+        useTasksStore().tasks = [{ id: 1 }];
+        useTasksStore().lastSync = '2026-01-01';
         
         axios.get.mockResolvedValueOnce({
             data: {
@@ -136,36 +141,41 @@ describe('Balance Store Coverage Booster', () => {
         expect(store.tasks[0].title).toBe('Updated');
     });
 
-    it('covers pulse and theme methods', () => {
+    it('covers pulse and theme methods', async () => {
         const store = useBalanceStore();
         vi.useFakeTimers();
-        
+
         // Pulse
-        store.pulseInterval = 1;
+        useSettingsStore().pulseInterval = 1;
         store.startPulse();
         expect(store.pulseTimer).not.toBeNull();
-        
+
         // Fast forward 1 min
         vi.advanceTimersByTime(60000);
         // It recalculates or fetches
         store.stopPulse();
         expect(store.pulseTimer).toBeNull();
-        
+
         vi.useRealTimers();
 
-        // applyTheme
-        store.theme = 'dark';
+        // applyTheme (balance wrapper)
+        useSettingsStore().theme = 'dark';
         store.applyTheme();
         expect(document.documentElement.classList.contains('dark')).toBe(true);
-        store.theme = 'light';
+        useSettingsStore().theme = 'light';
         store.applyTheme();
         expect(document.documentElement.classList.contains('dark')).toBe(false);
+
+        // Proxy getters coverage
+        expect(store.notepadText).toBe('');
+        expect(store.loading).toBe(false);
+        expect(store.lastPulse).toBeDefined();
     });
 
     it('covers updateTask recurring branch edge cases', async () => {
         const store = useBalanceStore();
         const task = { id: 1, completed: false, repeat_type: 'none' };
-        store.tasks = [task];
+        useTasksStore().tasks = [task];
         
         axios.put.mockResolvedValueOnce({ data: { id: 1, title: 'Updated' } });
         
@@ -181,7 +191,7 @@ describe('Balance Store Coverage Booster', () => {
     });
     it('handles fetchStats success and error', async () => {
         const store = useBalanceStore();
-        store.token = 'test-token';
+        useAuthStore().token = 'test-token';
         axios.get.mockResolvedValueOnce({ data: { all: 5 } });
         await store.fetchStats();
         expect(store.stats).toEqual({ all: 5 });
@@ -221,18 +231,19 @@ describe('Balance Store Coverage Booster', () => {
 
     it('covers toggleNotifications', async () => {
         const store = useBalanceStore();
-        
+        const tasks = useTasksStore();
+
         // Mock success for both actions
-        vi.spyOn(store, 'subscribeToPush').mockResolvedValue(true);
-        vi.spyOn(store, 'unsubscribeFromPush').mockResolvedValue(true);
+        vi.spyOn(tasks, 'subscribeToPush').mockResolvedValue(true);
+        vi.spyOn(tasks, 'unsubscribeFromPush').mockResolvedValue(true);
 
-        store.notificationsEnabled = false;
+        tasks.notificationsEnabled = false;
         await store.toggleNotifications();
-        expect(store.subscribeToPush).toHaveBeenCalled();
+        expect(tasks.subscribeToPush).toHaveBeenCalled();
 
-        store.notificationsEnabled = true;
+        tasks.notificationsEnabled = true;
         await store.toggleNotifications();
-        expect(store.unsubscribeFromPush).toHaveBeenCalled();
+        expect(tasks.unsubscribeFromPush).toHaveBeenCalled();
     });
 
     it('handles subscribeToPush catch block', async () => {
@@ -290,7 +301,7 @@ describe('Balance Store Coverage Booster', () => {
         axios.put.mockResolvedValue({ data: {} });
 
         // completeTask on already completed
-        store.tasks = [{ id: 1, completed: true }];
+        useTasksStore().tasks = [{ id: 1, completed: true }];
         await store.completeTask(1);
         expect(axios.put).not.toHaveBeenCalled();
 
@@ -303,7 +314,7 @@ describe('Balance Store Coverage Booster', () => {
         vi.clearAllMocks();
 
         // updateTask on non-existent
-        store.tasks = [];
+        useTasksStore().tasks = [];
         await store.updateTask(1, { title: 'New' });
         expect(axios.put).not.toHaveBeenCalled();
     });
@@ -311,7 +322,7 @@ describe('Balance Store Coverage Booster', () => {
     it('covers recurring task local update', async () => {
         const store = useBalanceStore();
         const task = { id: 1, repeat_type: 'interval', repeat_interval: 1, completed: false };
-        store.tasks = [task];
+        useTasksStore().tasks = [task];
         
         axios.put.mockResolvedValue({ data: { id: 1, repeat_type: 'interval', repeat_interval: 1, completed: false, hidden_until: '2026-01-01' } });
         
@@ -335,12 +346,12 @@ describe('Balance Store Coverage Booster', () => {
         };
 
         // 1. Line 50: bubbleTasks with hidden_until in future
-        store.tasks = [{ id: 1, category_slug: 'work', completed: false, hidden_until: futureDate }];
+        useTasksStore().tasks = [{ id: 1, category_slug: 'work', completed: false, hidden_until: futureDate }];
         store.filterCat = 'work';
         expect(store.bubbleTasks.length).toBe(0);
 
         // 2. Line 77: filteredTasks archive sort where completed_at is missing for both
-        store.tasks = [
+        useTasksStore().tasks = [
             { id: 2, category_slug: 'work', completed: true }, // no completed_at
             { id: 3, category_slug: 'work', completed: true }  // no completed_at
         ];
@@ -348,21 +359,21 @@ describe('Balance Store Coverage Booster', () => {
         expect(store.filteredTasks.length).toBe(2);
 
         // 3. Line 102: counts when state.tasks is not an array
-        store.tasks = null;
+        useTasksStore().tasks = null;
         expect(store.counts.all).toBe(0);
 
         // 4. Line 146: logout without token
-        store.token = null;
+        useAuthStore().token = null;
         await store.logout();
         expect(store.token).toBeNull(); // Should return early or bypass if safely
 
         // 5. Line 165: fetchStats without token
-        store.token = null;
+        useAuthStore().token = null;
         await store.fetchStats(); // Should return early, no axios call
 
         // 6. Line 193/198: sync where forceFull false but tasks empty
-        store.tasks = [];
-        store.lastSync = '2026-01-01';
+        useTasksStore().tasks = [];
+        useTasksStore().lastSync = '2026-01-01';
         axios.get.mockResolvedValueOnce({ data: { tasks: { updated: [], deleted: [] }, categories: { updated: [], deleted: [] } } });
         await store.sync(false);
 
@@ -375,7 +386,7 @@ describe('Balance Store Coverage Booster', () => {
                 subcatCoeffs: { 'test': 1.5 }
             } 
         });
-        store.theme = 'light';
+        await store.setTheme('light');
         await store.sync(false);
         expect(store.theme).toBe('light');
         expect(store.subcatCoeffs.test).toBe(1.5);
@@ -401,8 +412,8 @@ describe('Balance Store Coverage Booster', () => {
         expect(nextOccPayload.hidden_until).toBeDefined();
 
         // Extra test for sync with forceFull = false, lastSync missing
-        store.tasks = [{ id: 1 }];
-        store.lastSync = null;
+        useTasksStore().tasks = [{ id: 1 }];
+        useTasksStore().lastSync = null;
         axios.get.mockResolvedValueOnce({ data: { tasks: { updated: [], deleted: [] }, categories: { updated: [], deleted: [] } } });
         await store.sync(false);
 
@@ -414,14 +425,13 @@ describe('Balance Store Coverage Booster', () => {
         expect(store.notificationsEnabled).toBe(false);
 
         // 9. Line 320: startPulse when pulseInterval <= 0
-        store.pulseInterval = 0;
-        store.startPulse();
+        await store.setPulseInterval(0);
         expect(store.pulseTimer).toBeNull();
 
         // 10. Line 391: updateTask when idx === -1 during await
-        store.tasks = [{ id: 1, title: 'Old' }];
+        useTasksStore().tasks = [{ id: 1, title: 'Old' }];
         axios.put.mockImplementationOnce(async () => {
-            store.tasks = []; // Mutate during await to simulate race condition
+            useTasksStore().tasks = []; // Mutate during await to simulate race condition
             return { data: { id: 1, title: 'New' } };
         });
         await store.updateTask(1, { title: 'New' });

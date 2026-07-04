@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { useBalanceStore } from '../../../resources/js/stores/balance';
+import { useAuthStore } from '../../../resources/js/stores/auth';
 import axios from 'axios';
 
 vi.mock('axios');
@@ -54,8 +55,9 @@ describe('Balance Store - Perfectionist Coverage', () => {
 
     it('logout clears all state and storage', async () => {
         const store = useBalanceStore();
-        store.token = 'test-token';
-        store.user = { id: 1 };
+        const auth = useAuthStore();
+        auth.token = 'test-token';
+        auth.user = { id: 1 };
         localStorage.setItem('auth_token', 'test-token');
         
         await store.logout();

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useBalanceStore } from '../../../resources/js/stores/balance';
+import { useTasksStore } from '../../../resources/js/stores/tasks';
 import axios from 'axios';
 
 vi.mock('axios');
@@ -36,8 +37,8 @@ describe('Balance Store - Sync Logic', () => {
 
     it('performs incremental sync and merges data', async () => {
         const store = useBalanceStore();
-        store.tasks = [{ id: 1, title: 'Old Title' }];
-        store.lastSync = '2026-01-01T00:00:00Z';
+        useTasksStore().tasks = [{ id: 1, title: 'Old Title' }];
+        useTasksStore().lastSync = '2026-01-01T00:00:00Z';
 
         const mockDelta = {
             tasks: { 
@@ -59,8 +60,8 @@ describe('Balance Store - Sync Logic', () => {
 
     it('removes deleted items during sync', async () => {
         const store = useBalanceStore();
-        store.tasks = [{ id: 1 }, { id: 2 }];
-        store.lastSync = '2026-01-01T00:00:00Z';
+        useTasksStore().tasks = [{ id: 1 }, { id: 2 }];
+        useTasksStore().lastSync = '2026-01-01T00:00:00Z';
 
         const mockDelta = {
             tasks: { updated: [], deleted: [1] },
