@@ -30,6 +30,73 @@
             </div>
 
             <template v-else-if="store.stats">
+                <!-- System Status Block -->
+                <div v-if="store.stats.status" class="space-y-4">
+                    <div class="flex items-center justify-between px-1">
+                        <h3 class="text-xs font-black text-[var(--color-text)] uppercase tracking-widest">
+                            {{ $t('stats.status.title') }}
+                        </h3>
+                    </div>
+
+                    <!-- Status cards row -->
+                    <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
+                        <div
+                            v-for="card in statusCards"
+                            :key="card.key"
+                            class="bg-[var(--bg-card)] p-3 rounded-2xl border text-center"
+                            :class="card.borderClass"
+                        >
+                            <p class="text-2xl font-black" :class="card.colorClass">
+                                {{ card.value }}
+                            </p>
+                            <p class="text-[9px] font-bold text-[var(--color-secondary)] uppercase tracking-wide mt-0.5">
+                                {{ card.label }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Completion rate bar -->
+                    <div class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)]">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest">
+                                {{ $t('stats.status.completion_rate') }}
+                            </span>
+                            <span class="text-sm font-black" :class="rateColorClass">
+                                {{ Math.round(store.stats.status.completion_rate * 100) }}%
+                            </span>
+                        </div>
+                        <div class="h-2 w-full bg-[var(--bg-secondary)] rounded-full overflow-hidden">
+                            <div
+                                class="h-full rounded-full transition-all duration-700"
+                                :class="rateBarClass"
+                                :style="{ width: `${Math.round(store.stats.status.completion_rate * 100)}%` }"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Categories health -->
+                    <div class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)]">
+                        <p class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3">
+                            {{ $t('stats.status.needs_attention') }}
+                        </p>
+                        <div v-if="attentionCategories.length" class="flex flex-wrap gap-2">
+                            <button
+                                v-for="cat in attentionCategories"
+                                :key="cat.slug"
+                                class="px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all hover:scale-105 cursor-pointer"
+                                :style="{ backgroundColor: cat.color + '18', borderColor: cat.color + '40', color: cat.color }"
+                                @click="goToCategory(cat.slug)"
+                            >
+                                {{ cat.name }}
+                                <span class="opacity-60 ml-1">({{ cat.active }})</span>
+                            </button>
+                        </div>
+                        <p v-else class="text-xs text-[var(--color-secondary)] italic">
+                            {{ store.stats.status.active_tasks ? $t('stats.status.all_good') : $t('stats.status.no_active_tasks') }}
+                        </p>
+                    </div>
+                </div>
+
                 <!-- Counters Grid -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div v-for="(val, key) in counters" :key="key" class="bg-[var(--bg-card)] p-4 rounded-3xl border border-[var(--color-border)] shadow-sm">
@@ -102,11 +169,13 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBalanceStore } from '../stores/balance';
+import { useI18n } from 'vue-i18n';
 import AppIcon from '../components/AppIcon.vue';
 import BaseButton from '../components/BaseButton.vue';
 
 const store = useBalanceStore();
 const router = useRouter();
+const { t } = useI18n();
 const loading = ref(true);
 
 onMounted(async () => {
@@ -115,6 +184,55 @@ onMounted(async () => {
 });
 
 const counters = computed(() => store.stats?.counters || {});
+
+const statusCards = computed(() => {
+    const s = store.stats?.status;
+    if (!s) return [];
+    const cards = [
+        { key: 'active_tasks', value: s.active_tasks, label: t('stats.status.active_tasks'), colorClass: 'text-blue-500', borderClass: 'border-[var(--color-border)]' },
+        { key: 'overdue_tasks', value: s.overdue_tasks, label: t('stats.status.overdue_tasks'), colorClass: s.overdue_tasks > 0 ? 'text-red-500' : 'text-[var(--color-secondary)]', borderClass: s.overdue_tasks > 0 ? 'border-red-500/30' : 'border-[var(--color-border)]' },
+        { key: 'postponed_tasks', value: s.postponed_tasks, label: t('stats.status.postponed_tasks'), colorClass: 'text-amber-500', borderClass: 'border-[var(--color-border)]' },
+        { key: 'hidden_tasks', value: s.hidden_tasks, label: t('stats.status.hidden_tasks'), colorClass: 'text-[var(--color-secondary)]', borderClass: 'border-[var(--color-border)]' },
+        { key: 'completed_today', value: s.completed_today, label: t('stats.status.completed_today'), colorClass: 'text-green-500', borderClass: s.completed_today > 0 ? 'border-green-500/30' : 'border-[var(--color-border)]' },
+        { key: 'completion_rate', value: `${Math.round(s.completion_rate * 100)}%`, label: t('stats.status.completion_rate'), colorClass: rateColorClass.value, borderClass: 'border-[var(--color-border)]' },
+    ];
+    return cards;
+});
+
+const rateColorClass = computed(() => {
+    const r = store.stats?.status?.completion_rate ?? 0;
+    if (r >= 0.5) return 'text-green-500';
+    if (r >= 0.25) return 'text-amber-500';
+    return 'text-red-500';
+});
+
+const rateBarClass = computed(() => {
+    const r = store.stats?.status?.completion_rate ?? 0;
+    if (r >= 0.5) return 'bg-green-500';
+    if (r >= 0.25) return 'bg-amber-500';
+    return 'bg-red-500';
+});
+
+const attentionCategories = computed(() => {
+    const health = store.stats?.status?.categories_health;
+    if (!health) return [];
+    return Object.entries(health)
+        .filter(([, h]) => h.needs_attention)
+        .map(([slug, h]) => {
+            const cat = store.categories.find(c => c.slug === slug);
+            return {
+                slug,
+                name: cat?.name || slug,
+                color: cat?.color || '#8e8e93',
+                active: h.active,
+            };
+        });
+});
+
+const goToCategory = (slug) => {
+    store.filterCat = slug;
+    router.push('/');
+};
 
 const heatmapWeeks = computed(() => {
     if (!store.stats?.heatmap) return [];

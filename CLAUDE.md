@@ -37,7 +37,7 @@ npm run dev                          # Vite HMR only
 # Build for production
 npm run build
 
-# Frontend tests (Vitest, 100% coverage required on stores/ and utils/)
+# Frontend tests (Vitest, 100% coverage required on stores/, utils/, and views/)
 npm test
 
 # Run a single frontend test file

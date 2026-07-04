@@ -212,6 +212,18 @@
         "balance": {
             "title": "Category Balance (30 days)",
             "no_data": "Not enough data for balance analysis"
+        },
+        "status": {
+            "title": "System Status",
+            "active_tasks": "Active tasks",
+            "overdue_tasks": "Overdue",
+            "postponed_tasks": "Postponed",
+            "hidden_tasks": "Hidden",
+            "completed_today": "Completed today",
+            "completion_rate": "Productivity",
+            "needs_attention": "Needs attention",
+            "all_good": "All good",
+            "no_active_tasks": "No active tasks"
         }
     }
 }

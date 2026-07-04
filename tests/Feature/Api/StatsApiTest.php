@@ -54,11 +54,26 @@ class StatsApiTest extends TestCase
                     'current_streak',
                     'longest_streak',
                 ],
+                'status' => [
+                    'active_tasks',
+                    'overdue_tasks',
+                    'postponed_tasks',
+                    'hidden_tasks',
+                    'completed_today',
+                    'completion_rate',
+                    'categories_health',
+                ],
             ]);
 
         $this->assertEquals(1, $response->json('counters.today'));
         $this->assertEquals(2, $response->json('counters.total'));
         $this->assertEquals(2, $response->json('counters.current_streak'));
+
+        // System status assertions
+        $this->assertEquals(1, $response->json('status.active_tasks'));
+        $this->assertEquals(0, $response->json('status.overdue_tasks'));
+        $this->assertEquals(1, $response->json('status.completed_today'));
+        $this->assertArrayHasKey('work', $response->json('status.categories_health'));
     }
 
     public function test_stats_isolation()

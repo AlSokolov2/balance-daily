@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
+use App\Models\Task;
 use App\Models\TaskCompletion;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -46,6 +48,9 @@ class StatsController extends Controller
         // 4. General Activity Streak
         $streakData = $this->calculateGeneralStreak((int) $user->id);
 
+        // 5. System Status Block
+        $status = $this->calculateStatus((int) $user->id, $now, $todayCount);
+
         return response()->json([
             'heatmap' => $heatmap,
             'category_balance' => $categoryBalance,
@@ -55,7 +60,128 @@ class StatsController extends Controller
                 'current_streak' => $streakData['current'],
                 'longest_streak' => $streakData['longest'],
             ],
+            'status' => $status,
         ]);
+    }
+
+    /**
+     * Calculate system status: active tasks, overdue, postponed, hidden,
+     * completion rate, and per-category health.
+     *
+     * @return array{active_tasks: int, overdue_tasks: int, postponed_tasks: int, hidden_tasks: int, completed_today: int, completion_rate: float, categories_health: array<string, array{active: int, completed_today: int, needs_attention: bool}>}
+     */
+    private function calculateStatus(int $userId, Carbon $now, int $todayCount): array
+    {
+        /** @var \Illuminate\Database\Eloquent\Collection<int, Task> $allTasks */
+        $allTasks = Task::where('user_id', $userId)
+            ->where('completed', false)
+            ->get();
+
+        /** @var \Illuminate\Database\Eloquent\Collection<int, Category> $categories */
+        $categories = Category::where('user_id', $userId)->get();
+        $catsMap = $categories->keyBy('slug');
+
+        $activeTasks = 0;
+        $overdueTasks = 0;
+        $postponedTasks = 0;
+        $hiddenTasks = 0;
+        $perCatActive = [];
+        $perCatCompletedToday = [];
+
+        // Init per-category counters
+        foreach ($categories as $cat) {
+            $perCatActive[$cat->slug] = 0;
+            $perCatCompletedToday[$cat->slug] = 0;
+        }
+
+        foreach ($allTasks as $task) {
+            $isHidden = $task->hidden_until && $task->hidden_until > $now;
+            $isPostponed = ($task->postpone_until && $task->postpone_until > $now)
+                || (! $task->force_active && $this->isCategoryPostponedNow($catsMap->get($task->category_slug), $now));
+
+            if ($isHidden) {
+                $hiddenTasks++;
+                continue; // Hidden tasks are not counted as active
+            }
+
+            $activeTasks++;
+
+            if ($task->deadline && $task->deadline < $now) {
+                $overdueTasks++;
+            }
+
+            if ($isPostponed) {
+                $postponedTasks++;
+            }
+
+            // Per-category counts
+            $slug = $task->category_slug;
+            if (isset($perCatActive[$slug])) {
+                $perCatActive[$slug]++;
+            }
+        }
+
+        // Count completions today per category
+        $catCompletionsToday = TaskCompletion::where('task_completions.user_id', $userId)
+            ->where('task_completions.completed_at', '>=', $now->copy()->startOfDay())
+            ->join('tasks', 'task_completions.task_id', '=', 'tasks.id')
+            ->select('tasks.category_slug', DB::raw('count(*) as count'))
+            ->groupBy('tasks.category_slug')
+            ->pluck('count', 'category_slug');
+
+        foreach ($catCompletionsToday as $slug => $count) {
+            if (isset($perCatCompletedToday[$slug])) {
+                $perCatCompletedToday[$slug] = (int) $count;
+            }
+        }
+
+        // Build categories_health
+        $categoriesHealth = [];
+        foreach ($categories as $cat) {
+            $categoriesHealth[$cat->slug] = [
+                'active' => $perCatActive[$cat->slug] ?? 0,
+                'completed_today' => $perCatCompletedToday[$cat->slug] ?? 0,
+                'needs_attention' => ($perCatActive[$cat->slug] ?? 0) > 0
+                    && ($perCatCompletedToday[$cat->slug] ?? 0) === 0,
+            ];
+        }
+
+        $completionRate = ($activeTasks + $todayCount) > 0
+            ? round($todayCount / ($activeTasks + $todayCount), 2)
+            : 0.0;
+
+        return [
+            'active_tasks' => $activeTasks,
+            'overdue_tasks' => $overdueTasks,
+            'postponed_tasks' => $postponedTasks,
+            'hidden_tasks' => $hiddenTasks,
+            'completed_today' => $todayCount,
+            'completion_rate' => $completionRate,
+            'categories_health' => $categoriesHealth,
+        ];
+    }
+
+    /**
+     * Check if a category is currently hidden by its hide_until time.
+     * hide_until is stored as "HH:MM" string and applies to the current day.
+     */
+    private function isCategoryPostponedNow(?Category $cat, Carbon $now): bool
+    {
+        if (! $cat || ! $cat->hide_until) {
+            return false;
+        }
+
+        $parts = explode(':', $cat->hide_until);
+        if (count($parts) !== 2) {
+            return false;
+        }
+
+        $h = (int) $parts[0];
+        $m = (int) $parts[1];
+
+        $hideTime = $now->copy()->setTime($h, $m);
+
+        return $now->lt($hideTime);
     }
 
     /**

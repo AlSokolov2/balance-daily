@@ -211,6 +211,18 @@
         "balance": {
             "title": "Баланс категорий (30 дней)",
             "no_data": "Недостаточно данных для анализа баланса"
+        },
+        "status": {
+            "title": "Состояние системы",
+            "active_tasks": "Активных задач",
+            "overdue_tasks": "Просрочено",
+            "postponed_tasks": "Отложено",
+            "hidden_tasks": "Скрыто",
+            "completed_today": "Выполнено сегодня",
+            "completion_rate": "Продуктивность",
+            "needs_attention": "Требует внимания",
+            "all_good": "Всё хорошо",
+            "no_active_tasks": "Нет активных задач"
         }
     }
 }
