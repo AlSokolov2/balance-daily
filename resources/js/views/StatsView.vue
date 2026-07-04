@@ -245,11 +245,11 @@
                     </div>
 
                     <!-- Weekly Activity Line Chart -->
-                    <div class="bg-[var(--bg-card)] p-5 rounded-[24px] border border-[var(--color-border)] shadow-sm">
+                    <div class="bg-[var(--bg-card)] p-5 rounded-[24px] border border-[var(--color-border)] shadow-sm max-w-xl">
                         <h4 class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3 px-1">
                             {{ $t('stats.trends.weekly.title') }}
                         </h4>
-                        <svg viewBox="0 0 300 100" class="w-full h-auto" preserveAspectRatio="xMidYMid meet">
+                        <svg viewBox="0 0 300 100" class="w-full h-auto" preserveAspectRatio="xMidYMid meet" style="max-height:120px">
                             <!-- Grid lines -->
                             <line
                                 v-for="y in 4"
@@ -262,7 +262,8 @@
                                 :points="weeklyLinePoints"
                                 fill="none"
                                 stroke="#3B82F6"
-                                stroke-width="2"
+                                stroke-width="1.5"
+                                vector-effect="non-scaling-stroke"
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
                             />
@@ -272,8 +273,9 @@
                                 :key="'dot-' + i"
                                 :cx="pt.x"
                                 :cy="pt.y"
-                                r="2.5"
+                                r="2"
                                 fill="#3B82F6"
+                                vector-effect="non-scaling-stroke"
                             />
                             <!-- Labels -->
                             <text
@@ -281,7 +283,7 @@
                                 :key="'lbl-' + i"
                                 :x="pt.x"
                                 :y="98"
-                                text-anchor="middle"
+                                :text-anchor="i === 0 ? 'start' : i === weeklyPoints.length - 1 ? 'end' : 'middle'"
                                 class="text-[7px]"
                                 fill="var(--color-secondary)"
                             >{{ pt.label }}</text>
@@ -295,11 +297,11 @@
                     <!-- Day-of-week + Hour-of-day row -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Day-of-week bars -->
-                        <div class="bg-[var(--bg-card)] p-5 rounded-[24px] border border-[var(--color-border)] shadow-sm">
+                        <div class="bg-[var(--bg-card)] p-5 rounded-[24px] border border-[var(--color-border)] shadow-sm flex flex-col">
                             <h4 class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3 px-1">
                                 {{ $t('stats.trends.day_of_week.title') }}
                             </h4>
-                            <svg viewBox="0 0 200 80" class="w-full h-auto" preserveAspectRatio="xMidYMid meet">
+                            <svg viewBox="0 0 200 60" class="w-full h-auto mt-auto" preserveAspectRatio="xMidYMid meet" style="max-height:80px">
                                 <rect
                                     v-for="(bar, i) in dayOfWeekData"
                                     :key="'dow-' + i"
@@ -315,7 +317,7 @@
                                     v-for="(bar, i) in dayOfWeekData"
                                     :key="'dowl-' + i"
                                     :x="bar.x + bar.w / 2"
-                                    :y="78"
+                                    :y="58"
                                     text-anchor="middle"
                                     class="text-[7px] font-bold"
                                     fill="var(--color-secondary)"
@@ -324,11 +326,11 @@
                         </div>
 
                         <!-- Hour-of-day heatmap -->
-                        <div class="bg-[var(--bg-card)] p-5 rounded-[24px] border border-[var(--color-border)] shadow-sm">
+                        <div class="bg-[var(--bg-card)] p-5 rounded-[24px] border border-[var(--color-border)] shadow-sm flex flex-col">
                             <h4 class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3 px-1">
                                 {{ $t('stats.trends.hour_of_day.title') }}
                             </h4>
-                            <svg viewBox="0 0 240 60" class="w-full h-auto" preserveAspectRatio="xMidYMid meet">
+                            <svg viewBox="0 0 240 40" class="w-full h-auto mt-auto" preserveAspectRatio="xMidYMid meet" style="max-height:64px">
                                 <rect
                                     v-for="(cell, i) in hourOfDayData"
                                     :key="'hod-' + i"
@@ -345,7 +347,7 @@
                                     v-for="label in hourLabels"
                                     :key="'hl-' + label.hour"
                                     :x="label.x + 4"
-                                    :y="58"
+                                    :y="38"
                                     text-anchor="middle"
                                     class="text-[6px] font-bold"
                                     fill="var(--color-secondary)"
@@ -472,7 +474,6 @@ const fetchStatsData = async () => {
 
 const changePeriod = async (p) => {
     currentPeriod.value = p;
-    store.stats = null; // clear old data
     selectedDay.value = null;
     await fetchStatsData();
 };
@@ -619,7 +620,7 @@ const dayOfWeekData = computed(() => {
     const dayLabels = ['stats.trends.day_of_week.sun', 'stats.trends.day_of_week.mon', 'stats.trends.day_of_week.tue', 'stats.trends.day_of_week.wed', 'stats.trends.day_of_week.thu', 'stats.trends.day_of_week.fri', 'stats.trends.day_of_week.sat'];
     const max = Math.max(...days.map(d => d.count), 1);
     const chartWidth = 200;
-    const chartHeight = 60;
+    const chartHeight = 40;
     const barW = (chartWidth / 7) - 4;
 
     return days.map((d, i) => {
@@ -643,17 +644,16 @@ const hourOfDayData = computed(() => {
     const cols = 12;
     const rows = 2;
     const cellW = 240 / cols;
-    const cellH = 40 / rows;
-    const gap = 1;
+    const cellH = 14;
 
     return hours.map((h) => {
         const col = h.hour % cols;
         const row = Math.floor(h.hour / cols);
         return {
-            x: col * cellW + gap / 2,
-            y: row * cellH + gap / 2,
-            w: cellW - gap,
-            h: cellH - gap,
+            x: col * cellW + 1,
+            y: row * cellH + 1,
+            w: cellW - 2,
+            h: cellH - 2,
             count: h.count,
             opacity: h.count > 0 ? 0.15 + (h.count / max) * 0.85 : 0.08,
         };
