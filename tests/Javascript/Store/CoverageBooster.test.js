@@ -136,7 +136,7 @@ describe('Balance Store Coverage Booster', () => {
         expect(store.tasks[0].title).toBe('Updated');
     });
 
-    it('covers pulse and theme methods', () => {
+    it('covers pulse and theme methods', async () => {
         const store = useBalanceStore();
         vi.useFakeTimers();
         
@@ -154,11 +154,9 @@ describe('Balance Store Coverage Booster', () => {
         vi.useRealTimers();
 
         // applyTheme
-        store.theme = 'dark';
-        store.applyTheme();
+        await store.setTheme('dark');
         expect(document.documentElement.classList.contains('dark')).toBe(true);
-        store.theme = 'light';
-        store.applyTheme();
+        await store.setTheme('light');
         expect(document.documentElement.classList.contains('dark')).toBe(false);
     });
 
@@ -375,7 +373,7 @@ describe('Balance Store Coverage Booster', () => {
                 subcatCoeffs: { 'test': 1.5 }
             } 
         });
-        store.theme = 'light';
+        await store.setTheme('light');
         await store.sync(false);
         expect(store.theme).toBe('light');
         expect(store.subcatCoeffs.test).toBe(1.5);
@@ -414,8 +412,7 @@ describe('Balance Store Coverage Booster', () => {
         expect(store.notificationsEnabled).toBe(false);
 
         // 9. Line 320: startPulse when pulseInterval <= 0
-        store.pulseInterval = 0;
-        store.startPulse();
+        await store.setPulseInterval(0);
         expect(store.pulseTimer).toBeNull();
 
         // 10. Line 391: updateTask when idx === -1 during await

@@ -1,50 +1,40 @@
 /**
- * Settings module — theme, locale, pulse interval.
- * Plain functions that operate on a store instance.
+ * Settings store — theme, locale, pulse interval.
  *
  * @see #129 — Split monolith store
  */
+import { defineStore } from 'pinia';
 import axios from 'axios';
 
-/**
- * Set theme and persist to server.
- * @param {Object} store — balance store instance
- * @param {string} t — 'light' | 'dark' | 'system'
- */
-export async function setTheme(store, t) {
-    store.theme = t;
-    store.applyTheme();
-    await axios.post('settings', { settings: { theme: t } });
-}
+export const useSettingsStore = defineStore('settings', {
+    state: () => ({
+        theme: 'system',
+        locale: localStorage.getItem('locale') || 'ru',
+        pulseInterval: parseInt(localStorage.getItem('pulse_interval')) || 1,
+    }),
 
-/**
- * Set locale and persist to localStorage + server.
- * @param {Object} store — balance store instance
- * @param {string} l — 'ru' | 'en'
- */
-export async function setLocale(store, l) {
-    store.locale = l;
-    localStorage.setItem('locale', l);
-    await axios.post('settings', { settings: { locale: l } });
-}
+    actions: {
+        async setTheme(t) {
+            this.theme = t;
+            this.applyTheme();
+            await axios.post('settings', { settings: { theme: t } });
+        },
 
-/**
- * Set pulse interval and restart timer.
- * @param {Object} store — balance store instance
- * @param {number|string} m — minutes
- */
-export async function setPulseInterval(store, m) {
-    store.pulseInterval = parseInt(m);
-    localStorage.setItem('pulse_interval', m);
-    store.startPulse();
-    await axios.post('settings', { settings: { pulse_interval: m } });
-}
+        async setLocale(l) {
+            this.locale = l;
+            localStorage.setItem('locale', l);
+            await axios.post('settings', { settings: { locale: l } });
+        },
 
-/**
- * Apply theme to document root (dark class toggle).
- * @param {Object} store — balance store instance
- */
-export function applyTheme(store) {
-    const isDark = store.theme === 'dark' || (store.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    document.documentElement.classList.toggle('dark', isDark);
-}
+        async setPulseInterval(m) {
+            this.pulseInterval = parseInt(m);
+            localStorage.setItem('pulse_interval', m);
+            await axios.post('settings', { settings: { pulse_interval: m } });
+        },
+
+        applyTheme() {
+            const isDark = this.theme === 'dark' || (this.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            document.documentElement.classList.toggle('dark', isDark);
+        },
+    },
+});

@@ -6,7 +6,7 @@
  */
 import { defineStore } from 'pinia';
 import { initAuth, logoutAuth, googleAuthUrl, vkAuthUrl } from './auth.js';
-import { setTheme, setLocale, setPulseInterval, applyTheme } from './settings.js';
+import { useSettingsStore } from './settings.js';
 import { setVisualStyle, setTreemapScale, setTreemapMode } from './ui.js';
 import {
     fetchAll, fetchStats, sync, mergeCollection,
@@ -27,9 +27,6 @@ export const useBalanceStore = defineStore('balance', {
         notepadText: '',
         lastSync: localStorage.getItem('last_sync') || null,
         stats: null,
-        theme: 'system',
-        locale: localStorage.getItem('locale') || 'ru',
-        pulseInterval: parseInt(localStorage.getItem('pulse_interval')) || 1,
         visualStyle: localStorage.getItem('visual_style') || 'bubbles',
         treemapScale: parseFloat(localStorage.getItem('treemap_scale')) || 1.2,
         treemapMode: localStorage.getItem('treemap_mode') || 'nested',
@@ -46,6 +43,11 @@ export const useBalanceStore = defineStore('balance', {
         isAuthenticated: (state) => !!state.token,
         googleAuthUrl: () => googleAuthUrl(),
         vkAuthUrl: () => vkAuthUrl(),
+
+        // ── Proxy to settings store ──
+        theme() { return useSettingsStore().theme; },
+        locale() { return useSettingsStore().locale; },
+        pulseInterval() { return useSettingsStore().pulseInterval; },
 
         allSubcats: (state) => Object.keys(state.subcatCoeffs),
         allTasksOrdered: (state) => {
@@ -129,11 +131,11 @@ export const useBalanceStore = defineStore('balance', {
         async restoreTask(id) { await restoreTask(this, id); },
         async returnNow(id) { await returnNow(this, id); },
 
-        // ── Settings ──
+        // ── Settings (proxy to settings store) ──
 
-        async setTheme(t) { await setTheme(this, t); },
-        async setLocale(l) { await setLocale(this, l); },
-        async setPulseInterval(m) { await setPulseInterval(this, m); },
+        async setTheme(t) { await useSettingsStore().setTheme(t); },
+        async setLocale(l) { await useSettingsStore().setLocale(l); },
+        async setPulseInterval(m) { await useSettingsStore().setPulseInterval(m); this.startPulse(); },
         setVisualStyle(s) { setVisualStyle(this, s); },
         setTreemapScale(s) { setTreemapScale(this, s); },
         setTreemapMode(m) { setTreemapMode(this, m); },
@@ -153,7 +155,7 @@ export const useBalanceStore = defineStore('balance', {
 
         // ── Theme ──
 
-        applyTheme() { applyTheme(this); },
+        applyTheme() { useSettingsStore().applyTheme(); },
 
         // ── Priority ──
 

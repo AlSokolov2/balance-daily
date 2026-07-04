@@ -7,6 +7,7 @@
 import axios from 'axios';
 import { recalculateTasks, isEffectivelyPostponed as isEffectivelyPostponedUtil, isCategoryPostponed as isCategoryPostponedUtil } from '../utils/priority-engine';
 import { urlBase64ToUint8Array } from './auth.js';
+import { useSettingsStore } from './settings.js';
 
 // ── Data & Sync ──
 
@@ -39,9 +40,10 @@ export async function sync(store, forceFull = false) {
         mergeCollection(store, 'categories', d.categories, forceFull);
         if (d.settings) {
             store.notepadText = d.settings.notepad_text || store.notepadText;
-            store.theme = d.settings.theme || store.theme;
-            store.locale = d.settings.locale || store.locale;
-            store.pulseInterval = parseInt(d.settings.pulse_interval) || store.pulseInterval;
+            const settings = useSettingsStore();
+            settings.theme = d.settings.theme || settings.theme;
+            settings.locale = d.settings.locale || settings.locale;
+            settings.pulseInterval = parseInt(d.settings.pulse_interval) || settings.pulseInterval;
         }
         if (d.subcatCoeffs) store.subcatCoeffs = d.subcatCoeffs;
         store.lastSync = d.server_time;
