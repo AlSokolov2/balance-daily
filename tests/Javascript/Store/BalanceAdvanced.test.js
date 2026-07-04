@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { useBalanceStore } from '../../../resources/js/stores/balance';
+import { useTasksStore } from '../../../resources/js/stores/tasks';
 import axios from 'axios';
 
 vi.mock('axios');
@@ -101,7 +102,7 @@ describe('Balance Store - Advanced Coverage', () => {
 
     it('restoreTask and returnNow update task state', async () => {
         const store = useBalanceStore();
-        store.tasks = [{ id: 1, title: 'Task', completed: true }];
+        useTasksStore().tasks = [{ id: 1, title: 'Task', completed: true }];
         axios.put.mockResolvedValue({ data: { id: 1, completed: false } });
 
         await store.restoreTask(1);
@@ -113,7 +114,7 @@ describe('Balance Store - Advanced Coverage', () => {
 
     it('deleteTask removes task and recalculates', async () => {
         const store = useBalanceStore();
-        store.tasks = [
+        useTasksStore().tasks = [
             { id: 1, title: 'Task 1' },
             { id: 2, title: 'Task 2' }
         ];
@@ -127,8 +128,8 @@ describe('Balance Store - Advanced Coverage', () => {
 
     it('archiveTask marks task completed without history', async () => {
         const store = useBalanceStore();
-        store.tasks = [{ id: 1, title: 'Task 1', category_slug: 'chor' }];
-        store.categories = [{ slug: 'chor', color: '#fff', weight: 0.5, currentWeight: 0.5 }];
+        useTasksStore().tasks = [{ id: 1, title: 'Task 1', category_slug: 'chor' }];
+        useTasksStore().categories = [{ slug: 'chor', color: '#fff', weight: 0.5, currentWeight: 0.5 }];
         axios.put.mockResolvedValue({ data: { id: 1, completed: true } });
 
         await store.archiveTask(1);
@@ -145,7 +146,7 @@ describe('Balance Store - Advanced Coverage', () => {
         const now = new Date();
         const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-        store.tasks = [
+        useTasksStore().tasks = [
             { id: 1, title: 'Remind me', reminder_times: [currentTime], completed: false, hidden_until: null },
         ];
 
@@ -159,7 +160,7 @@ describe('Balance Store - Advanced Coverage', () => {
 
     it('checkReminders skips completed tasks', () => {
         const store = useBalanceStore();
-        store.tasks = [
+        useTasksStore().tasks = [
             { id: 1, title: 'Done', reminder_times: ['12:00'], completed: true, hidden_until: null },
         ];
 
@@ -176,7 +177,7 @@ describe('Balance Store - Advanced Coverage', () => {
         const future = new Date();
         future.setDate(future.getDate() + 1);
 
-        store.tasks = [
+        useTasksStore().tasks = [
             { id: 1, title: 'Hidden', reminder_times: ['12:00'], completed: false, hidden_until: future.toISOString() },
         ];
 
@@ -190,7 +191,7 @@ describe('Balance Store - Advanced Coverage', () => {
 
     it('checkReminders skips non-matching time', () => {
         const store = useBalanceStore();
-        store.tasks = [
+        useTasksStore().tasks = [
             { id: 1, title: 'No match', reminder_times: ['03:00'], completed: false, hidden_until: null },
         ];
 

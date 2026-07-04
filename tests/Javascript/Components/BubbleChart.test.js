@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import BubbleChart from '../../../resources/js/components/BubbleChart.vue';
 import { useBalanceStore } from '../../../resources/js/stores/balance';
+import { useTasksStore } from '../../../resources/js/stores/tasks';
 import { mockPush } from '../setup';
 
 describe('BubbleChart Component', () => {
@@ -95,9 +96,9 @@ describe('BubbleChart Component', () => {
         Object.defineProperty(HTMLElement.prototype, 'clientHeight', { configurable: true, value: 640 });
 
         const store = useBalanceStore();
-        store.categories = [{ slug: 'work', weight: 1, color: '#ff0000' }];
+        useTasksStore().categories = [{ slug: 'work', weight: 1, color: '#ff0000' }];
         // Task 1: Central (default), Task 2: Side (ha), Task 3: Side (postponed)
-        store.tasks = [
+        useTasksStore().tasks = [
             { id: 1, title: 'Central', category_slug: 'work', importance: 3, calculatedPriority: 10 },
             { id: 2, title: 'Side 1', category_slug: 'work', importance: 3, calculatedPriority: 10, ha: true },
             { id: 3, title: 'Side 2', category_slug: 'work', importance: 3, calculatedPriority: 10, postpone_until: '2099-01-01' }
