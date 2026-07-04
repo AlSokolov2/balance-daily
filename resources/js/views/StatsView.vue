@@ -115,7 +115,14 @@
                 </div>
 
                 <!-- Heatmap Section -->
-                <div class="space-y-4">
+                <div class="space-y-4 relative">
+                    <!-- Inline loading overlay for period switch -->
+                    <div
+                        v-if="periodLoading"
+                        class="absolute inset-0 z-10 flex items-center justify-center bg-[var(--bg-app)]/60 rounded-[24px] backdrop-blur-sm"
+                    >
+                        <div class="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    </div>
                     <div class="flex items-center justify-between px-1">
                         <div class="flex items-center gap-3">
                             <h3 class="text-xs font-black text-[var(--color-text)] uppercase tracking-widest">
@@ -463,6 +470,7 @@ const dayCount = ref(0);
 
 const periods = [90, 180, 365];
 const currentPeriod = ref(90);
+const periodLoading = ref(false);
 
 const fetchStatsData = async () => {
     loading.value = true;
@@ -472,9 +480,10 @@ const fetchStatsData = async () => {
 
 const changePeriod = async (p) => {
     currentPeriod.value = p;
-    store.stats = null; // clear old data
     selectedDay.value = null;
-    await fetchStatsData();
+    periodLoading.value = true;
+    await store.fetchStats({ period: p });
+    periodLoading.value = false;
 };
 
 const exportStats = () => {
