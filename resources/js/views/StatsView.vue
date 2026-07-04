@@ -117,10 +117,29 @@
                 <!-- Heatmap Section -->
                 <div class="space-y-4">
                     <div class="flex items-center justify-between px-1">
-                        <h3 class="text-xs font-black text-[var(--color-text)] uppercase tracking-widest">
-                            {{ $t('stats.heatmap.title') }}
-                        </h3>
-                        <span class="text-[10px] text-[var(--color-secondary)] font-bold italic">{{ $t('stats.heatmap.subtitle') }}</span>
+                        <div class="flex items-center gap-3">
+                            <h3 class="text-xs font-black text-[var(--color-text)] uppercase tracking-widest">
+                                {{ $t('stats.heatmap.title') }}
+                            </h3>
+                            <!-- Period switcher pills -->
+                            <div class="flex gap-1 bg-[var(--bg-secondary)]/50 p-0.5 rounded-lg">
+                                <button
+                                    v-for="p in periods"
+                                    :key="p"
+                                    :class="['px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide transition-all border-none cursor-pointer',
+                                             currentPeriod === p ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']"
+                                    @click="changePeriod(p)"
+                                >
+                                    {{ $t(`stats.period.${p}`) }}
+                                </button>
+                            </div>
+                        </div>
+                        <button
+                            class="text-[9px] font-bold text-[var(--color-secondary)] hover:text-[var(--color-text)] uppercase tracking-widest bg-transparent border border-[var(--color-border)] px-2 py-1 rounded-lg cursor-pointer transition-colors"
+                            @click="exportStats"
+                        >
+                            {{ $t('stats.export') }}
+                        </button>
                     </div>
                     <div class="bg-[var(--bg-card)] p-4 rounded-[24px] border border-[var(--color-border)] overflow-x-auto scrollbar-hide shadow-sm">
                         <div class="flex gap-1 min-w-max">
@@ -361,6 +380,63 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Annual Summary -->
+                <div v-if="store.stats.annual" class="space-y-4">
+                    <h3 class="text-xs font-black text-[var(--color-text)] uppercase tracking-widest px-1">
+                        {{ $t('stats.annual.title') }}
+                    </h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)] text-center">
+                            <p class="text-2xl font-black text-blue-500">{{ store.stats.annual.total }}</p>
+                            <p class="text-[9px] font-bold text-[var(--color-secondary)] uppercase tracking-wide mt-1">{{ $t('stats.annual.total') }}</p>
+                        </div>
+                        <div class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)] text-center">
+                            <p class="text-2xl font-black text-green-500">{{ store.stats.annual.best_streak }}</p>
+                            <p class="text-[9px] font-bold text-[var(--color-secondary)] uppercase tracking-wide mt-1">{{ $t('stats.annual.best_streak') }}</p>
+                        </div>
+                        <div class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)] text-center">
+                            <p class="text-lg font-black text-[var(--color-text)]">{{ getDayLabel(store.stats.annual.best_day) }}</p>
+                            <p class="text-[9px] font-bold text-[var(--color-secondary)] uppercase tracking-wide mt-1">{{ $t('stats.annual.best_day') }}</p>
+                        </div>
+                        <div class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)] text-center">
+                            <p class="text-lg font-black text-[var(--color-text)]">{{ getHourLabel(store.stats.annual.best_hour) }}</p>
+                            <p class="text-[9px] font-bold text-[var(--color-secondary)] uppercase tracking-wide mt-1">{{ $t('stats.annual.best_hour') }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Top categories & subcategories -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div v-if="store.stats.annual.top_categories.length" class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)]">
+                            <p class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3">{{ $t('stats.annual.top_categories') }}</p>
+                            <div class="space-y-2">
+                                <div
+                                    v-for="(cat, i) in store.stats.annual.top_categories"
+                                    :key="cat.category_slug"
+                                    class="flex items-center gap-2"
+                                >
+                                    <span class="text-lg font-black text-[var(--color-secondary)] w-5">{{ i + 1 }}</span>
+                                    <span class="text-sm font-bold text-[var(--color-text)]">{{ getCatName(cat.category_slug) }}</span>
+                                    <span class="ml-auto text-xs font-bold text-[var(--color-secondary)]">{{ cat.count }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="store.stats.annual.top_subcategories.length" class="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--color-border)]">
+                            <p class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3">{{ $t('stats.annual.top_subcategories') }}</p>
+                            <div class="space-y-2">
+                                <div
+                                    v-for="(sub, i) in store.stats.annual.top_subcategories"
+                                    :key="sub.name"
+                                    class="flex items-center gap-2"
+                                >
+                                    <span class="text-lg font-black text-[var(--color-secondary)] w-5">{{ i + 1 }}</span>
+                                    <span class="text-sm font-bold text-[var(--color-text)]">{{ sub.name }}</span>
+                                    <span class="ml-auto text-xs font-bold text-[var(--color-secondary)]">{{ sub.count }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </template>
         </div>
     </div>
@@ -385,9 +461,39 @@ const dayCompletions = ref([]);
 const dayLoading = ref(false);
 const dayCount = ref(0);
 
-onMounted(async () => {
-    await store.fetchStats();
+const periods = [90, 180, 365];
+const currentPeriod = ref(90);
+
+const fetchStatsData = async () => {
+    loading.value = true;
+    await store.fetchStats({ period: currentPeriod.value });
     loading.value = false;
+};
+
+const changePeriod = async (p) => {
+    currentPeriod.value = p;
+    store.stats = null; // clear old data
+    selectedDay.value = null;
+    await fetchStatsData();
+};
+
+const exportStats = () => {
+    if (!store.stats) return;
+    const blob = new Blob([JSON.stringify(store.stats, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `balance-daily-stats-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+};
+
+const dayLabelKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+const getDayLabel = (d) => t(`stats.trends.day_of_week.${dayLabelKeys[d] || 'sun'}`);
+const getHourLabel = (h) => `${String(h).padStart(2, '0')}:00`;
+
+onMounted(async () => {
+    await fetchStatsData();
 });
 
 const counters = computed(() => store.stats?.counters || {});
@@ -446,7 +552,7 @@ const heatmapWeeks = computed(() => {
     const weeks = [];
     const now = new Date();
     const startDate = new Date();
-    startDate.setDate(now.getDate() - 90);
+    startDate.setDate(now.getDate() - currentPeriod.value);
     const dayOfWeek = startDate.getDay();
     const diff = startDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
     const gridStart = new Date(startDate.setDate(diff));

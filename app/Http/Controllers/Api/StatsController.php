@@ -26,10 +26,13 @@ class StatsController extends Controller
             return $this->completionsByDate($request->input('date'), (int) $user->id);
         }
 
-        // Fetch completions once
+        // Period: 90 (default), 180, or 365 days
+        $period = min(max((int) $request->input('period', 90), 30), 365);
+
+        // Fetch completions once for the requested period
         /** @var \Illuminate\Database\Eloquent\Collection<int, TaskCompletion> $completions */
         $completions = TaskCompletion::where('user_id', $user->id)
-            ->where('completed_at', '>=', $now->copy()->subDays(90)->startOfDay())
+            ->where('completed_at', '>=', $now->copy()->subDays($period)->startOfDay())
             ->orderBy('completed_at', 'asc')
             ->get();
 
@@ -59,6 +62,12 @@ class StatsController extends Controller
         // 6. Trends
         $trends = $this->calculateTrends((int) $user->id, $completions, $now);
 
+        // 7. Annual summary (only for 365d)
+        $annual = null;
+        if ($period >= 365) {
+            $annual = $this->calculateAnnualSummary($completions, $categoryBalance, $streakData);
+        }
+
         return response()->json([
             'heatmap' => $heatmap,
             'category_balance' => $categoryBalance,
@@ -70,6 +79,8 @@ class StatsController extends Controller
             ],
             'status' => $status,
             'trends' => $trends,
+            'period' => $period,
+            'annual' => $annual,
         ]);
     }
 
@@ -231,6 +242,57 @@ class StatsController extends Controller
             'day_of_week' => $dayOfWeek,
             'hour_of_day' => $hourOfDay,
             'subcategory' => $subcategoryData,
+        ];
+    }
+
+    /**
+     * Calculate annual summary for 365-day period.
+     *
+     * @param  \Illuminate\Database\Eloquent\Collection<int, TaskCompletion>  $completions
+     * @param  \Illuminate\Support\Collection  $categoryBalance
+     * @param  array{current: int, longest: int}  $streakData
+     * @return array{total: int, top_categories: array<int, array{slug: string, count: int}>, top_subcategories: array<int, array{name: string, count: int}>, best_streak: int, best_day: int, best_hour: int}
+     */
+    private function calculateAnnualSummary($completions, $categoryBalance, array $streakData): array
+    {
+        // Top categories (sorted by count)
+        $topCategories = $categoryBalance->sortByDesc('count')->take(3)->values()->toArray();
+
+        // Top subcategories via a single DB query (avoid N+1 on task relation)
+        $subcatData = DB::table('task_completions')
+            ->where('task_completions.user_id', $this->user()->id)
+            ->where('task_completions.completed_at', '>=', now()->subDays(365)->startOfDay())
+            ->join('tasks', 'task_completions.task_id', '=', 'tasks.id')
+            ->whereNotNull('tasks.subcategory')
+            ->where('tasks.subcategory', '!=', '')
+            ->select('tasks.subcategory as name', DB::raw('count(*) as count'))
+            ->groupBy('tasks.subcategory')
+            ->orderByDesc('count')
+            ->limit(3)
+            ->get()
+            ->toArray();
+
+        // Best day of week
+        $dayCounts = array_fill(0, 7, 0);
+        foreach ($completions as $c) {
+            $dayCounts[$c->completed_at->dayOfWeek]++;
+        }
+        $bestDay = (int) array_search(max($dayCounts), $dayCounts);
+
+        // Best hour
+        $hourCounts = array_fill(0, 24, 0);
+        foreach ($completions as $c) {
+            $hourCounts[$c->completed_at->hour]++;
+        }
+        $bestHour = (int) array_search(max($hourCounts), $hourCounts);
+
+        return [
+            'total' => $completions->count(),
+            'top_categories' => $topCategories,
+            'top_subcategories' => $subcatData,
+            'best_streak' => $streakData['longest'],
+            'best_day' => $bestDay,
+            'best_hour' => $bestHour,
         ];
     }
 

@@ -249,6 +249,22 @@
                 "title": "Subcategories",
                 "no_data": "No subcategory data"
             }
+        },
+        "annual": {
+            "title": "Annual Summary",
+            "total": "Total completed",
+            "top_categories": "Top categories",
+            "top_subcategories": "Top subcategories",
+            "best_streak": "Best streak",
+            "best_day": "Best day",
+            "best_hour": "Best hour",
+            "days": "days"
+        },
+        "export": "Export JSON",
+        "period": {
+            "90": "90 days",
+            "180": "180 days",
+            "365": "Year"
         }
     }
 }
