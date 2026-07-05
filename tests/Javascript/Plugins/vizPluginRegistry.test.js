@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { registerPlugin, getPlugin, listPlugins } from '../../../resources/js/plugins/vizPluginRegistry.js';
+import { ensurePlugin } from '../../../resources/js/plugins/pluginCatalog.js';
 
 describe('VizPlugin Registry', () => {
     beforeEach(() => {
@@ -21,9 +22,9 @@ describe('VizPlugin Registry', () => {
     });
 
     it('lists all registered plugins', async () => {
-        // Import plugins to trigger registration
-        await import('../../../resources/js/plugins/BubblePlugin.js');
-        await import('../../../resources/js/plugins/TreemapPlugin.js');
+        // Load plugins via catalog (public API)
+        await ensurePlugin('bubbles');
+        await ensurePlugin('treemap');
         const plugins = listPlugins();
         expect(plugins.length).toBeGreaterThanOrEqual(2);
         const names = plugins.map(p => p.name);

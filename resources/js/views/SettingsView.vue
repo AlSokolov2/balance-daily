@@ -88,47 +88,19 @@
                                 v-for="p in vizPlugins"
                                 :key="p.name"
                                 :class="['py-3 rounded-xl text-xs font-bold transition-all', store.visualStyle === p.name ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']"
-                                @click="store.setVisualStyle(p.name)"
+                                @click="async () => { await ensurePlugin(p.name); store.setVisualStyle(p.name); }"
                             >
                                 {{ p.label[store.locale] || p.label.en || p.name }}
                             </button>
                         </div>
                     </div>
 
-                    <div v-if="store.visualStyle === 'treemap'" class="space-y-6 pt-4 border-t border-[var(--color-border)]">
-                        <div>
-                            <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-3">{{ $t('settings.general.treemap_mode') }}</label>
-                            <div class="grid grid-cols-3 gap-2 bg-[var(--bg-secondary)] p-1 rounded-2xl border border-[var(--color-border)]">
-                                <button
-                                    v-for="mode in ['flat', 'nested', 'airy']"
-                                    :key="mode"
-                                    :class="['py-3 rounded-xl text-[10px] font-bold transition-all', store.treemapMode === mode ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']"
-                                    @click="store.setTreemapMode(mode)"
-                                >
-                                    {{ $t(`settings.general.treemap_modes.${mode}`) }}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="flex justify-between items-center mb-3 px-1">
-                                <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black tracking-widest">{{ $t('settings.general.treemap_scale') }}</label>
-                                <span class="text-[10px] font-bold text-[var(--color-primary)]">{{ store.treemapScale.toFixed(1) }}x</span>
-                            </div>
-                            <input
-                                :value="store.treemapScale"
-                                type="range"
-                                min="1.0"
-                                max="3.0"
-                                step="0.1"
-                                class="w-full accent-[var(--color-primary)]"
-                                @input="store.setTreemapScale($event.target.value)"
-                            >
-                            <p class="text-[9px] text-[var(--color-secondary)] mt-2 px-1 leading-relaxed">
-                                {{ $t('settings.general.treemap_scale_desc') }}
-                            </p>
-                        </div>
-                    </div>
+                    <Suspense v-if="activePlugin?.settingsComponent">
+                        <component :is="defineAsyncComponent(activePlugin.settingsComponent)" />
+                        <template #fallback>
+                            <AppSkeleton variant="rect" height="80px" width="100%" />
+                        </template>
+                    </Suspense>
 
                     <div class="p-4 bg-[var(--bg-secondary)]/30 border border-[var(--color-border)] rounded-2xl flex items-center justify-between shadow-none">
                         <div class="flex-1">
@@ -340,14 +312,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, computed } from 'vue';
+import { ref, onMounted, reactive, computed, defineAsyncComponent } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBalanceStore } from '../stores/balance';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 import AppIcon from '../components/AppIcon.vue';
+import AppSkeleton from '../components/AppSkeleton.vue';
 import BaseButton from '../components/BaseButton.vue';
-import { listPlugins } from '../plugins/vizPluginRegistry.js';
+import { pluginCatalog, ensurePlugin } from '../plugins/pluginCatalog.js';
+import { getPlugin } from '../plugins/vizPluginRegistry.js';
 
 const tabs = [
     { key: 'general', label: 'settings.tabs.gen' },
@@ -357,7 +331,8 @@ const tabs = [
     { key: 'accounts', label: 'settings.tabs.accounts' },
 ];
 const activeTab = ref('general');
-const vizPlugins = computed(() => listPlugins());
+const vizPlugins = computed(() => pluginCatalog);
+const activePlugin = computed(() => getPlugin(store.visualStyle));
 
 const { locale, t } = useI18n();
 const store = useBalanceStore();

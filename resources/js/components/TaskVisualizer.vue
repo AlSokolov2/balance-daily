@@ -32,11 +32,10 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent, computed, ref, onErrorCaptured } from 'vue';
+import { defineAsyncComponent, computed, ref, watch, onErrorCaptured } from 'vue';
 import { useBalanceStore } from '../stores/balance';
 import { getPlugin } from '../plugins/vizPluginRegistry.js';
-import '../plugins/BubblePlugin.js';
-import '../plugins/TreemapPlugin.js';
+import { ensurePlugin } from '../plugins/pluginCatalog.js';
 import AppIcon from './AppIcon.vue';
 import AppSkeleton from './AppSkeleton.vue';
 import BaseButton from './BaseButton.vue';
@@ -51,8 +50,24 @@ const store = useBalanceStore();
 
 const error = ref(null);
 const retryCount = ref(0);
+const pluginLoadTick = ref(0);
+/** @type {Set<string>} — track which plugin names we've already tried to load */
+const attemptedPlugins = new Set();
 
-const plugin = computed(() => getPlugin(store.visualStyle));
+const plugin = computed(() => {
+    void pluginLoadTick.value; // reactive dependency
+    return getPlugin(store.visualStyle) || null;
+});
+
+// Lazily load plugin code when visualStyle changes
+watch(() => store.visualStyle, (name) => {
+    if (!getPlugin(name) && !attemptedPlugins.has(name)) {
+        attemptedPlugins.add(name);
+        ensurePlugin(name).then(() => {
+            pluginLoadTick.value++;
+        });
+    }
+}, { immediate: true });
 
 const resolvedTasks = computed(() => {
     if (props.tasks) return props.tasks;

@@ -23,8 +23,9 @@
  * @property {Function} loader          — () => Promise<Component> for lazy loading
  * @property {string} version           — semver
  * @property {Function} [getter]        — (store) => ComputedRef, defaults to store.bubbleTasks
- * @property {Object} [defaultSettings] — plugin-specific settings (e.g. { mode: 'combined' })
- * @property {PluginSource} source      — where the plugin comes from
+ * @property {Object} [defaultSettings]    — plugin-specific defaults (e.g. { mode: 'combined' })
+ * @property {Function} [settingsComponent] — () => Promise<Component>, lazy-loaded settings panel
+ * @property {PluginSource} source          — where the plugin comes from
  */
 
 /** @type {Map<string, VizPlugin>} */
