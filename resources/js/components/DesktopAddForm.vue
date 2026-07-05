@@ -43,7 +43,7 @@ const handleAddTask = async () => {
         await store.addTask({
             title: title.value,
             category_slug: categorySlug,
-            importance: 2,
+            importance: 2, urgency: 'not_urgent',
             repeat_type: 'none',
             repeat_interval: 1,
             repeat_days: [],

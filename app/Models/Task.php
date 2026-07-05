@@ -19,6 +19,7 @@ class Task extends Model
         'title',
         'category_slug',
         'importance',
+        'urgency',
         'subcategory',
         'deadline',
         'postpone_until',

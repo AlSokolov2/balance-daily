@@ -26,6 +26,11 @@ export const pluginCatalog = [
         label: { ru: 'Древовидная карта', en: 'Treemap' },
         loader: () => import('./TreemapPlugin.js'),
     },
+    {
+        name: 'eisenhower',
+        label: { ru: 'Эйзенхауэр', en: 'Eisenhower' },
+        loader: () => import('./EisenhowerPlugin.js'),
+    },
 ];
 
 /**

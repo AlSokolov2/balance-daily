@@ -127,15 +127,16 @@
                     </label>
                 </div>
 
+                <div>
+                    <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-2">{{ $t('edit_task.category') }}</label>
+                    <select v-model="editData.category_slug" class="w-full p-3 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-2xl text-sm text-[var(--color-text)] outline-none focus:ring-2 focus:ring-[var(--color-border)]">
+                        <option v-for="cat in store.categories.filter(c => c.slug !== '__archive__')" :key="cat.slug" :value="cat.slug">
+                            {{ cat.name }}
+                        </option>
+                    </select>
+                </div>
+
                 <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-2">{{ $t('edit_task.category') }}</label>
-                        <select v-model="editData.category_slug" class="w-full p-3 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-2xl text-sm text-[var(--color-text)] outline-none focus:ring-2 focus:ring-[var(--color-border)]">
-                            <option v-for="cat in store.categories.filter(c => c.slug !== '__archive__')" :key="cat.slug" :value="cat.slug">
-                                {{ cat.name }}
-                            </option>
-                        </select>
-                    </div>
                     <div>
                         <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-2">{{ $t('edit_task.importance') }}</label>
                         <select v-model="editData.importance" class="w-full p-3 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-2xl text-sm text-[var(--color-text)] outline-none focus:ring-2 focus:ring-[var(--color-border)]">
@@ -156,133 +157,141 @@
                             </option>
                         </select>
                     </div>
-                </div>
-
-                <div>
-                    <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-2">{{ $t('edit_task.subcategory') }}</label>
-                    <input v-model="editData.subcategory" list="subcat-list-edit" class="w-full p-3 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-2xl text-sm text-[var(--color-text)] outline-none focus:ring-2 focus:ring-[var(--color-border)]">
-                    <datalist id="subcat-list-edit">
-                        <option v-for="s in store.allSubcats" :key="s" :value="s" />
-                    </datalist>
-                </div>
-
-                <div class="p-4 bg-[var(--bg-secondary)]/30 rounded-2xl border border-[var(--color-border)]">
-                    <label class="flex items-center justify-between cursor-pointer group">
-                        <span class="text-xs font-bold text-[var(--color-text)] group-hover:text-[var(--color-primary)] transition-colors">{{ $t('edit_task.force_active') }}</span>
-                        <input v-model="editData.force_active" type="checkbox" class="w-5 h-5 rounded-lg accent-[var(--color-text)]">
-                    </label>
-                </div>
-            </div>
-
-            <!-- Tab: Schedule (Time) -->
-            <div v-if="activeTab === 'schedule'" class="space-y-4">
-                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="text-[9px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-1.5">{{ $t('edit_task.deadline') }}</label>
-                        <input v-model="editData.deadline" type="datetime-local" class="w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-[11px] text-[var(--color-text)] outline-none">
-                    </div>
-                    <div>
-                        <label class="text-[9px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-1.5">{{ $t('edit_task.postpone_until') }}</label>
-                        <input v-model="editData.postpone_until" type="datetime-local" class="w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-[11px] text-[var(--color-text)] outline-none">
-                    </div>
-                    <div>
-                        <label class="text-[9px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-1.5">{{ $t('edit_task.hidden_until') }}</label>
-                        <input v-model="editData.hidden_until" type="datetime-local" class="w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-[11px] text-[var(--color-text)] outline-none">
-                    </div>
-                </div>
-
-                <div class="space-y-3 pt-3 border-t border-[var(--color-border)]">
-                    <div>
-                        <label class="text-[9px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-1.5">{{ $t('edit_task.repeat.type') }}</label>
-                        <select v-model="editData.repeat_type" class="w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-xs text-[var(--color-text)] outline-none">
-                            <option value="none">
-                                {{ $t('edit_task.repeat.none') }}
+                        <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-2">{{ $t('edit_task.urgency') }}</label>
+                        <select v-model="editData.urgency" class="w-full p-3 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-2xl text-sm text-[var(--color-text)] outline-none focus:ring-2 focus:ring-[var(--color-border)]">
+                            <option value="urgent">
+                                {{ $t('edit_task.urgency_levels.urgent') }}
                             </option>
-                            <option value="interval">
-                                {{ $t('edit_task.repeat.interval') }}
-                            </option>
-                            <option value="weekly">
-                                {{ $t('edit_task.repeat.weekly') }}
+                            <option value="not_urgent">
+                                {{ $t('edit_task.urgency_levels.not_urgent') }}
                             </option>
                         </select>
                     </div>
-
-                    <div v-if="editData.repeat_type === 'interval'" class="flex items-center gap-3 p-3 bg-[var(--bg-secondary)]/50 rounded-xl border border-[var(--color-border)]">
-                        <span class="text-[11px] font-bold text-[var(--color-text)]">{{ $t('edit_task.repeat.every') }}</span>
-                        <input
-                            v-model.number="editData.repeat_interval"
-                            type="number"
-                            min="1"
-                            class="w-16 p-1.5 bg-[var(--bg-card)] border border-[var(--color-border)] rounded-lg text-center font-bold text-xs text-[var(--color-text)]"
-                        >
-                        <span class="text-[11px] font-bold text-[var(--color-text)]">{{ $t('edit_task.repeat.days') }}</span>
-                    </div>
-
-                    <div v-if="editData.repeat_type === 'weekly'" class="flex gap-1.5 flex-wrap justify-between">
-                        <label
-                            v-for="(dayName, dayIdx) in $tm('edit_task.weekdays')"
-                            :key="dayIdx" 
-                            :class="['w-8 h-8 flex-1 min-w-[32px] flex items-center justify-center rounded-lg text-[9px] font-black cursor-pointer transition-all border shadow-sm', 
-                                     editData.repeat_days.includes(dayIdx) ? 'bg-[var(--color-text)] text-[var(--bg-card)] border-[var(--color-text)]' : 'bg-[var(--bg-secondary)] text-[var(--color-secondary)] border-[var(--color-border)]']"
-                        >
-                            <input
-                                v-model="editData.repeat_days"
-                                type="checkbox"
-                                :value="dayIdx"
-                                class="hidden"
-                            >
-                            {{ dayName }}
-                        </label>
-                    </div>
-
-                    <div v-if="editData.completed" class="pt-2">
-                        <label class="text-[9px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-1.5">{{ $t('edit_task.completed_at') }}</label>
-                        <input v-model="editData.completed_at" type="datetime-local" class="w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-[11px] text-[var(--color-text)] outline-none">
-                    </div>
                 </div>
+                <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-2">{{ $t('edit_task.subcategory') }}</label>
+                <input v-model="editData.subcategory" list="subcat-list-edit" class="w-full p-3 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-2xl text-sm text-[var(--color-text)] outline-none focus:ring-2 focus:ring-[var(--color-border)]">
+                <datalist id="subcat-list-edit">
+                    <option v-for="s in store.allSubcats" :key="s" :value="s" />
+                </datalist>
+            </div>
 
-                <!-- Reminder Times -->
-                <div class="space-y-2 pt-3 border-t border-[var(--color-border)]">
-                    <div class="flex items-center justify-between px-1">
-                        <span class="text-[9px] text-[var(--color-secondary)] uppercase font-black tracking-widest">{{ $t('edit_task.reminder_times') }}</span>
-                        <button
-                            class="w-6 h-6 rounded-lg bg-[var(--color-primary)] text-white flex items-center justify-center text-xs font-black"
-                            @click="addReminderTime"
-                        >
-                            +
-                        </button>
-                    </div>
-                    <div
-                        v-for="(rt, idx) in editData.reminder_times"
-                        :key="idx"
-                        class="flex items-center gap-2"
-                    >
-                        <input
-                            v-model="editData.reminder_times[idx]"
-                            type="time"
-                            class="flex-1 p-2 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-xs text-[var(--color-text)] outline-none"
-                        >
-                        <button
-                            class="w-6 h-6 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center text-xs"
-                            @click="removeReminderTime(idx)"
-                        >
-                            ×
-                        </button>
-                    </div>
-                </div>
+            <div class="p-4 bg-[var(--bg-secondary)]/30 rounded-2xl border border-[var(--color-border)]">
+                <label class="flex items-center justify-between cursor-pointer group">
+                    <span class="text-xs font-bold text-[var(--color-text)] group-hover:text-[var(--color-primary)] transition-colors">{{ $t('edit_task.force_active') }}</span>
+                    <input v-model="editData.force_active" type="checkbox" class="w-5 h-5 rounded-lg accent-[var(--color-text)]">
+                </label>
             </div>
         </div>
 
-        <!-- Footer (Fixed) -->
-        <div class="p-5 border-t border-[var(--color-border)] bg-[var(--bg-app)] shrink-0 flex gap-2">
-            <button
-                v-if="!isNew"
-                class="w-14 py-4 bg-[var(--bg-secondary)] text-red-500 rounded-2xl flex items-center justify-center hover:bg-red-500/10 transition-colors border border-[var(--color-border)] shadow-none" 
-                @click="handleDelete"
-            >
-                <AppIcon name="trash" :size="24" />
-            </button>
+        <!-- Tab: Schedule (Time) -->
+        <div v-if="activeTab === 'schedule'" class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-[9px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-1.5">{{ $t('edit_task.deadline') }}</label>
+                    <input v-model="editData.deadline" type="datetime-local" class="w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-[11px] text-[var(--color-text)] outline-none">
+                </div>
+                <div>
+                    <label class="text-[9px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-1.5">{{ $t('edit_task.postpone_until') }}</label>
+                    <input v-model="editData.postpone_until" type="datetime-local" class="w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-[11px] text-[var(--color-text)] outline-none">
+                </div>
+                <div>
+                    <label class="text-[9px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-1.5">{{ $t('edit_task.hidden_until') }}</label>
+                    <input v-model="editData.hidden_until" type="datetime-local" class="w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-[11px] text-[var(--color-text)] outline-none">
+                </div>
+            </div>
+
+            <div class="space-y-3 pt-3 border-t border-[var(--color-border)]">
+                <div>
+                    <label class="text-[9px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-1.5">{{ $t('edit_task.repeat.type') }}</label>
+                    <select v-model="editData.repeat_type" class="w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-xs text-[var(--color-text)] outline-none">
+                        <option value="none">
+                            {{ $t('edit_task.repeat.none') }}
+                        </option>
+                        <option value="interval">
+                            {{ $t('edit_task.repeat.interval') }}
+                        </option>
+                        <option value="weekly">
+                            {{ $t('edit_task.repeat.weekly') }}
+                        </option>
+                    </select>
+                </div>
+
+                <div v-if="editData.repeat_type === 'interval'" class="flex items-center gap-3 p-3 bg-[var(--bg-secondary)]/50 rounded-xl border border-[var(--color-border)]">
+                    <span class="text-[11px] font-bold text-[var(--color-text)]">{{ $t('edit_task.repeat.every') }}</span>
+                    <input
+                        v-model.number="editData.repeat_interval"
+                        type="number"
+                        min="1"
+                        class="w-16 p-1.5 bg-[var(--bg-card)] border border-[var(--color-border)] rounded-lg text-center font-bold text-xs text-[var(--color-text)]"
+                    >
+                    <span class="text-[11px] font-bold text-[var(--color-text)]">{{ $t('edit_task.repeat.days') }}</span>
+                </div>
+
+                <div v-if="editData.repeat_type === 'weekly'" class="flex gap-1.5 flex-wrap justify-between">
+                    <label
+                        v-for="(dayName, dayIdx) in $tm('edit_task.weekdays')"
+                        :key="dayIdx" 
+                        :class="['w-8 h-8 flex-1 min-w-[32px] flex items-center justify-center rounded-lg text-[9px] font-black cursor-pointer transition-all border shadow-sm', 
+                                 editData.repeat_days.includes(dayIdx) ? 'bg-[var(--color-text)] text-[var(--bg-card)] border-[var(--color-text)]' : 'bg-[var(--bg-secondary)] text-[var(--color-secondary)] border-[var(--color-border)]']"
+                    >
+                        <input
+                            v-model="editData.repeat_days"
+                            type="checkbox"
+                            :value="dayIdx"
+                            class="hidden"
+                        >
+                        {{ dayName }}
+                    </label>
+                </div>
+
+                <div v-if="editData.completed" class="pt-2">
+                    <label class="text-[9px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-1.5">{{ $t('edit_task.completed_at') }}</label>
+                    <input v-model="editData.completed_at" type="datetime-local" class="w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-[11px] text-[var(--color-text)] outline-none">
+                </div>
+            </div>
+
+            <!-- Reminder Times -->
+            <div class="space-y-2 pt-3 border-t border-[var(--color-border)]">
+                <div class="flex items-center justify-between px-1">
+                    <span class="text-[9px] text-[var(--color-secondary)] uppercase font-black tracking-widest">{{ $t('edit_task.reminder_times') }}</span>
+                    <button
+                        class="w-6 h-6 rounded-lg bg-[var(--color-primary)] text-white flex items-center justify-center text-xs font-black"
+                        @click="addReminderTime"
+                    >
+                        +
+                    </button>
+                </div>
+                <div
+                    v-for="(rt, idx) in editData.reminder_times"
+                    :key="idx"
+                    class="flex items-center gap-2"
+                >
+                    <input
+                        v-model="editData.reminder_times[idx]"
+                        type="time"
+                        class="flex-1 p-2 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-xs text-[var(--color-text)] outline-none"
+                    >
+                    <button
+                        class="w-6 h-6 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center text-xs"
+                        @click="removeReminderTime(idx)"
+                    >
+                        ×
+                    </button>
+                </div>
+            </div>
         </div>
+    </div>
+
+    <!-- Footer (Fixed) -->
+    <div class="p-5 border-t border-[var(--color-border)] bg-[var(--bg-app)] shrink-0 flex gap-2">
+        <button
+            v-if="!isNew"
+            class="w-14 py-4 bg-[var(--bg-secondary)] text-red-500 rounded-2xl flex items-center justify-center hover:bg-red-500/10 transition-colors border border-[var(--color-border)] shadow-none" 
+            @click="handleDelete"
+        >
+            <AppIcon name="trash" :size="24" />
+        </button>
     </div>
 </template>
 

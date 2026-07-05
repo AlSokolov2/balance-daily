@@ -26,7 +26,7 @@ const task = computed(() => {
     if (isNew.value) {
         const presetTitle = (route.query.title || '').trim();
         return {
-            title: presetTitle, category_slug: 'chor', importance: 2, repeat_type: 'none',
+            title: presetTitle, category_slug: 'chor', importance: 2, urgency: 'not_urgent', repeat_type: 'none',
             repeat_interval: 1, repeat_days: [], deadline: null, postpone_until: null,
             ha: false, force_active: false, notes: '', isNew: true
         };

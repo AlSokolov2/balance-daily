@@ -140,6 +140,11 @@
             "low": "Low",
             "very_low": "Very Low"
         },
+        "urgency": "Urgency",
+        "urgency_levels": {
+            "urgent": "Urgent",
+            "not_urgent": "Not Urgent"
+        },
         "subcategory": "Subcategory",
         "deadline": "Deadline",
         "postpone_until": "Postpone until",
@@ -266,5 +271,14 @@
             "180": "180 days",
             "365": "Year"
         }
+    },
+    "eisenhower": {
+        "urgency": "Urgency",
+        "urgent": "Urgent",
+        "not_urgent": "Not Urgent",
+        "q1": "Do First",
+        "q2": "Plan",
+        "q3": "Delegate",
+        "q4": "Eliminate"
     }
 }
