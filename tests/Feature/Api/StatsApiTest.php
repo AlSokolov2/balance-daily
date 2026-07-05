@@ -100,6 +100,40 @@ class StatsApiTest extends TestCase
         $this->assertEquals(0, $response->json('counters.total'));
     }
 
+    public function test_category_balance_includes_all_categories_even_with_zero_completions()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        // Create two categories
+        $cat1 = Category::factory()->create(['slug' => 'work', 'user_id' => $user->id]);
+        $cat2 = Category::factory()->create(['slug' => 'chor', 'user_id' => $user->id]);
+
+        // Create a task only for 'work' and add completions
+        $task = Task::factory()->create(['user_id' => $user->id, 'category_slug' => 'work']);
+        TaskCompletion::create([
+            'task_id' => $task->id,
+            'user_id' => $user->id,
+            'completed_at' => Carbon::now(),
+        ]);
+
+        $response = $this->getJson('/api/stats');
+
+        $response->assertStatus(200);
+        $balance = $response->json('category_balance');
+
+        // Both categories should appear
+        $this->assertCount(2, $balance);
+
+        $workBalance = collect($balance)->firstWhere('category_slug', 'work');
+        $chorBalance = collect($balance)->firstWhere('category_slug', 'chor');
+
+        $this->assertNotNull($workBalance);
+        $this->assertNotNull($chorBalance);
+        $this->assertEquals(1, $workBalance['count']);
+        $this->assertEquals(0, $chorBalance['count']);
+    }
+
     public function test_streak_calculation()
     {
         $user = User::factory()->create();
@@ -136,5 +170,101 @@ class StatsApiTest extends TestCase
 
         $response = $this->getJson('/api/stats');
         $this->assertEquals(1, $response->json('counters.current_streak'));
+    }
+
+    public function test_subcategory_trends_include_zero_completion_subcategories()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        Category::factory()->create(['slug' => 'work', 'user_id' => $user->id]);
+
+        // Task A: subcategory "coding" with completions
+        $taskA = Task::factory()->create([
+            'user_id' => $user->id,
+            'category_slug' => 'work',
+            'subcategory' => 'coding',
+        ]);
+        TaskCompletion::create([
+            'task_id' => $taskA->id,
+            'user_id' => $user->id,
+            'completed_at' => Carbon::now(),
+        ]);
+
+        // Task B: subcategory "meetings" with zero completions
+        Task::factory()->create([
+            'user_id' => $user->id,
+            'category_slug' => 'work',
+            'subcategory' => 'meetings',
+        ]);
+
+        $response = $this->getJson('/api/stats');
+        $response->assertStatus(200);
+
+        $groups = $response->json('trends.subcategory');
+        $this->assertCount(1, $groups);
+        $this->assertEquals('work', $groups[0]['category_slug']);
+        $this->assertCount(2, $groups[0]['items']);
+
+        $coding = collect($groups[0]['items'])->firstWhere('name', 'coding');
+        $meetings = collect($groups[0]['items'])->firstWhere('name', 'meetings');
+        $this->assertNotNull($coding);
+        $this->assertNotNull($meetings);
+        $this->assertEquals(1, $coding['count']);
+        $this->assertEquals(0, $meetings['count']);
+    }
+
+    public function test_subcategory_trends_grouped_by_category()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        Category::factory()->create(['slug' => 'work', 'user_id' => $user->id]);
+        Category::factory()->create(['slug' => 'health', 'user_id' => $user->id]);
+
+        $taskW = Task::factory()->create([
+            'user_id' => $user->id, 'category_slug' => 'work', 'subcategory' => 'coding',
+        ]);
+        $taskH = Task::factory()->create([
+            'user_id' => $user->id, 'category_slug' => 'health', 'subcategory' => 'running',
+        ]);
+
+        TaskCompletion::create(['task_id' => $taskW->id, 'user_id' => $user->id, 'completed_at' => Carbon::now()]);
+        TaskCompletion::create(['task_id' => $taskH->id, 'user_id' => $user->id, 'completed_at' => Carbon::now()]);
+
+        $response = $this->getJson('/api/stats');
+        $groups = $response->json('trends.subcategory');
+
+        $this->assertCount(2, $groups);
+        $slugs = collect($groups)->pluck('category_slug')->sort()->values()->toArray();
+        $this->assertEquals(['health', 'work'], $slugs);
+    }
+
+    public function test_subcategory_trends_respects_period()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        Category::factory()->create(['slug' => 'work', 'user_id' => $user->id]);
+
+        $task = Task::factory()->create([
+            'user_id' => $user->id, 'category_slug' => 'work', 'subcategory' => 'coding',
+        ]);
+
+        // Completion 200 days ago (within 365, outside 90)
+        TaskCompletion::create([
+            'task_id' => $task->id,
+            'user_id' => $user->id,
+            'completed_at' => Carbon::now()->subDays(200),
+        ]);
+
+        // 90-day period: count should be 0
+        $response90 = $this->getJson('/api/stats?period=90');
+        $items90 = $response90->json('trends.subcategory')[0]['items'];
+        $this->assertEquals(0, collect($items90)->firstWhere('name', 'coding')['count']);
+
+        // 365-day period: count should be 1
+        $response365 = $this->getJson('/api/stats?period=365');
+        $items365 = $response365->json('trends.subcategory')[0]['items'];
+        $this->assertEquals(1, collect($items365)->firstWhere('name', 'coding')['count']);
     }
 }

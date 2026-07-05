@@ -233,7 +233,7 @@
                                     <div
                                         class="h-full rounded-full transition-all duration-1000 group-hover:opacity-80"
                                         :style="{
-                                            width: `${(item.count / maxBalance) * 100}%`,
+                                            width: `${Math.max((item.count / maxBalance) * 100, 2)}%`,
                                             backgroundColor: getCatColor(item.category_slug)
                                         }"
                                     />
@@ -367,23 +367,46 @@
                         <h4 class="text-[10px] font-bold text-[var(--color-secondary)] uppercase tracking-widest mb-3 px-1">
                             {{ $t('stats.trends.subcategory.title') }}
                         </h4>
-                        <div v-if="!store.stats.trends.subcategory.length" class="text-center py-4 text-xs text-[var(--color-secondary)] italic">
+                        <div v-if="!subcategoryGroups.length" class="text-center py-4 text-xs text-[var(--color-secondary)] italic">
                             {{ $t('stats.trends.subcategory.no_data') }}
                         </div>
-                        <div v-else class="space-y-3">
+                        <div v-else class="space-y-5">
                             <div
-                                v-for="item in store.stats.trends.subcategory"
-                                :key="item.name"
-                                class="flex items-center gap-3"
+                                v-for="group in subcategoryGroups"
+                                :key="group.category_slug"
+                                class="space-y-2"
                             >
-                                <span class="text-[11px] font-bold text-[var(--color-text)] w-24 truncate shrink-0">{{ item.name }}</span>
-                                <div class="flex-1 h-2 bg-[var(--bg-secondary)] rounded-full overflow-hidden">
-                                    <div
-                                        class="h-full rounded-full bg-blue-500/60"
-                                        :style="{ width: `${(item.count / subcategoryMax) * 100}%` }"
+                                <!-- Category header -->
+                                <div class="flex items-center gap-2 px-1">
+                                    <span
+                                        class="w-2.5 h-2.5 rounded-full shrink-0"
+                                        :style="{ backgroundColor: getCatColor(group.category_slug) }"
                                     />
+                                    <span
+                                        class="text-[10px] font-black uppercase tracking-widest"
+                                        :style="{ color: getCatColor(group.category_slug) }"
+                                    >
+                                        {{ getCatName(group.category_slug) }}
+                                    </span>
                                 </div>
-                                <span class="text-[10px] font-bold text-[var(--color-secondary)] w-6 text-right shrink-0">{{ item.count }}</span>
+                                <!-- Subcategory bars -->
+                                <div
+                                    v-for="item in group.items"
+                                    :key="item.name"
+                                    class="flex items-center gap-3 pl-4"
+                                >
+                                    <span class="text-[11px] font-bold text-[var(--color-text)] w-24 truncate shrink-0">{{ item.name }}</span>
+                                    <div class="flex-1 h-2 bg-[var(--bg-secondary)] rounded-full overflow-hidden">
+                                        <div
+                                            class="h-full rounded-full"
+                                            :style="{
+                                                width: `${(item.count / subcategoryMax) * 100}%`,
+                                                backgroundColor: getCatColor(group.category_slug) + '99'
+                                            }"
+                                        />
+                                    </div>
+                                    <span class="text-[10px] font-bold text-[var(--color-secondary)] w-6 text-right shrink-0">{{ item.count }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -459,6 +482,7 @@
                                 >
                                     <span class="text-lg font-black text-[var(--color-secondary)] w-5">{{ i + 1 }}</span>
                                     <span class="text-sm font-bold text-[var(--color-text)]">{{ sub.name }}</span>
+                                    <span class="text-[9px] text-[var(--color-secondary)]">{{ getCatName(sub.category_slug) }}</span>
                                     <span class="ml-auto text-xs font-bold text-[var(--color-secondary)]">{{ sub.count }}</span>
                                 </div>
                             </div>
@@ -607,7 +631,7 @@ const getHeatmapClass = (count) => {
 };
 
 const sortedBalance = computed(() => [...(store.stats?.category_balance || [])].sort((a, b) => b.count - a.count));
-const maxBalance = computed(() => Math.max(...(store.stats?.category_balance.map(b => b.count) || [1])));
+const maxBalance = computed(() => Math.max(...(store.stats?.category_balance.map(b => b.count) || []), 1));
 const getCatName = (slug) => store.categories.find(c => c.slug === slug)?.name || slug;
 const getCatColor = (slug) => store.categories.find(c => c.slug === slug)?.color || '#8e8e93';
 
@@ -688,9 +712,15 @@ const hourLabels = computed(() => {
     }));
 });
 
+const subcategoryGroups = computed(() => store.stats?.trends?.subcategory || []);
 const subcategoryMax = computed(() => {
-    const sub = store.stats?.trends?.subcategory || [];
-    return Math.max(...sub.map(s => s.count), 1);
+    let max = 1;
+    for (const group of subcategoryGroups.value) {
+        for (const item of group.items || []) {
+            if (item.count > max) max = item.count;
+        }
+    }
+    return max;
 });
 
 const formatDateLocale = (dateStr) => {

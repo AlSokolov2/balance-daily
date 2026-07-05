@@ -44,6 +44,23 @@ describe('StatsView', () => {
                 empty: { active: 0, completed_today: 0, needs_attention: false },
             },
         },
+        trends: {
+            subcategory: [
+                {
+                    category_slug: 'work',
+                    items: [
+                        { name: 'coding', count: 5 },
+                        { name: 'meetings', count: 0 },
+                    ],
+                },
+                {
+                    category_slug: 'chor',
+                    items: [
+                        { name: 'cleaning', count: 2 },
+                    ],
+                },
+            ],
+        },
     };
 
     /**
@@ -378,6 +395,46 @@ describe('StatsView', () => {
 
             // Should not fetch when count is 0
             expect(axios.get).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('Subcategory trends', () => {
+        it('renders subcategories grouped by category', async () => {
+            const wrapper = await mountStatsView();
+
+            // Category headers should appear
+            const text = wrapper.text();
+            expect(text).toContain('Work');
+            expect(text).toContain('Chores');
+        });
+
+        it('renders subcategory items with counts', async () => {
+            const wrapper = await mountStatsView();
+
+            const text = wrapper.text();
+            expect(text).toContain('coding');
+            expect(text).toContain('5');
+            expect(text).toContain('meetings');
+            expect(text).toContain('0');
+            expect(text).toContain('cleaning');
+            expect(text).toContain('2');
+        });
+
+        it('renders subcategory section title', async () => {
+            const wrapper = await mountStatsView();
+
+            expect(wrapper.text()).toContain('stats.trends.subcategory.title');
+        });
+
+        it('shows empty state when no subcategory data', async () => {
+            useTasksStore().stats = {
+                ...mockStats,
+                trends: { subcategory: [] },
+            };
+
+            const wrapper = await mountStatsView();
+
+            expect(wrapper.text()).toContain('stats.trends.subcategory.no_data');
         });
     });
 });
