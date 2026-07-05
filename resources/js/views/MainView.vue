@@ -36,6 +36,7 @@
                                 mode="single"
                                 class="w-full h-full"
                                 @edit="handleEdit"
+                                @update-task="handleUpdateTask"
                             />
                             <div class="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none opacity-40 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-secondary)]">
                                 {{ $t('app.sections.plans') }} ↓
@@ -48,6 +49,7 @@
                                 mode="single"
                                 class="w-full h-full"
                                 @edit="handleEdit"
+                                @update-task="handleUpdateTask"
                             />
                             <div class="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none opacity-40 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-secondary)]">
                                 ↑ {{ $t('app.sections.plans') }}
@@ -63,6 +65,7 @@
                                 mode="single"
                                 class="w-full h-full"
                                 @edit="handleEdit"
+                                @update-task="handleUpdateTask"
                             />
                             <div class="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none opacity-40 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-secondary)]">
                                 ↑ {{ $t('app.sections.routine') }}
@@ -108,6 +111,7 @@
                                 :key="task.id"
                                 :task="task"
                                 @edit="handleEdit"
+                                @update-task="handleUpdateTask"
                                 @delete="deleteTask"
                             />
                         </TransitionGroup>
@@ -122,7 +126,7 @@
                 v-if="store.filterCat !== 'archive' && store.filterCat !== 'hidden'" 
                 class="flex-1 bg-[var(--bg-card)] rounded-3xl shadow-sm border border-[var(--color-border)] relative overflow-hidden flex flex-col min-h-0 min-w-0"
             >
-                <TaskVisualizer class="flex-1 w-full h-full" @edit="handleEdit" />
+                <TaskVisualizer class="flex-1 w-full h-full" @edit="handleEdit" @update-task="handleUpdateTask" />
             </div>
 
             <div
@@ -140,6 +144,7 @@
                             :key="task.id"
                             :task="task"
                             @edit="handleEdit"
+                            @update-task="handleUpdateTask"
                             @delete="deleteTask"
                         />
                     </TransitionGroup>
@@ -236,6 +241,14 @@ const toggleSearch = () => {
 };
 
 const handleEdit = (task) => { router.push(`/task/${task.id}`); };
+
+const handleUpdateTask = async ({ taskId, changes }) => {
+    try {
+        await store.updateTask(taskId, changes);
+    } catch {
+        // silently fail — the visual feedback (quadrant change) is already applied
+    }
+};
 const openAdvancedAdd = (presetTitle = '') => { router.push(`/task/new?title=${encodeURIComponent(presetTitle)}`); };
 
 const deleteTask = async (id) => {

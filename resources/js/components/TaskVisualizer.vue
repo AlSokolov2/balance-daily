@@ -21,6 +21,7 @@
                 :tasks="resolvedTasks"
                 :mode="pluginMode"
                 @edit="handleEdit"
+                @update-task="handleUpdateTask"
             />
             <template #fallback>
                 <div class="flex-1 flex items-center justify-center">
@@ -45,7 +46,7 @@ const props = defineProps({
     mode: { type: String, default: 'combined' },
 });
 
-const emit = defineEmits(['edit']);
+const emit = defineEmits(['edit', 'update-task']);
 const store = useBalanceStore();
 
 const error = ref(null);
@@ -103,5 +104,9 @@ onErrorCaptured((err) => {
 
 const handleEdit = (task) => {
     emit('edit', task);
+};
+
+const handleUpdateTask = (payload) => {
+    emit('update-task', payload);
 };
 </script>

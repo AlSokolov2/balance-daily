@@ -1,6 +1,5 @@
 <template>
     <div class="flex-1 flex flex-col min-h-0 min-w-0 p-4 gap-4">
-        <!-- Header: axis labels -->
         <div class="grid grid-cols-[auto_1fr] gap-2 items-stretch flex-1 min-h-0">
             <!-- Y-axis label (left) -->
             <div class="flex items-center justify-center pr-2">
@@ -13,21 +12,23 @@
             <div class="flex-1 flex flex-col min-h-0">
                 <!-- Top row: Q1 + Q2 (high importance) -->
                 <div class="flex-1 grid grid-cols-2 gap-1 min-h-0">
-                    <!-- Q1: Urgent + Important -->
                     <QuadrantCard
                         :tasks="quadrants.q1"
                         :label="$t('eisenhower.q1')"
                         :color="'var(--color-danger, #ef4444)'"
                         variant="solid"
+                        quadrant="q1"
                         @edit="$emit('edit', $event)"
+                        @move-task="handleMoveTask"
                     />
-                    <!-- Q2: Not Urgent + Important -->
                     <QuadrantCard
                         :tasks="quadrants.q2"
                         :label="$t('eisenhower.q2')"
                         :color="'var(--color-primary, #3b82f6)'"
                         variant="soft"
+                        quadrant="q2"
                         @edit="$emit('edit', $event)"
+                        @move-task="handleMoveTask"
                     />
                 </div>
 
@@ -48,21 +49,23 @@
 
                 <!-- Bottom row: Q4 + Q3 (low importance) -->
                 <div class="flex-1 grid grid-cols-2 gap-1 min-h-0">
-                    <!-- Q4: Not Urgent + Not Important -->
                     <QuadrantCard
                         :tasks="quadrants.q4"
                         :label="$t('eisenhower.q4')"
                         :color="'var(--color-secondary)'"
                         variant="ghost"
+                        quadrant="q4"
                         @edit="$emit('edit', $event)"
+                        @move-task="handleMoveTask"
                     />
-                    <!-- Q3: Urgent + Not Important -->
                     <QuadrantCard
                         :tasks="quadrants.q3"
                         :label="$t('eisenhower.q3')"
                         :color="'var(--color-warning, #f59e0b)'"
                         variant="muted"
+                        quadrant="q3"
                         @edit="$emit('edit', $event)"
+                        @move-task="handleMoveTask"
                     />
                 </div>
             </div>
@@ -79,15 +82,17 @@ const props = defineProps({
     mode: { type: String, default: 'combined' },
 });
 
-defineEmits(['edit']);
+const emit = defineEmits(['edit', 'update-task']);
 
 const HIGH_IMPORTANCE_THRESHOLD = 2.0;
+const HIGH_IMPORTANCE_VALUE = 3;
+const LOW_IMPORTANCE_VALUE = 1;
 
 const quadrants = computed(() => {
-    const q1 = []; // urgent + important
-    const q2 = []; // not urgent + important
-    const q3 = []; // urgent + not important
-    const q4 = []; // not urgent + not important
+    const q1 = [];
+    const q2 = [];
+    const q3 = [];
+    const q4 = [];
 
     for (const task of props.tasks) {
         const isUrgent = task.urgency === 'urgent';
@@ -101,4 +106,34 @@ const quadrants = computed(() => {
 
     return { q1, q2, q3, q4 };
 });
+
+/**
+ * Handle task move between quadrants.
+ * Computes new urgency/importance based on target quadrant.
+ */
+function handleMoveTask({ taskId, fromQuadrant: _fromQuadrant, toQuadrant }) {
+    const task = props.tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const changes = {};
+
+    // Determine target urgency based on quadrant
+    if (toQuadrant === 'q1' || toQuadrant === 'q3') {
+        changes.urgency = 'urgent';
+    } else {
+        changes.urgency = 'not_urgent';
+    }
+
+    // Determine target importance based on quadrant
+    if (toQuadrant === 'q1' || toQuadrant === 'q2') {
+        changes.importance = HIGH_IMPORTANCE_VALUE;
+    } else {
+        changes.importance = LOW_IMPORTANCE_VALUE;
+    }
+
+    // Only emit if something actually changes
+    if (changes.urgency !== task.urgency || Math.abs(changes.importance - parseFloat(task.importance || 2)) > 0.01) {
+        emit('update-task', { taskId, changes });
+    }
+}
 </script>

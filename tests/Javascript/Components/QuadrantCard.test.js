@@ -10,6 +10,7 @@ describe('QuadrantCard Component', () => {
                 label: 'Test Quadrant',
                 color: '#ef4444',
                 variant: 'solid',
+                quadrant: 'q1',
                 ...props,
             },
             global: {

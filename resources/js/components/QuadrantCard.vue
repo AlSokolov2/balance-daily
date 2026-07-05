@@ -1,10 +1,14 @@
 <template>
     <div
         :class="[
-            'flex flex-col rounded-2xl border p-3 overflow-hidden min-h-0 cursor-pointer transition-all',
+            'flex flex-col rounded-2xl border p-3 overflow-hidden min-h-0 transition-all',
             'hover:shadow-sm active:scale-[0.99]',
+            dragOver ? 'ring-2 ring-offset-1 scale-[1.02]' : '',
             colorClasses
         ]"
+        @dragover.prevent="onDragOver"
+        @dragleave="onDragLeave"
+        @drop.prevent="onDrop"
     >
         <!-- Header with label + count -->
         <div class="flex items-center justify-between shrink-0 mb-1">
@@ -27,8 +31,12 @@
             <div
                 v-for="task in tasks"
                 :key="task.id"
-                class="flex items-center gap-2 py-1 px-1.5 rounded-lg hover:bg-white/10 transition-colors text-[11px] cursor-pointer shrink-0"
+                draggable="true"
+                class="flex items-center gap-2 py-1 px-1.5 rounded-lg hover:bg-white/10 transition-colors text-[11px] cursor-grab active:cursor-grabbing shrink-0"
+                :class="{ 'opacity-50': draggingId === task.id }"
                 @click.stop="$emit('edit', task)"
+                @dragstart="onDragStart($event, task)"
+                @dragend="onDragEnd"
             >
                 <div
                     class="w-1.5 h-1.5 rounded-full shrink-0"
@@ -51,16 +59,20 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps({
     tasks: { type: Array, required: true },
     label: { type: String, required: true },
     color: { type: String, default: 'var(--color-secondary)' },
     variant: { type: String, default: 'solid' },
+    quadrant: { type: String, required: true },
 });
 
-defineEmits(['edit']);
+const emit = defineEmits(['edit', 'move-task']);
+
+const dragOver = ref(false);
+const draggingId = ref(null);
 
 const colorClasses = computed(() => {
     switch (props.variant) {
@@ -77,10 +89,50 @@ const colorClasses = computed(() => {
     }
 });
 
+function onDragStart(event, task) {
+    draggingId.value = task.id;
+    event.dataTransfer.setData('application/json', JSON.stringify({
+        taskId: task.id,
+        fromQuadrant: props.quadrant,
+    }));
+    event.dataTransfer.effectAllowed = 'move';
+}
+
+function onDragEnd() {
+    draggingId.value = null;
+    dragOver.value = false;
+}
+
+function onDragOver(event) {
+    event.dataTransfer.dropEffect = 'move';
+    dragOver.value = true;
+}
+
+function onDragLeave() {
+    dragOver.value = false;
+}
+
+function onDrop(event) {
+    dragOver.value = false;
+    const raw = event.dataTransfer.getData('application/json');
+    if (!raw) return;
+    try {
+        const data = JSON.parse(raw);
+        // Only emit if dropping on a different quadrant
+        if (data.fromQuadrant !== props.quadrant) {
+            // Find the task in our tasks list (we don't have it by ID, so emit the ID)
+            // The parent will look up the task from its full list
+            emit('move-task', {
+                taskId: data.taskId,
+                fromQuadrant: data.fromQuadrant,
+                toQuadrant: props.quadrant,
+            });
+        }
+    } catch { /* ignore invalid data */ }
+}
+
 function taskColor(task) {
-    // Use category color if available
     if (task.category_color) return task.category_color;
-    // Fallback based on importance
     const imp = parseFloat(task.importance || 2);
     if (imp >= 3) return 'var(--color-danger, #ef4444)';
     if (imp >= 2) return 'var(--color-primary, #3b82f6)';

@@ -88,7 +88,7 @@
                                 v-for="p in vizPlugins"
                                 :key="p.name"
                                 :class="['py-3 rounded-xl text-xs font-bold transition-all', store.visualStyle === p.name ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']"
-                                @click="async () => { await ensurePlugin(p.name); store.setVisualStyle(p.name); }"
+                                @click="selectPlugin(p.name)"
                             >
                                 {{ p.label[store.locale] || p.label.en || p.name }}
                             </button>
@@ -352,6 +352,11 @@ const linkGoogle = async () => {
 };
 
 const editableCats = reactive({});
+
+const selectPlugin = async (name) => {
+    await ensurePlugin(name);
+    store.setVisualStyle(name);
+};
 
 const changeLanguage = (l) => {
     store.setLocale(l);
