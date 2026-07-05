@@ -40,13 +40,19 @@ class StatsController extends Controller
         $heatmap = $completions->groupBy(fn ($c) => $c->completed_at->toDateString())
             ->map(fn ($group) => $group->count());
 
-        // 2. Category Balance
-        $categoryBalance = DB::table('task_completions')
-            ->join('tasks', 'task_completions.task_id', '=', 'tasks.id')
-            ->where('task_completions.user_id', $user->id)
-            ->where('task_completions.completed_at', '>=', $now->copy()->subDays(30)->startOfDay())
-            ->select('tasks.category_slug', DB::raw('count(*) as count'))
-            ->groupBy('tasks.category_slug')
+        // 2. Category Balance — all categories, zero if no completions in last 30 days
+        $categoryBalance = DB::table('categories')
+            ->where('categories.user_id', $user->id)
+            ->leftJoin('tasks', function ($join) use ($user) {
+                $join->on('categories.slug', '=', 'tasks.category_slug')
+                    ->where('tasks.user_id', '=', $user->id);
+            })
+            ->leftJoin('task_completions', function ($join) use ($now) {
+                $join->on('tasks.id', '=', 'task_completions.task_id')
+                    ->where('task_completions.completed_at', '>=', $now->copy()->subDays(30)->startOfDay());
+            })
+            ->select('categories.slug as category_slug', DB::raw('COUNT(task_completions.id) as count'))
+            ->groupBy('categories.slug')
             ->get();
 
         // 3. Basic Counters
@@ -60,7 +66,7 @@ class StatsController extends Controller
         $status = $this->calculateStatus((int) $user->id, $now, $todayCount);
 
         // 6. Trends
-        $trends = $this->calculateTrends((int) $user->id, $completions, $now);
+        $trends = $this->calculateTrends((int) $user->id, $completions, $now, $period);
 
         // 7. Annual summary (only for 365d)
         $annual = null;
@@ -186,9 +192,10 @@ class StatsController extends Controller
      * hour-of-day heatmap, and subcategory performance.
      *
      * @param  \Illuminate\Database\Eloquent\Collection<int, TaskCompletion>  $completions
-     * @return array{weekly: array<int, array{week_start: string, count: int}>, day_of_week: array<int, array{day: int, count: int}>, hour_of_day: array<int, array{hour: int, count: int}>, subcategory: array<int, array{name: string, count: int}>}
+     * @param  int  $period  Selected period in days (30–365)
+     * @return array{weekly: array<int, array{week_start: string, count: int}>, day_of_week: array<int, array{day: int, count: int}>, hour_of_day: array<int, array{hour: int, count: int}>, subcategory: array<int, array{category_slug: string, items: array<int, array{name: string, count: int}>}>}
      */
-    private function calculateTrends(int $userId, $completions, Carbon $now): array
+    private function calculateTrends(int $userId, $completions, Carbon $now, int $period): array
     {
         // 1. Weekly completions (last 12 weeks)
         $weekly = [];
@@ -224,24 +231,51 @@ class StatsController extends Controller
             ];
         }
 
-        // 4. Subcategory performance (last 90 days)
-        $subcategoryData = DB::table('task_completions')
-            ->where('task_completions.user_id', $userId)
-            ->where('task_completions.completed_at', '>=', $now->copy()->subDays(90)->startOfDay())
-            ->join('tasks', 'task_completions.task_id', '=', 'tasks.id')
-            ->whereNotNull('tasks.subcategory')
-            ->where('tasks.subcategory', '!=', '')
-            ->select('tasks.subcategory as name', DB::raw('count(*) as count'))
-            ->groupBy('tasks.subcategory')
-            ->orderByDesc('count')
-            ->limit(10)
-            ->get();
+        // 4. Subcategory performance (user's selected period)
+        // Use Eloquent to decrypt subcategory field; group by category
+        $tasksWithSubcat = Task::where('user_id', $userId)
+            ->whereNotNull('subcategory')
+            ->where('subcategory', '!=', '')
+            ->get(['id', 'category_slug', 'subcategory']);
+
+        $subcategoryData = [];
+
+        if ($tasksWithSubcat->isNotEmpty()) {
+            $completionCounts = DB::table('task_completions')
+                ->where('task_completions.user_id', $userId)
+                ->where('task_completions.completed_at', '>=', $now->copy()->subDays($period)->startOfDay())
+                ->whereIn('task_id', $tasksWithSubcat->pluck('id'))
+                ->select('task_id', DB::raw('COUNT(*) as count'))
+                ->groupBy('task_id')
+                ->pluck('count', 'task_id');
+
+            $subcategoryData = $tasksWithSubcat
+                ->groupBy('category_slug')
+                ->map(function ($tasks, $slug) use ($completionCounts) {
+                    $items = $tasks
+                        ->groupBy(fn (Task $t) => (string) $t->subcategory)
+                        ->map(fn ($subTasks, $name) => [
+                            'name' => $name,
+                            'count' => $subTasks->sum(fn (Task $t) => (int) ($completionCounts[$t->id] ?? 0)),
+                        ])
+                        ->sortByDesc('count')
+                        ->values()
+                        ->all();
+
+                    return [
+                        'category_slug' => $slug,
+                        'items' => $items,
+                    ];
+                })
+                ->values()
+                ->all();
+        }
 
         return [
             'weekly' => $weekly,
             'day_of_week' => $dayOfWeek,
             'hour_of_day' => $hourOfDay,
-            'subcategory' => $subcategoryData->toArray(),
+            'subcategory' => $subcategoryData,
         ];
     }
 
@@ -251,25 +285,41 @@ class StatsController extends Controller
      * @param  \Illuminate\Database\Eloquent\Collection<int, TaskCompletion>  $completions
      * @param  \Illuminate\Support\Collection<int, \stdClass>  $categoryBalance
      * @param  array{current: int, longest: int}  $streakData
-     * @return array{total: int, top_categories: array<int, array{slug: string, count: int}>, top_subcategories: array<int, array{name: string, count: int}>, best_streak: int, best_day: int, best_hour: int}
+     * @return array{total: int, top_categories: array<int, array{slug: string, count: int}>, top_subcategories: array<int, array{name: string, category_slug: string, count: int}>, best_streak: int, best_day: int, best_hour: int}
      */
     private function calculateAnnualSummary($completions, $categoryBalance, array $streakData): array
     {
         // Top categories (sorted by count)
         $topCategories = $categoryBalance->sortByDesc('count')->take(3)->values()->toArray();
 
-        // Top subcategories via a single DB query (avoid N+1 on task relation)
-        $subcatData = DB::table('task_completions')
+        // Top subcategories via Eloquent (decrypt subcategory field) + DB aggregation
+        $allTasksWithSubcat = Task::where('user_id', $this->user()->id)
+            ->whereNotNull('subcategory')
+            ->where('subcategory', '!=', '')
+            ->get(['id', 'category_slug', 'subcategory']);
+
+        $subcatCompletions = DB::table('task_completions')
             ->where('task_completions.user_id', $this->user()->id)
             ->where('task_completions.completed_at', '>=', now()->subDays(365)->startOfDay())
-            ->join('tasks', 'task_completions.task_id', '=', 'tasks.id')
-            ->whereNotNull('tasks.subcategory')
-            ->where('tasks.subcategory', '!=', '')
-            ->select('tasks.subcategory as name', DB::raw('count(*) as count'))
-            ->groupBy('tasks.subcategory')
-            ->orderByDesc('count')
-            ->limit(3)
-            ->get()
+            ->whereIn('task_id', $allTasksWithSubcat->pluck('id'))
+            ->select('task_id', DB::raw('COUNT(*) as count'))
+            ->groupBy('task_id')
+            ->pluck('count', 'task_id');
+
+        $subcatData = $allTasksWithSubcat
+            ->groupBy(fn (Task $t) => (string) $t->subcategory)
+            ->map(function ($subTasks, $name) use ($subcatCompletions) {
+                $firstTask = $subTasks->first();
+
+                return [
+                    'name' => $name,
+                    'category_slug' => $firstTask->category_slug ?? '',
+                    'count' => $subTasks->sum(fn (Task $t) => (int) ($subcatCompletions[$t->id] ?? 0)),
+                ];
+            })
+            ->sortByDesc('count')
+            ->take(3)
+            ->values()
             ->toArray();
 
         // Best day of week
