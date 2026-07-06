@@ -32,7 +32,7 @@
                 class="flex items-center gap-2 py-1 px-1.5 rounded-lg hover:bg-white/10 transition-colors text-[11px] cursor-grab active:cursor-grabbing shrink-0"
                 :class="{ 'opacity-50': isDraggingThis(task) }"
                 @click.stop="$emit('edit', task)"
-                @pointerdown.prevent="onTaskPointerDown(task, quadrant, $event)"
+                @pointerdown="onTaskPointerDown(task, quadrant, $event)"
             >
                 <div
                     class="w-1.5 h-1.5 rounded-full shrink-0"
