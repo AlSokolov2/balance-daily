@@ -38,6 +38,7 @@ class TaskController extends Controller
             'urgency' => 'nullable|string|in:urgent,not_urgent',
             'subcategory' => 'nullable|string',
             'deadline' => 'nullable|date',
+            'scheduled_date' => 'nullable|date',
             'postpone_until' => 'nullable|date',
             'repeat_type' => 'nullable|string',
             'repeat_interval' => 'nullable|integer',
@@ -89,6 +90,7 @@ class TaskController extends Controller
             'urgency' => 'sometimes|nullable|string|in:urgent,not_urgent',
             'subcategory' => 'nullable|string',
             'deadline' => 'nullable|date',
+            'scheduled_date' => 'nullable|date',
             'postpone_until' => 'nullable|date',
             'repeat_type' => 'nullable|string',
             'repeat_interval' => 'nullable|integer',
@@ -170,7 +172,7 @@ class TaskController extends Controller
      */
     private function sanitizeDateFields(Request $request): void
     {
-        $dateFields = ['deadline', 'postpone_until', 'hidden_until', 'last_completed_date', 'completed_at'];
+        $dateFields = ['deadline', 'scheduled_date', 'postpone_until', 'hidden_until', 'last_completed_date', 'completed_at'];
 
         foreach ($dateFields as $field) {
             if ($request->has($field) && $request->input($field) === '') {

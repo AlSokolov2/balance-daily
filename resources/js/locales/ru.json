@@ -146,6 +146,7 @@
         },
         "subcategory": "Подкатегория",
         "deadline": "Дедлайн",
+        "scheduled_date": "Запланировано на",
         "postpone_until": "Отложить до",
         "hidden_until": "Появится (дата)",
         "add_completion": "Добавить",

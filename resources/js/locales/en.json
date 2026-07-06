@@ -147,6 +147,7 @@
         },
         "subcategory": "Subcategory",
         "deadline": "Deadline",
+        "scheduled_date": "Scheduled date",
         "postpone_until": "Postpone until",
         "hidden_until": "Appears on (date)",
         "add_completion": "Add",

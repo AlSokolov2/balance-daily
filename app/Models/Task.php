@@ -22,6 +22,7 @@ class Task extends Model
         'urgency',
         'subcategory',
         'deadline',
+        'scheduled_date',
         'postpone_until',
         'repeat_type',
         'repeat_interval',
