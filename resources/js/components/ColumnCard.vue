@@ -28,10 +28,9 @@
             <div
                 v-for="task in tasks"
                 :key="task.id"
-                class="flex items-center gap-2 py-2 px-2 rounded-lg hover:bg-white/10 transition-colors text-[11px] cursor-grab active:cursor-grabbing shrink-0"
+                class="flex items-center gap-2 py-2 px-2 rounded-lg hover:bg-white/10 transition-colors text-[11px] shrink-0"
                 :class="{ 'opacity-50': isDraggingThis(task) }"
                 @click.stop="$emit('edit', task)"
-                @pointerdown="onTaskPointerDown(task, column, $event)"
             >
                 <div
                     class="w-2 h-2 rounded-full shrink-0"
@@ -50,6 +49,12 @@
                     v-if="task.urgency === 'urgent'"
                     class="text-[9px] font-black text-red-400 shrink-0"
                 >!</span>
+                <span
+                    class="drag-handle flex items-center justify-center w-5 h-5 rounded-md shrink-0 text-[var(--color-secondary)] opacity-40 hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+                    style="touch-action: none"
+                    @click.stop
+                    @pointerdown="onTaskPointerDown(task, column, $event)"
+                >⋮⋮</span>
             </div>
 
             <!-- Empty state -->
