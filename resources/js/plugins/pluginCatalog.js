@@ -31,6 +31,11 @@ export const pluginCatalog = [
         label: { ru: 'Эйзенхауэр', en: 'Eisenhower' },
         loader: () => import('./EisenhowerPlugin.js'),
     },
+    {
+        name: 'daily',
+        label: { ru: 'Планер', en: 'Planner' },
+        loader: () => import('./DailyPlannerPlugin.js'),
+    },
 ];
 
 /**

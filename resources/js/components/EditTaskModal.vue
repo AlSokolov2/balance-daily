@@ -200,6 +200,18 @@
                     <input v-model="editData.scheduled_date" type="date" class="w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-[11px] text-[var(--color-text)] outline-none">
                 </div>
                 <div>
+                    <label class="text-[9px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-1.5">{{ $t('edit_task.estimated_duration') }}</label>
+                    <input
+                        v-model.number="editData.estimated_duration"
+                        type="number"
+                        min="5"
+                        max="480"
+                        step="5"
+                        placeholder="30"
+                        class="w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-[11px] text-[var(--color-text)] outline-none"
+                    >
+                </div>
+                <div>
                     <label class="text-[9px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-1.5">{{ $t('edit_task.hidden_until') }}</label>
                     <input v-model="editData.hidden_until" type="datetime-local" class="w-full p-2.5 bg-[var(--bg-secondary)] border border-[var(--color-border)] rounded-xl text-[11px] text-[var(--color-text)] outline-none">
                 </div>

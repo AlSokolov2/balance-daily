@@ -23,6 +23,7 @@ class Task extends Model
         'subcategory',
         'deadline',
         'scheduled_date',
+        'estimated_duration',
         'postpone_until',
         'repeat_type',
         'repeat_interval',

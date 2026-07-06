@@ -12,11 +12,12 @@ describe('pluginCatalog', () => {
         }
     });
 
-    it('contains bubbles, treemap, and eisenhower entries', () => {
+    it('contains all builtin plugins', () => {
         const names = pluginCatalog.map(e => e.name);
         expect(names).toContain('bubbles');
         expect(names).toContain('treemap');
         expect(names).toContain('eisenhower');
+        expect(names).toContain('daily');
     });
 
     it('each entry has ru and en labels', () => {

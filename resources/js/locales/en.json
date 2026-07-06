@@ -148,6 +148,7 @@
         "subcategory": "Subcategory",
         "deadline": "Deadline",
         "scheduled_date": "Scheduled date",
+        "estimated_duration": "Duration (min)",
         "postpone_until": "Postpone until",
         "hidden_until": "Appears on (date)",
         "add_completion": "Add",
@@ -281,5 +282,13 @@
         "q2": "Plan",
         "q3": "Delegate",
         "q4": "Eliminate"
+    },
+    "daily": {
+        "today": "Today",
+        "unscheduled": "Backlog",
+        "empty_today": "No tasks planned for today.\nDrag tasks from Backlog →",
+        "empty_unscheduled": "No more tasks.\nDrag here to unschedule",
+        "total": "Total",
+        "tasks_today": "tasks"
     }
 }
