@@ -1,14 +1,12 @@
 <template>
     <div
+        :data-drop-zone="quadrant"
         :class="[
             'flex flex-col rounded-2xl border p-3 overflow-hidden min-h-0 transition-all',
             'hover:shadow-sm active:scale-[0.99]',
-            dragOver ? 'ring-2 ring-offset-1 scale-[1.02]' : '',
+            isDragOver ? 'ring-2 ring-offset-1 scale-[1.02]' : '',
             colorClasses
         ]"
-        @dragover.prevent="onDragOver"
-        @dragleave="onDragLeave"
-        @drop.prevent="onDrop"
     >
         <!-- Header with label + count -->
         <div class="flex items-center justify-between shrink-0 mb-1">
@@ -31,12 +29,10 @@
             <div
                 v-for="task in tasks"
                 :key="task.id"
-                draggable="true"
                 class="flex items-center gap-2 py-1 px-1.5 rounded-lg hover:bg-white/10 transition-colors text-[11px] cursor-grab active:cursor-grabbing shrink-0"
-                :class="{ 'opacity-50': draggingId === task.id }"
+                :class="{ 'opacity-50': isDraggingThis(task) }"
                 @click.stop="$emit('edit', task)"
-                @dragstart="onDragStart($event, task)"
-                @dragend="onDragEnd"
+                @pointerdown.prevent="onTaskPointerDown(task, quadrant, $event)"
             >
                 <div
                     class="w-1.5 h-1.5 rounded-full shrink-0"
@@ -59,7 +55,8 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, watch } from 'vue';
+import { useDragTask } from '../composables/useDragTask.js';
 
 const props = defineProps({
     tasks: { type: Array, required: true },
@@ -71,8 +68,24 @@ const props = defineProps({
 
 const emit = defineEmits(['edit', 'move-task']);
 
-const dragOver = ref(false);
-const draggingId = ref(null);
+const { dragOverZone, dragData, lastDrop, onTaskPointerDown } = useDragTask();
+
+const isDragOver = computed(() => dragOverZone.value === props.quadrant);
+
+function isDraggingThis(task) {
+    return dragData.value?.taskId === task.id;
+}
+
+// Emit move-task when a drop completes on this quadrant
+watch(lastDrop, (drop) => {
+    if (drop && drop.toZone === props.quadrant) {
+        emit('move-task', {
+            taskId: drop.taskId,
+            fromQuadrant: drop.fromZone,
+            toQuadrant: props.quadrant,
+        });
+    }
+});
 
 const colorClasses = computed(() => {
     switch (props.variant) {
@@ -88,48 +101,6 @@ const colorClasses = computed(() => {
         return 'border-[var(--color-border)] bg-[var(--bg-card)]';
     }
 });
-
-function onDragStart(event, task) {
-    draggingId.value = task.id;
-    event.dataTransfer.setData('application/json', JSON.stringify({
-        taskId: task.id,
-        fromQuadrant: props.quadrant,
-    }));
-    event.dataTransfer.effectAllowed = 'move';
-}
-
-function onDragEnd() {
-    draggingId.value = null;
-    dragOver.value = false;
-}
-
-function onDragOver(event) {
-    event.dataTransfer.dropEffect = 'move';
-    dragOver.value = true;
-}
-
-function onDragLeave() {
-    dragOver.value = false;
-}
-
-function onDrop(event) {
-    dragOver.value = false;
-    const raw = event.dataTransfer.getData('application/json');
-    if (!raw) return;
-    try {
-        const data = JSON.parse(raw);
-        // Only emit if dropping on a different quadrant
-        if (data.fromQuadrant !== props.quadrant) {
-            // Find the task in our tasks list (we don't have it by ID, so emit the ID)
-            // The parent will look up the task from its full list
-            emit('move-task', {
-                taskId: data.taskId,
-                fromQuadrant: data.fromQuadrant,
-                toQuadrant: props.quadrant,
-            });
-        }
-    } catch { /* ignore invalid data */ }
-}
 
 function taskColor(task) {
     if (task.category_color) return task.category_color;

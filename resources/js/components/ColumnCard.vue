@@ -1,13 +1,11 @@
 <template>
     <div
+        :data-drop-zone="column"
         :class="[
             'flex flex-col rounded-2xl border p-3 overflow-hidden min-h-0 transition-all',
-            dragOver ? 'ring-2 ring-offset-1 scale-[1.02]' : '',
+            isDragOver ? 'ring-2 ring-offset-1 scale-[1.02]' : '',
         ]"
         :style="{ borderColor: color + '30', backgroundColor: color + '08' }"
-        @dragover.prevent="onDragOver"
-        @dragleave="onDragLeave"
-        @drop.prevent="onDrop"
     >
         <!-- Header -->
         <div class="flex items-center justify-between shrink-0 mb-2">
@@ -30,12 +28,10 @@
             <div
                 v-for="task in tasks"
                 :key="task.id"
-                draggable="true"
                 class="flex items-center gap-2 py-2 px-2 rounded-lg hover:bg-white/10 transition-colors text-[11px] cursor-grab active:cursor-grabbing shrink-0"
-                :class="{ 'opacity-50': draggingId === task.id }"
+                :class="{ 'opacity-50': isDraggingThis(task) }"
                 @click.stop="$emit('edit', task)"
-                @dragstart="onDragStart($event, task)"
-                @dragend="onDragEnd"
+                @pointerdown.prevent="onTaskPointerDown(task, column, $event)"
             >
                 <div
                     class="w-2 h-2 rounded-full shrink-0"
@@ -68,7 +64,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { computed, watch } from 'vue';
+import { useDragTask } from '../composables/useDragTask.js';
 
 const props = defineProps({
     tasks: { type: Array, required: true },
@@ -80,46 +77,22 @@ const props = defineProps({
 
 const emit = defineEmits(['edit', 'move-task']);
 
-const dragOver = ref(false);
-const draggingId = ref(null);
+const { dragOverZone, dragData, lastDrop, onTaskPointerDown } = useDragTask();
 
-function onDragStart(event, task) {
-    draggingId.value = task.id;
-    event.dataTransfer.setData('application/json', JSON.stringify({
-        taskId: task.id,
-        fromColumn: props.column,
-    }));
-    event.dataTransfer.effectAllowed = 'move';
+const isDragOver = computed(() => dragOverZone.value === props.column);
+
+function isDraggingThis(task) {
+    return dragData.value?.taskId === task.id;
 }
 
-function onDragEnd() {
-    draggingId.value = null;
-    dragOver.value = false;
-}
-
-function onDragOver(event) {
-    event.dataTransfer.dropEffect = 'move';
-    dragOver.value = true;
-}
-
-function onDragLeave() {
-    dragOver.value = false;
-}
-
-function onDrop(event) {
-    dragOver.value = false;
-    const raw = event.dataTransfer.getData('application/json');
-    if (!raw) return;
-    try {
-        const data = JSON.parse(raw);
-        if (data.fromColumn !== props.column) {
-            emit('move-task', {
-                taskId: data.taskId,
-                toColumn: props.column,
-            });
-        }
-    } catch { /* ignore invalid data */ }
-}
+watch(lastDrop, (drop) => {
+    if (drop && drop.toZone === props.column) {
+        emit('move-task', {
+            taskId: drop.taskId,
+            toColumn: props.column,
+        });
+    }
+});
 </script>
 
 <style scoped>

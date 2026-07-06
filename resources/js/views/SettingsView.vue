@@ -83,13 +83,20 @@
 
                     <div>
                         <label class="text-[10px] text-[var(--color-secondary)] uppercase font-black px-1 tracking-widest block mb-3">{{ $t('settings.general.visual_style') }}</label>
-                        <div :class="['grid gap-2 bg-[var(--bg-secondary)] p-1 rounded-2xl border border-[var(--color-border)]', vizPlugins.length <= 2 ? 'grid-cols-2' : 'grid-cols-3']">
+                        <div class="flex flex-col gap-1 bg-[var(--bg-secondary)]/50 p-1 rounded-2xl border border-[var(--color-border)]">
                             <button
                                 v-for="p in vizPlugins"
                                 :key="p.name"
-                                :class="['py-3 rounded-xl text-xs font-bold transition-all', store.visualStyle === p.name ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm' : 'bg-transparent text-[var(--color-secondary)]']"
+                                :class="['flex items-center gap-3 w-full py-3 px-4 rounded-xl text-sm font-bold transition-all text-left',
+                                         store.visualStyle === p.name
+                                             ? 'bg-[var(--bg-card)] text-[var(--color-text)] shadow-sm'
+                                             : 'bg-transparent text-[var(--color-secondary)] hover:bg-white/5']"
                                 @click="selectPlugin(p.name)"
                             >
+                                <span
+                                    class="w-2.5 h-2.5 rounded-full shrink-0 transition-all"
+                                    :class="store.visualStyle === p.name ? 'bg-[var(--color-primary)] scale-100' : 'bg-[var(--color-border)] scale-75'"
+                                />
                                 {{ p.label[store.locale] || p.label.en || p.name }}
                             </button>
                         </div>
