@@ -43,7 +43,8 @@
         },
         "accounts": {
             "connected": "Connected",
-            "link_google": "Link Google"
+            "link_google": "Link Google",
+            "link_error": "Failed to link account. Please try again later."
         }
     },
     "common": {

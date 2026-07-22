@@ -369,10 +369,11 @@ const hasGoogleLinked = computed(() => linkedProviders.value.some(p => p.provide
 
 const linkGoogle = async () => {
     try {
-        const { data } = await axios.post('/api/auth/link-token', { provider: 'google' });
+        const { data } = await axios.post('auth/link-token', { provider: 'google' });
         window.location.href = data.url;
-    } catch {
-        // silently fail
+    } catch (e) {
+        console.error('Link Google error:', e);
+        window.alert(t('settings.accounts.link_error'));
     }
 };
 
