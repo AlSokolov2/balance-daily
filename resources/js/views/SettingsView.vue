@@ -244,24 +244,6 @@
                         >
                             {{ $t('settings_modal.data.sync_button') }}
                         </BaseButton>
-                        <BaseButton
-                            variant="secondary"
-                            size="md"
-                            icon="download"
-                            class="w-full py-4"
-                            @click="exportData"
-                        >
-                            {{ $t('settings_modal.data.export_button') }}
-                        </BaseButton>
-                        <BaseButton
-                            variant="secondary"
-                            size="md"
-                            icon="upload"
-                            class="w-full py-4"
-                            @click="fileInput?.click()"
-                        >
-                            {{ $t('settings_modal.data.import_button') }}
-                        </BaseButton>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
@@ -275,13 +257,6 @@
                         </a>
                     </div>
                 </div>
-                <input
-                    ref="fileInput"
-                    type="file"
-                    accept=".json"
-                    class="hidden"
-                    @change="handleImport"
-                >
             </section>
 
             <!-- Section: Linked Accounts -->
@@ -362,7 +337,6 @@ const vizPlugins = computed(() => listPlugins());
 const { locale, t } = useI18n();
 const store = useBalanceStore();
 const router = useRouter();
-const fileInput = ref(null);
 const version = __APP_VERSION__;
 const linkedProviders = computed(() => store.user?.providers || []);
 const hasGoogleLinked = computed(() => linkedProviders.value.some(p => p.provider === 'google'));
@@ -406,40 +380,27 @@ const addCategory = () => {
 
 const saveCats = async () => {
     try {
-        await axios.post('import', {
-            categories: { ...editableCats, '__archive__': store.categories.find(c => c.slug === '__archive__') },
-            tasks: store.tasks, 
-            subcatCoeffs: store.subcatCoeffs,
-            notepad: store.notepadText
-        });
+        const cats = store.categories;
+        for (const [slug, data] of Object.entries(editableCats)) {
+            const existing = cats.find(c => c.slug === slug);
+            const payload = {
+                name: data.name,
+                weight: Math.round(parseFloat(data.weight)) / 100,
+                color: data.color,
+                hide_until: data.hide_until || null,
+            };
+            if (existing?.id) {
+                await axios.put(`categories/${existing.id}`, payload);
+            } else {
+                await axios.post('categories', { slug, ...payload });
+            }
+        }
         await store.fetchAll();
-    } catch { window.alert(t('settings_modal.categories.save_error')); }
-};
-
-const exportData = async () => {
-    try {
-        const res = await axios.get('export');
-        const b = new Blob([JSON.stringify(res.data)], { type: 'application/json' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(b);
-        a.download = 'balance_backup.json';
-        a.click();
-    } catch { /* ignored */ }
-};
-
-const handleImport = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-        try {
-            const data = JSON.parse(event.target.result);
-            await axios.post('import', data);
-            await store.fetchAll();
-            window.location.reload();
-        } catch { window.alert(t('settings_modal.data.import_error')); }
-    };
-    reader.readAsText(file);
+        initData();
+    } catch (e) {
+        console.error('Save categories error:', e);
+        window.alert(t('settings_modal.categories.save_error'));
+    }
 };
 
 onMounted(initData);
