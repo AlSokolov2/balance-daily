@@ -53,29 +53,22 @@ const syncWeights = (_s, _w) => {
 
 const handleSave = async (s, data) => {
     try {
-        // Prepare categories map for the existing import-based save logic
-        const categories = {};
-        store.categories.forEach(c => {
-            categories[c.slug] = {
-                name: c.name,
-                weight: Math.round(parseFloat(c.weight) * 100),
-                color: c.color,
-                hide_until: c.hide_until || ''
-            };
-        });
-
-        // Update or add the current one
-        categories[s] = data;
-
-        await axios.post('import', {
-            categories: categories,
-            tasks: store.tasks, 
-            subcatCoeffs: store.subcatCoeffs,
-            notepad: store.notepadText
-        });
+        const existing = store.categories.find(c => c.slug === s);
+        const payload = {
+            name: data.name,
+            weight: Math.round(parseFloat(data.weight)) / 100,
+            color: data.color,
+            hide_until: data.hide_until || null,
+        };
+        if (existing?.id) {
+            await axios.put(`categories/${existing.id}`, payload);
+        } else {
+            await axios.post('categories', { slug: s, ...payload });
+        }
         await store.fetchAll();
         router.push('/settings');
-    } catch {
+    } catch (e) {
+        console.error('Save category error:', e);
         window.alert(t('settings_modal.categories.save_error'));
     }
 };
@@ -86,23 +79,15 @@ const handleDelete = async (s) => {
         return;
     }
     if (window.confirm(t('app.alerts.delete_confirm'))) {
-        const categories = {};
-        store.categories.filter(c => c.slug !== s).forEach(c => {
-            categories[c.slug] = {
-                name: c.name,
-                weight: Math.round(parseFloat(c.weight) * 100),
-                color: c.color,
-                hide_until: c.hide_until || ''
-            };
-        });
-
-        await axios.post('import', {
-            categories: categories,
-            tasks: store.tasks, 
-            subcatCoeffs: store.subcatCoeffs,
-            notepad: store.notepadText
-        });
-        await store.fetchAll();
+        try {
+            const cat = store.categories.find(c => c.slug === s);
+            if (cat?.id) {
+                await axios.delete(`categories/${cat.id}`);
+                await store.fetchAll();
+            }
+        } catch (e) {
+            console.error('Delete category error:', e);
+        }
         router.push('/settings');
     }
 };

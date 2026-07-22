@@ -170,4 +170,88 @@ describe('SettingsView — Accounts tab', () => {
             alertSpy.mockRestore();
         });
     });
+
+    describe('saveCats — categories tab', () => {
+        it('saves categories via individual PUT requests with normalized weight', async () => {
+            window.apiBaseUrl = 'https://balance.example.com';
+            axios.defaults.baseURL = window.apiBaseUrl + '/api/';
+            axios.put.mockResolvedValue({ data: {} });
+            axios.post.mockResolvedValue({ data: {} });
+
+            const TasksStore = (await import('../../../resources/js/stores/tasks')).useTasksStore;
+            setActivePinia(createPinia());
+            const tasksStore = TasksStore();
+            tasksStore.categories = [
+                { id: 1, slug: 'chor', name: 'CHOR', weight: 0.13, color: '#ff3b30', hide_until: null },
+                { id: 2, slug: 'prog', name: 'PROG', weight: 0.46, color: '#34c759', hide_until: null },
+                { id: 3, slug: '__archive__', name: 'Archive', weight: 0.01, color: '#8e8e93', hide_until: null },
+            ];
+
+            const store = useBalanceStore();
+            Object.defineProperty(store, 'user', {
+                get: () => ({ id: 1, providers: [] }),
+                configurable: true,
+            });
+            // Also need store.categories getter to return tasksStore.categories
+            Object.defineProperty(store, 'categories', {
+                get: () => tasksStore.categories,
+                configurable: true,
+            });
+            store.fetchAll = vi.fn().mockResolvedValue(undefined);
+
+            const { default: SettingsView } = await import('../../../resources/js/views/SettingsView.vue');
+
+            const wrapper = mount(SettingsView, {
+                global: {
+                    stubs: {
+                        AppIcon: { template: '<span />' },
+                        BaseButton: {
+                            name: 'BaseButton',
+                            props: ['variant', 'size', 'icon', 'disabled', 'loading', 'class'],
+                            emits: ['click'],
+                            template: '<button class="base-btn-stub" @click="$emit(\'click\')"><slot /></button>',
+                        },
+                        RouterLink: { template: '<a><slot /></a>' },
+                    },
+                },
+            });
+
+            // Switch to categories tab
+            const allBtns = wrapper.findAll('button');
+            let catTabBtn = null;
+            for (const btn of allBtns) {
+                if (btn.text().includes('settings.tabs.cat')) {
+                    catTabBtn = btn;
+                    break;
+                }
+            }
+            if (catTabBtn) {
+                await catTabBtn.trigger('click');
+                await wrapper.vm.$nextTick();
+            }
+
+            // Click "Save" button
+            const saveBtn = wrapper.findAll('.base-btn-stub').find(
+                b => b.text().includes('settings_modal.categories.save_button')
+            );
+            expect(saveBtn).toBeTruthy();
+            await saveBtn.trigger('click');
+            await wrapper.vm.$nextTick();
+            await new Promise(r => setTimeout(r, 50));
+
+            // Should call PUT for each non-archive category with normalized weight
+            expect(axios.put).toHaveBeenCalledWith('categories/1', {
+                name: 'CHOR',
+                weight: 0.13,  // 13 / 100 = 0.13
+                color: '#ff3b30',
+                hide_until: null,
+            });
+            expect(axios.put).toHaveBeenCalledWith('categories/2', {
+                name: 'PROG',
+                weight: 0.46,
+                color: '#34c759',
+                hide_until: null,
+            });
+        });
+    });
 });
