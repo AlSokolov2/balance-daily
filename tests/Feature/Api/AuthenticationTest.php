@@ -466,4 +466,50 @@ class AuthenticationTest extends TestCase
         $response = $this->getJson('/api/user');
         $response->assertStatus(401);
     }
+
+    /**
+     * When the session is lost during the OAuth redirect (SameSite, proxy, etc.),
+     * the callback should recover the linking intent from cache using the OAuth state.
+     */
+    public function test_callback_links_provider_via_cache_fallback_when_session_lost(): void
+    {
+        $user = User::create([
+            'name' => 'Cache Linker',
+            'email' => 'cache-linker@example.com',
+        ]);
+
+        $oauthState = 'oauth-state-abc123';
+
+        // Simulate what linkRedirect does: store userId in cache keyed by OAuth state
+        cache(['auth_link_state_' . $oauthState => $user->id], 300);
+
+        $abstractUser = Mockery::mock('Laravel\Socialite\Two\User');
+        $abstractUser->shouldReceive('getId')->andReturn('google-linked-id');
+        $abstractUser->shouldReceive('getName')->andReturn('Cache Linker');
+        $abstractUser->shouldReceive('getEmail')->andReturn('google-email@example.com');
+        $abstractUser->shouldReceive('getAvatar')->andReturn('https://google.com/ava.jpg');
+        $abstractUser->token = 'google-token';
+
+        $provider = Mockery::mock('Laravel\Socialite\Two\AbstractProvider');
+        $provider->shouldReceive('user')->andReturn($abstractUser);
+
+        Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+        // No session intent — session was lost!
+        // The state query parameter is what Google returns in the callback URL.
+        $response = $this->get('/auth/google/callback?state=' . $oauthState);
+
+        $response->assertRedirect();
+        $this->assertStringContainsString('code=', $response->getTargetUrl());
+
+        // Provider was linked via cache fallback
+        $this->assertDatabaseHas('user_providers', [
+            'user_id' => $user->id,
+            'provider' => 'google',
+            'provider_id' => 'google-linked-id',
+        ]);
+
+        // Cache entry was consumed
+        $this->assertNull(cache('auth_link_state_' . $oauthState));
+    }
 }
