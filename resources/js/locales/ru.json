@@ -43,7 +43,8 @@
         },
         "accounts": {
             "connected": "Подключено",
-            "link_google": "Привязать Google"
+            "link_google": "Привязать Google",
+            "link_error": "Не удалось привязать аккаунт. Попробуйте позже."
         }
     },
     "common": {
