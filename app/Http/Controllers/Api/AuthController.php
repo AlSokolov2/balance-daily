@@ -70,6 +70,15 @@ class AuthController extends Controller
             $linkUserId = session()->pull('oauth_link_user_id');
             session()->pull('oauth_link_driver');
 
+            // Fallback: if session was lost, recover linking intent from cache
+            // using the OAuth state parameter (guaranteed to be returned by provider).
+            if (! $linkUserId) {
+                $oauthState = $request->input('state');
+                if ($oauthState) {
+                    $linkUserId = cache()->pull('auth_link_state_' . $oauthState);
+                }
+            }
+
             if ($linkUserId) {
                 /** @var User|null $currentUser */
                 $currentUser = User::find($linkUserId);
@@ -277,6 +286,13 @@ class AuthController extends Controller
 
         /** @var RedirectResponse $response */
         $response = Socialite::driver($driver)->redirect();
+
+        // Backup: cache userId by OAuth state in case session is lost
+        // (SameSite, session regen, or proxy stripping cookies).
+        $oauthState = session()->get('state');
+        if ($oauthState) {
+            cache(['auth_link_state_' . $oauthState => $userId], 300);
+        }
 
         return $response;
     }
