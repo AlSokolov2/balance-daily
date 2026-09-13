@@ -49,12 +49,18 @@ async function apiCreateArchived(page, title, completedHoursAgo) {
 /**
  * The titles of this spec's own tasks, in the order the list renders them.
  *
+ * Scoped by `stamp` because the whole file shares one dev user and one database: without it
+ * an earlier test's archived tasks land in the same list and the assertion counts six.
+ *
  * @param {import('@playwright/test').Page} page
+ * @param {number} stamp
  * @returns {Promise<string[]>}
  */
-async function renderedOrder(page) {
+async function renderedOrder(page, stamp) {
     const titles = await page.locator('.task-item .task-title').allTextContents();
-    return titles.map(t => (t.match(/P155-(zulu|alpha|mike)/) || [])[1]).filter(Boolean);
+    return titles
+        .filter(t => t.includes(String(stamp)))
+        .map(t => (t.match(/P155-(zulu|alpha|mike)/) || [])[1]);
 }
 
 test.describe('Reproduction: #155 — sorting the archive', () => {
@@ -82,13 +88,13 @@ test.describe('Reproduction: #155 — sorting the archive', () => {
         // The existing order is completion date, newest first. It is what the reporter
         // could not identify, so pin it before changing anything.
         await expect
-            .poll(() => renderedOrder(page), { timeout: 5_000 })
+            .poll(() => renderedOrder(page, stamp), { timeout: 5_000 })
             .toEqual(['zulu', 'mike', 'alpha']);
 
         await byName.click();
 
         await expect
-            .poll(() => renderedOrder(page), { timeout: 5_000 })
+            .poll(() => renderedOrder(page, stamp), { timeout: 5_000 })
             .toEqual(['alpha', 'mike', 'zulu']);
     });
 
@@ -98,5 +104,37 @@ test.describe('Reproduction: #155 — sorting the archive', () => {
         await h.waitForApp();
 
         await expect(page.getByRole('button', { name: 'By name' })).toBeHidden();
+    });
+});
+
+// The same control rendered into the handheld list card. Worth a separate pass because the
+// mobile layout is the one place it could not be reached at all until #151 opened the archive.
+test.describe('Reproduction: #155 — sorting the archive on a phone', () => {
+    test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+
+    test('the archive sorts by name in the handheld layout too', async ({ page }) => {
+        const h = helpers(page);
+        await h.ensureLoggedIn();
+        await h.waitForApp();
+
+        const stamp = Date.now();
+        await apiCreateArchived(page, `P155-zulu-${stamp}`, 1);
+        await apiCreateArchived(page, `P155-alpha-${stamp}`, 3);
+        await apiCreateArchived(page, `P155-mike-${stamp}`, 2);
+
+        await page.reload();
+        await page.waitForLoadState('networkidle');
+
+        await expect(page.locator('.mobile-scroll-container')).toBeVisible();
+
+        await page.locator('.filter-scroll > div').filter({ hasText: /Archive \(/ }).click();
+
+        const byName = page.getByRole('button', { name: 'By name' });
+        await expect(byName).toBeVisible();
+        await byName.click();
+
+        await expect
+            .poll(() => renderedOrder(page, stamp), { timeout: 5_000 })
+            .toEqual(['alpha', 'mike', 'zulu']);
     });
 });
