@@ -14,8 +14,8 @@ vi.mock('../../resources/js/components/TaskItem.vue', () => ({
 vi.mock('../../resources/js/components/AppHeader.vue', () => ({
     default: { name: 'AppHeader', template: '<div class="header-mock"></div>' }
 }));
-vi.mock('../../resources/js/components/DesktopFilterBar.vue', () => ({
-    default: { name: 'DesktopFilterBar', template: '<div class="filter-bar-mock"></div>' }
+vi.mock('../../resources/js/components/FilterBar.vue', () => ({
+    default: { name: 'FilterBar', template: '<div class="filter-bar-mock"></div>' }
 }));
 vi.mock('../../resources/js/components/DesktopAddForm.vue', () => ({
     default: { name: 'DesktopAddForm', template: '<div class="add-form-mock"></div>' }

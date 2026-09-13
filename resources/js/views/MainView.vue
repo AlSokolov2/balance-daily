@@ -15,10 +15,14 @@
                 @open-stats="openStats"
             />
             <DesktopAddForm @open-advanced="openAdvancedAdd" />
-            <DesktopFilterBar />
+            <FilterBar />
         </template>
 
         <!-- Mobile/Handheld Swipe View -->
+        <!-- The filter bar is the only way into the archive and the hidden list, so the
+             handheld branch needs it too — without it `filterCat` stayed 'all' forever and
+             completed tasks were unreachable anywhere in the mobile layout (#151). -->
+        <FilterBar v-if="isHandheld" />
         <div
             v-if="isHandheld"
             ref="mobileScrollContainer"
@@ -193,7 +197,7 @@ import { useI18n } from 'vue-i18n';
 import TaskVisualizer from '../components/TaskVisualizer.vue';
 import TaskItem from '../components/TaskItem.vue';
 import AppHeader from '../components/AppHeader.vue';
-import DesktopFilterBar from '../components/DesktopFilterBar.vue';
+import FilterBar from '../components/FilterBar.vue';
 import DesktopAddForm from '../components/DesktopAddForm.vue';
 import ListSortBar from '../components/ListSortBar.vue';
 import AppIcon from '../components/AppIcon.vue';
