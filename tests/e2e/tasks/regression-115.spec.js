@@ -51,7 +51,7 @@ test.describe('Regression #115 — task save with date fields', () => {
             return r.json();
         }, title);
 
-        // Backend sanitizeDateFields converts '' → null
+        // Backend sanitizeFields converts '' → null
         // SQLite accepts both, but the response must have null dates
         expect(task.id).toBeDefined();
         expect(task.title).toBe(title);

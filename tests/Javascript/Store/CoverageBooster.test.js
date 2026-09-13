@@ -313,9 +313,10 @@ describe('Balance Store Coverage Booster', () => {
         
         vi.clearAllMocks();
 
-        // updateTask on non-existent
+        // updateTask on non-existent — the caller has to hear about it, or the edit form
+        // closes with "Saved" on top of a request that never happened (#150)
         useTasksStore().tasks = [];
-        await store.updateTask(1, { title: 'New' });
+        await expect(store.updateTask(1, { title: 'New' })).rejects.toThrow('1');
         expect(axios.put).not.toHaveBeenCalled();
     });
 
