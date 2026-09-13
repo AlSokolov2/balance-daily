@@ -9,9 +9,10 @@
  * @param {Object} task - The task object.
  * @param {Object} catsMap - Map of category slugs to category objects with currentWeight.
  * @param {Object} subcatCoeffs - Map of subcategory names to coefficients.
+ * @param {Date} [now] - Reference instant; pass one to keep a whole pass on a single clock reading.
  * @returns {number} The calculated priority value.
  */
-export function calcPriority(task, catsMap, subcatCoeffs = {}) {
+export function calcPriority(task, catsMap, subcatCoeffs = {}, now = new Date()) {
     const cat = catsMap[task.category_slug];
     if (!cat) return 0;
 
@@ -21,14 +22,13 @@ export function calcPriority(task, catsMap, subcatCoeffs = {}) {
         s *= subcatCoeffs[task.subcategory];
     }
 
-    if (isEffectivelyPostponed(task, catsMap)) {
+    if (isEffectivelyPostponed(task, catsMap, now)) {
         s *= 0.7;
     }
 
     if (task.deadline) {
-        const n = new Date();
         const d = new Date(task.deadline);
-        const diff = Math.ceil((d - n) / 86400000);
+        const diff = Math.ceil((d - now) / 86400000);
         if (diff < 0) s += 5;
         else if (diff === 0) s += 4;
         else if (diff <= 2) s += 3;
@@ -64,6 +64,18 @@ export function isEffectivelyPostponed(task, catsMap, now = new Date()) {
  * Recalculate all tasks in the store.
  */
 export function recalculateTasks(tasks, categories, subcatCoeffs, now = new Date()) {
+    // Materialise the postponed state first, at one shared `now`, so every layer renders the
+    // same thing. Two reasons it happens before the early return: the view layer reads this
+    // flag unconditionally (an empty category list must not leave it undefined), and each
+    // component re-deriving the predicate from its own `new Date()` is what let the list and
+    // the charts disagree (#158, #161). It also never expired live — `new Date()` is not a
+    // reactive dependency, so cached computeds never invalidated. Mutating this property is
+    // what the pulse propagates.
+    const catsMap = Object.fromEntries((categories || []).map(c => [c.slug, c]));
+    tasks.forEach(t => {
+        t.postponed = isEffectivelyPostponed(t, catsMap, now);
+    });
+
     if (!categories || !categories.length) return tasks;
 
     // 1. Missed counts for repeats
@@ -113,9 +125,8 @@ export function recalculateTasks(tasks, categories, subcatCoeffs, now = new Date
     });
 
     // 3. Priorities
-    const catsMap = Object.fromEntries(categories.map(c => [c.slug, c]));
     tasks.forEach(t => {
-        t.calculatedPriority = t.completed ? 0 : calcPriority(t, catsMap, subcatCoeffs);
+        t.calculatedPriority = t.completed ? 0 : calcPriority(t, catsMap, subcatCoeffs, now);
     });
 
     return tasks;

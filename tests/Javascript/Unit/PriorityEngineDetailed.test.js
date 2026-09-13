@@ -112,3 +112,52 @@ describe('Priority Engine - Edge Cases for 100% Coverage', () => {
         expect(result[0].calculatedPriority).toBeGreaterThan(0);
     });
 });
+
+describe('Priority Engine - materialised postponed flag (#161)', () => {
+    it('materialises the flag for every task at one shared `now`', () => {
+        const now = new Date('2026-06-07T12:00:00Z');
+        const categories = [{ slug: 'work', weight: 1.0 }];
+        const tasks = [
+            { category_slug: 'work', completed: false, postpone_until: '2026-06-08T12:00:00Z' },
+            { category_slug: 'work', completed: false, postpone_until: '2026-06-06T12:00:00Z' },
+            { category_slug: 'work', completed: false, postpone_until: null }
+        ];
+
+        recalculateTasks(tasks, categories, {}, now);
+
+        expect(tasks.map(t => t.postponed)).toEqual([true, false, false]);
+    });
+
+    it('lets an explicit postpone_until win over force_active', () => {
+        const now = new Date('2026-06-07T12:00:00Z');
+        const categories = [{ slug: 'work', weight: 1.0, hide_until: '23:59' }];
+        const tasks = [
+            // force_active cancels the category hide, but not a date the user set explicitly
+            { category_slug: 'work', completed: false, force_active: true, postpone_until: '2026-06-08T12:00:00Z' },
+            { category_slug: 'work', completed: false, force_active: true, postpone_until: null }
+        ];
+
+        recalculateTasks(tasks, categories, {}, now);
+
+        expect(tasks[0].postponed).toBe(true);
+        expect(tasks[1].postponed).toBe(false);
+    });
+
+    it('materialises the flag even before any category has synced', () => {
+        const tasks = [{ category_slug: 'work', postpone_until: '2099-01-01T00:00:00Z' }];
+
+        recalculateTasks(tasks, [], {}, new Date('2026-06-07T12:00:00Z'));
+
+        // The view layer reads this flag unconditionally, so the early return for an empty
+        // category list must not leave it undefined.
+        expect(tasks[0].postponed).toBe(true);
+    });
+
+    it('calcPriority applies the postpone penalty at the passed `now`, not the system clock', () => {
+        const catsMap = { work: { currentWeight: 1.0 } };
+        const task = { category_slug: 'work', postpone_until: '2026-06-08T12:00:00Z' };
+
+        expect(calcPriority(task, catsMap, {}, new Date('2026-06-07T12:00:00Z'))).toBeCloseTo(0.7);
+        expect(calcPriority(task, catsMap, {}, new Date('2026-06-09T12:00:00Z'))).toBeCloseTo(1.0);
+    });
+});
