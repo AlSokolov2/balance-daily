@@ -292,6 +292,7 @@ import { useBalanceStore } from '../stores/balance';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 import { useToast } from '../composables/useToast';
+import { toLocalInputValue, fromLocalInputValue } from '../utils/datetime';
 import AppIcon from './AppIcon.vue';
 
 const props = defineProps({
@@ -334,7 +335,8 @@ const addCompletion = async () => {
     try {
         const res = await axios.post('task-completions', {
             task_id: props.task.id,
-            completed_at: newCompletionDate.value,
+            // Local wall-clock from the form -> UTC instant for the API (#152)
+            completed_at: fromLocalInputValue(newCompletionDate.value),
         });
         fullTaskDetails.value.completions.unshift(res.data);
         newCompletionDate.value = '';
@@ -395,11 +397,11 @@ const handleTouchEnd = (e) => {
 
 const editData = reactive({
     ...props.task,
-    // Format dates for input[type="datetime-local"]
-    deadline: props.task.deadline ? props.task.deadline.substring(0, 16) : '',
-    postpone_until: props.task.postpone_until ? props.task.postpone_until.substring(0, 16) : '',
-    hidden_until: props.task.hidden_until ? props.task.hidden_until.substring(0, 16) : '',
-    completed_at: props.task?.completed_at ? props.task.completed_at.substring(0, 16) : '',
+    // UTC instant from the API -> local wall-clock for input[type="datetime-local"]
+    deadline: toLocalInputValue(props.task.deadline),
+    postpone_until: toLocalInputValue(props.task.postpone_until),
+    hidden_until: toLocalInputValue(props.task.hidden_until),
+    completed_at: toLocalInputValue(props.task.completed_at),
     repeat_days: props.task.repeat_days || [],
     reminder_times: props.task.reminder_times?.length ? [...props.task.reminder_times] : [],
 });
@@ -435,10 +437,11 @@ const handleSave = async () => {
     try {
         const payload = {
             ...editData,
-            deadline: editData.deadline || null,
-            postpone_until: editData.postpone_until || null,
-            hidden_until: editData.hidden_until || null,
-            completed_at: editData.completed_at || null,
+            // Local wall-clock from the form -> UTC instants for the API
+            deadline: fromLocalInputValue(editData.deadline),
+            postpone_until: fromLocalInputValue(editData.postpone_until),
+            hidden_until: fromLocalInputValue(editData.hidden_until),
+            completed_at: fromLocalInputValue(editData.completed_at),
         };
         
         if (props.isNew) {
