@@ -124,11 +124,29 @@
 
         <!-- Desktop Content -->
         <div v-else class="flex-1 flex flex-col gap-3 min-h-0">
+            <!-- The zoom control lives inside the chart card, not beside it. Anchored to
+                 MainView it floated over whatever sat in the bottom-right corner, which in
+                 the archive — where this card is not rendered at all — was the last task's
+                 actions (#157). Inside the card it stays with the thing it zooms, and it
+                 goes away with it. -->
             <div
-                v-if="store.filterCat !== 'archive' && store.filterCat !== 'hidden'" 
+                v-if="store.filterCat !== 'archive' && store.filterCat !== 'hidden'"
                 class="flex-1 bg-[var(--bg-card)] rounded-3xl shadow-sm border border-[var(--color-border)] relative overflow-hidden flex flex-col min-h-0 min-w-0"
             >
                 <TaskVisualizer class="flex-1 w-full h-full" @edit="handleEdit" />
+
+                <!-- Zoom Controls -->
+                <div class="absolute bottom-4 right-4 flex items-center gap-1 bg-[var(--bg-card)]/80 backdrop-blur-md p-1.5 rounded-2xl border border-[var(--color-border)] shadow-sm z-50">
+                    <button class="zoom-btn" @click="store.bubbleZoom = Math.max(0.5, store.bubbleZoom - 0.1)">
+                        -
+                    </button>
+                    <button class="px-2 text-[10px] font-bold text-[var(--color-secondary)] hover:text-[var(--color-text)] transition-colors min-w-[36px] text-center" @click="store.bubbleZoom = 1">
+                        {{ store.bubbleZoom.toFixed(1) }}x
+                    </button>
+                    <button class="zoom-btn" @click="store.bubbleZoom = Math.min(2, store.bubbleZoom + 0.1)">
+                        +
+                    </button>
+                </div>
             </div>
 
             <div
@@ -152,19 +170,6 @@
                         />
                     </TransitionGroup>
                 </div>
-            </div>
-            
-            <!-- Zoom Controls -->
-            <div class="absolute bottom-4 right-4 flex items-center gap-1 bg-[var(--bg-card)]/80 backdrop-blur-md p-1.5 rounded-2xl border border-[var(--color-border)] shadow-sm z-50">
-                <button class="zoom-btn" @click="store.bubbleZoom = Math.max(0.5, store.bubbleZoom - 0.1)">
-                    -
-                </button>
-                <button class="px-2 text-[10px] font-bold text-[var(--color-secondary)] hover:text-[var(--color-text)] transition-colors min-w-[36px] text-center" @click="store.bubbleZoom = 1">
-                    {{ store.bubbleZoom.toFixed(1) }}x
-                </button>
-                <button class="zoom-btn" @click="store.bubbleZoom = Math.min(2, store.bubbleZoom + 0.1)">
-                    +
-                </button>
             </div>
         </div>
 
