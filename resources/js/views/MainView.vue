@@ -98,6 +98,8 @@
                     @touchmove="handleTouchMovePull"
                     @touchend="handleTouchEndPull"
                 >
+                    <!-- Outside the scroller on purpose: the sort control stays put while the list moves (#155). -->
+                    <ListSortBar />
                     <div class="flex-1 overflow-y-auto p-3 min-h-0">
                         <div v-if="!store.filteredTasks.length" class="text-center py-12 text-[var(--color-secondary)] text-sm">
                             {{ $t('app.no_tasks_in_category') }}
@@ -130,6 +132,8 @@
                 :class="store.filterCat === 'archive' || store.filterCat === 'hidden' ? 'flex-1' : 'max-h-[40vh] shrink-0'"
                 class="card bg-[var(--bg-card)] rounded-[16px] flex flex-col shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[var(--color-border)] min-h-[100px] overflow-hidden"
             >
+                <!-- Outside the scroller on purpose: the sort control stays put while the list moves (#155). -->
+                <ListSortBar />
                 <div class="flex-1 overflow-y-auto p-4 min-h-0">
                     <div v-if="!store.filteredTasks.length" class="text-center py-8 text-[var(--color-secondary)] text-sm">
                         {{ $t('app.no_tasks') }}
@@ -191,6 +195,7 @@ import TaskItem from '../components/TaskItem.vue';
 import AppHeader from '../components/AppHeader.vue';
 import DesktopFilterBar from '../components/DesktopFilterBar.vue';
 import DesktopAddForm from '../components/DesktopAddForm.vue';
+import ListSortBar from '../components/ListSortBar.vue';
 import AppIcon from '../components/AppIcon.vue';
 
 const props = defineProps({

@@ -84,6 +84,13 @@
             "hidden": "Hidden",
             "archive": "Archive"
         },
+        "sort": {
+            "label": "Sort",
+            "completed_desc": "By completion",
+            "created_desc": "By creation",
+            "name_asc": "By name",
+            "appears_asc": "By return"
+        },
         "sections": {
             "focus": "Focus",
             "plans": "Plans",
