@@ -113,7 +113,9 @@ const category = computed(() => store.categories.find(c => c.slug === props.task
 const categoryColor = computed(() => category.value?.color || '#8e8e93');
 const categoryName = computed(() => category.value?.name || props.task.category_slug);
 
-const isPostponed = computed(() => store.isEffectivelyPostponed(props.task));
+// The engine materialises `postponed` on every pulse pass; reading it here is what makes the
+// badge expire live instead of waiting for the next sync (#161).
+const isPostponed = computed(() => props.task.postponed);
 const isHidden = computed(() => store.isHidden(props.task));
 const isMissed = computed(() => (props.task.missed_count || 0) > 0);
 const isDimmed = computed(() => isPostponed.value && !isHidden.value);

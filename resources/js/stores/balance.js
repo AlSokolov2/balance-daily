@@ -67,9 +67,10 @@ export const useBalanceStore = defineStore('balance', {
             return active.filter(t => t.category_slug === this.filterCat);
         },
 
-        focusTasks() { return this.bubbleTasks.filter(t => !t.ha && !this.isEffectivelyPostponed(t)); },
-        plansTasks() { return this.bubbleTasks.filter(t => this.isEffectivelyPostponed(t)); },
-        routineTasks() { return this.bubbleTasks.filter(t => t.ha && !this.isEffectivelyPostponed(t)); },
+        // Read the flag the engine materialised, not the predicate — see #161.
+        focusTasks() { return this.bubbleTasks.filter(t => !t.ha && !t.postponed); },
+        plansTasks() { return this.bubbleTasks.filter(t => t.postponed); },
+        routineTasks() { return this.bubbleTasks.filter(t => t.ha && !t.postponed); },
 
         filteredTasks() {
             const now = new Date();

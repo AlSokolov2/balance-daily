@@ -193,7 +193,9 @@ describe('Tasks Store', () => {
 
         await tasks.deleteTask(1);
 
-        expect(tasks.tasks).toEqual([{ id: 2 }]);
+        // Asserted by id: `deleteTask` runs a recalculation pass, which materialises the
+        // engine's `postponed` flag onto every remaining task.
+        expect(tasks.tasks.map(t => t.id)).toEqual([2]);
         expect(axios.delete).toHaveBeenCalledWith('tasks/1');
     });
 

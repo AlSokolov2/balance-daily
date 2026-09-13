@@ -236,8 +236,8 @@ export const useTasksStore = defineStore('tasks', {
             }
         },
 
-        recalculateAll() {
-            this.tasks = recalculateTasks(this.tasks, this.categories, this.subcatCoeffs);
+        recalculateAll(now = new Date()) {
+            this.tasks = recalculateTasks(this.tasks, this.categories, this.subcatCoeffs, now);
         },
 
         checkReminders() {

@@ -36,8 +36,8 @@
                     <span 
                         :class="[
                             'block font-black break-words leading-tight',
-                            store.isEffectivelyPostponed(rect.task) && !rect.task.force_active 
-                                ? 'text-[var(--color-text)] opacity-70' 
+                            rect.task.postponed
+                                ? 'text-[var(--color-text)] opacity-70'
                                 : 'text-white drop-shadow-md'
                         ]"
                         :style="{ fontSize: getFontSize(rect) }"
@@ -102,7 +102,9 @@ const groupedTasks = computed(() => {
     const routine = [];
 
     tasks.forEach(t => {
-        if (store.isEffectivelyPostponed(t)) plans.push(t);
+        // `postponed` is materialised by the engine with the same rule as the mobile group
+        // getters in balance.js, so the treemap and the list can no longer disagree (#161).
+        if (t.postponed) plans.push(t);
         else if (t.ha) routine.push(t);
         else focus.push(t);
     });
@@ -313,7 +315,7 @@ const getZoneStyle = (zone) => ({
 const getStyle = (rect) => {
     const category = store.categories.find(c => c.slug === rect.task.category_slug);
     const color = category?.color || '#8e8e93';
-    const postponed = store.isEffectivelyPostponed(rect.task) && !rect.task.force_active;
+    const postponed = rect.task.postponed;
     const isMissed = rect.task.missed_count > 0;
     const borderColor = isMissed ? 'rgba(239,68,68,0.8)' : hexToRgba(color, 0.4);
 
