@@ -44,6 +44,12 @@
                     >
                         {{ rect.task.title }}
                     </span>
+                    <!-- Days overdue, on its own line under the name (#156). -->
+                    <span
+                        v-if="rect.task.days_overdue"
+                        class="block font-bold text-[var(--color-danger)] mt-0.5 leading-none"
+                        :style="{ fontSize: fontSize(rect) * 0.85 + 'px' }"
+                    >({{ rect.task.days_overdue }})</span>
                     <span v-if="rect.task.importance === 3" class="text-[10px] sm:text-xs text-red-200 mt-1 block font-bold uppercase tracking-widest leading-none">
                         High Priority
                     </span>
@@ -330,10 +336,13 @@ const getStyle = (rect) => {
     };
 };
 
-const getFontSize = (rect) => {
+/** Font size in px, so callers that need to scale it do not have to parse a CSS string. */
+const fontSize = (rect) => {
     const area = Math.max(0, rect.w) * Math.max(0, rect.h);
-    return `${Math.max(9, Math.min(28, Math.sqrt(area) / 7.5))}px`;
+    return Math.max(9, Math.min(28, Math.sqrt(area) / 7.5));
 };
+
+const getFontSize = (rect) => `${fontSize(rect)}px`;
 
 const handleClick = (task) => {
     router.push(`/task/${task.id}`);

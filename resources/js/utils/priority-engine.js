@@ -61,22 +61,38 @@ export function isEffectivelyPostponed(task, catsMap, now = new Date()) {
 }
 
 /**
+ * Whole calendar days between a deadline and `now`, counting from midnight to midnight.
+ *
+ * Deliberately the same truncation `missed_count` uses below: a deadline that passed at
+ * 10:00 today reads as 0 until tomorrow. Consistent with the repeat counter beats
+ * precise-but-inconsistent, and both feed the same `(N)` badge.
+ *
+ * @param {Object} task
+ * @param {Date} now
+ * @returns {number}
+ */
+export function overdueDays(task, now = new Date()) {
+    if (task.completed || !task.deadline) return 0;
+    const deadline = new Date(task.deadline);
+    if (isNaN(deadline)) return 0;
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const deadlineDay = new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate());
+    return Math.max(0, Math.floor((today - deadlineDay) / 86400000));
+}
+
+/**
  * Recalculate all tasks in the store.
  */
 export function recalculateTasks(tasks, categories, subcatCoeffs, now = new Date()) {
-    // Materialise the postponed state first, at one shared `now`, so every layer renders the
-    // same thing. Two reasons it happens before the early return: the view layer reads this
-    // flag unconditionally (an empty category list must not leave it undefined), and each
-    // component re-deriving the predicate from its own `new Date()` is what let the list and
-    // the charts disagree (#158, #161). It also never expired live — `new Date()` is not a
-    // reactive dependency, so cached computeds never invalidated. Mutating this property is
-    // what the pulse propagates.
+    // Materialise the derived per-task state first, at one shared `now`, so every layer renders
+    // the same thing. Three reasons it happens before the early return: the view layer reads
+    // these fields unconditionally (an empty category list must not leave them undefined), each
+    // component re-deriving the predicate from its own `new Date()` is what let the list and the
+    // charts disagree (#158, #161), and the counters below are the input to `days_overdue`, so
+    // they cannot stay behind the early return any more. It also never expired live — `new
+    // Date()` is not a reactive dependency, so cached computeds never invalidated. Mutating
+    // these properties is what the pulse propagates.
     const catsMap = Object.fromEntries((categories || []).map(c => [c.slug, c]));
-    tasks.forEach(t => {
-        t.postponed = isEffectivelyPostponed(t, catsMap, now);
-    });
-
-    if (!categories || !categories.length) return tasks;
 
     // 1. Missed counts for repeats
     tasks.forEach(t => {
@@ -102,7 +118,20 @@ export function recalculateTasks(tasks, categories, subcatCoeffs, now = new Date
         }
     });
 
-    // 2. Dynamic weights
+    // 2. Postponed state and the overdue counter
+    tasks.forEach(t => {
+        t.postponed = isEffectivelyPostponed(t, catsMap, now);
+        // A repeat that has missed occurrences is overdue by definition, even without a
+        // deadline; otherwise the deadline decides. Never both added up — they describe the
+        // same lateness, and summing them would double-count a repeating task with a deadline.
+        // `completed` wins over both: a finished task is not overdue, and `missed_count` is
+        // left stale on the pass that follows a completion.
+        t.days_overdue = t.completed ? 0 : Math.max(overdueDays(t, now), t.missed_count || 0);
+    });
+
+    if (!categories || !categories.length) return tasks;
+
+    // 3. Dynamic weights
     const ARCHIVE = '__archive__';
     categories.forEach(c => {
         c.currentWeight = parseFloat(c.weight) || 0.1;
@@ -124,7 +153,7 @@ export function recalculateTasks(tasks, categories, subcatCoeffs, now = new Date
         c.currentWeight /= totalWeight;
     });
 
-    // 3. Priorities
+    // 4. Priorities
     tasks.forEach(t => {
         t.calculatedPriority = t.completed ? 0 : calcPriority(t, catsMap, subcatCoeffs, now);
     });

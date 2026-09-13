@@ -178,3 +178,42 @@ describe('BubbleChart Component', () => {
         expect(store.bubbleZoom).toBe(0.5);
     });
 });
+
+describe('BubbleChart — overdue day counter (#156)', () => {
+    beforeEach(() => {
+        Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, value: 800 });
+        Object.defineProperty(HTMLElement.prototype, 'clientHeight', { configurable: true, value: 600 });
+    });
+
+    const render = (tasks) => {
+        useTasksStore().categories = [{ slug: 'work', weight: 1, color: '#ff0000' }];
+        useTasksStore().tasks = tasks;
+        return mount(BubbleChart);
+    };
+
+    const bubbleFor = (wrapper, title) =>
+        wrapper.findAll('.bubble').find(b => b.text().includes(title));
+
+    it('shows the day count on its own line under the title', () => {
+        const wrapper = render([
+            { id: 1, title: 'Wash', category_slug: 'work', importance: 3, calculatedPriority: 10, days_overdue: 2 },
+        ]);
+
+        const bubble = bubbleFor(wrapper, 'Wash');
+        expect(bubble.text()).toContain('(2)');
+        // Nested in the title span, so it sits under the name rather than beside it.
+        const counter = bubble.find('span span');
+        expect(counter.classes()).toContain('block');
+        expect(counter.text()).toBe('(2)');
+    });
+
+    it('shows nothing for a task that is not overdue', () => {
+        const wrapper = render([
+            { id: 1, title: 'Iron', category_slug: 'work', importance: 3, calculatedPriority: 5, days_overdue: 0 },
+            { id: 2, title: 'Dust', category_slug: 'work', importance: 3, calculatedPriority: 4 },
+        ]);
+
+        expect(bubbleFor(wrapper, 'Iron').find('span span').exists()).toBe(false);
+        expect(bubbleFor(wrapper, 'Dust').find('span span').exists()).toBe(false);
+    });
+});

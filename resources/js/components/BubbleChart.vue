@@ -28,6 +28,12 @@
             >
                 <span class="block leading-[1.1] break-words pointer-events-none">
                     {{ t.title }}
+                    <!-- Days overdue, on its own line under the name (#156). -->
+                    <span
+                        v-if="t.days_overdue"
+                        class="block font-bold text-[var(--color-danger)]"
+                        style="font-size: 0.85em;"
+                    >({{ t.days_overdue }})</span>
                 </span>
             </div>
             
