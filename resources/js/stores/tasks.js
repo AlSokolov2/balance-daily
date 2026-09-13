@@ -132,10 +132,20 @@ export const useTasksStore = defineStore('tasks', {
 
         async updateTask(id, payload) {
             const t = this.tasks.find(x => x.id === id);
-            if (!t) return;
+            // Silently returning here made the edit form report "Saved" without sending
+            // anything — the caller has to hear about it if the task is not in the store.
+            if (!t) throw new Error(`Task ${id} is not in the store`);
+
             const isRecurring = (payload.repeat_type && payload.repeat_type !== 'none') ||
                               (!payload.repeat_type && t.repeat_type && t.repeat_type !== 'none');
-            if (payload.completed && isRecurring) {
+
+            // Only a real "not done -> done" transition is a completion. The edit form sends
+            // the task's own `completed` back, so branching on that raw flag re-completed an
+            // already completed recurring task on a plain edit: it was hidden again until the
+            // next occurrence and a duplicate entry landed in the history.
+            const isCompleting = payload.completed === true && !t.completed;
+
+            if (isCompleting && isRecurring) {
                 const n = this.calculateNextOccurrence(t, payload);
                 payload.completed = false;
                 payload.completed_at = null;

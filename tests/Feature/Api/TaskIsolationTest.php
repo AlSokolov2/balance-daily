@@ -86,11 +86,11 @@ class TaskIsolationTest extends TestCase
      * Bug #115 regression test: empty strings for datetime columns
      * must be converted to null before reaching the database.
      *
-     * Without ConvertEmptyStringsToNull middleware (removed since Laravel 11),
-     * empty strings reach MySQL and cause:
+     * The global ConvertEmptyStringsToNull middleware turns '' into null, which
+     * `nullable|date` accepts and `fill()` then writes into a NOT NULL column:
      *   SQLSTATE[22007]: Incorrect datetime value: '' for column 'deadline'
      *
-     * The fix (sanitizeDateFields in TaskController) converts '' → null.
+     * The fix (sanitizeFields in TaskController) converts '' → null.
      */
     public function test_empty_string_dates_are_converted_to_null_on_create(): void
     {
