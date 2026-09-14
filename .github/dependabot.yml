@@ -1,0 +1,62 @@
+# Dependabot.
+#
+# This file is read from the default branch only — a copy sitting in another
+# branch is ignored entirely, which is why it is merged into master.
+# Security updates, unlike version updates, always open against the default
+# branch: that is platform behaviour and `target-branch` does not apply to them.
+#
+# Version updates are the ones that keep dependencies current regardless of
+# advisories. Minor and patch bumps are grouped into a single PR per ecosystem;
+# majors fall outside the group and arrive one at a time, since those are the
+# ones worth reading before merging.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    labels: [dependencies]
+
+  - package-ecosystem: composer
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    labels: [dependencies]
+
+  # Keeps the actions pinned in .github/workflows current.
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    labels: [dependencies]
+
+  # The local dev stack: mysql:8.0 and nginx:alpine in docker-compose.yml.
+  - package-ecosystem: docker-compose
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    labels: [dependencies]
