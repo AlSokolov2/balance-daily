@@ -31,10 +31,15 @@ const store = useBalanceStore();
 const { t } = useI18n();
 
 const slug = computed(() => route.params.slug);
-const isNew = computed(() => slug.value.startsWith('cat_new'));
+const existingCategory = computed(() => store.categories.find(c => c.slug === slug.value));
+
+// The `cat_new_` prefix only marks a category created from Settings in this session.
+// The API persists the slug verbatim, so a saved category keeps that prefix forever —
+// without the store lookup it would stay "new" and lose its name, colour and delete button.
+const isNew = computed(() => slug.value.startsWith('cat_new') && !existingCategory.value);
 
 const categoryData = computed(() => {
-    const cat = store.categories.find(c => c.slug === slug.value);
+    const cat = existingCategory.value;
     if (!cat && !isNew.value) return null;
 
     return {
