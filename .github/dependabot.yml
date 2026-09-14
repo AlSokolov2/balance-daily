@@ -48,13 +48,24 @@ updates:
         update-types: [minor, patch]
     labels: [dependencies]
 
-  # The local dev stack: mysql:8.0 and nginx:alpine in docker-compose.yml.
+  # The local dev stack: mysql:8.4 and nginx:alpine in docker-compose.yml.
+  #
+  # MySQL majors are ignored on purpose. Since 26.7 MySQL numbers its Innovation
+  # releases with CalVer (`YY.M.P`) and ships one roughly every quarter — without
+  # this rule each of them arrives as a "major" bump. Innovation releases are not
+  # LTS, jumping to one from 8.0 is not a supported upgrade path, and MySQL
+  # supports no downgrade from it; for a container that never leaves the local
+  # machine none of that is worth taking on. The 9.x LTS line is a major too, so
+  # it stays out as well — this is a deliberate stop on 8.4, not a stale pin.
   - package-ecosystem: docker-compose
     directory: /
     target-branch: develop
     schedule:
       interval: weekly
       day: monday
+    ignore:
+      - dependency-name: "mysql"
+        update-types: ["version-update:semver-major"]
     groups:
       minor-and-patch:
         patterns: ["*"]

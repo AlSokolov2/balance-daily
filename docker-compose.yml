@@ -24,7 +24,13 @@ services:
       - app
 
   db:
-    image: mysql:8.0
+    # LTS line, not an Innovation one. This container is local development only
+    # (it is excluded from the deploy rsync in .github/workflows/deploy.yml), so
+    # it does not have to track MySQL's quarterly CalVer releases.
+    # 8.0 -> 8.4 is a supported upgrade and the 8.4 server upgrades the existing
+    # `dbdata` volume on first start; the reverse is not supported, so going back
+    # to 8.0 means restoring a dump.
+    image: mysql:8.4
     container_name: balance-db
     restart: unless-stopped
     environment:
