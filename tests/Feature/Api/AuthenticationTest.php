@@ -384,6 +384,36 @@ class AuthenticationTest extends TestCase
         $response->assertStatus(429);
     }
 
+    public function test_code_exchange_rate_limit_is_configurable(): void
+    {
+        // The e2e suite logs in once per test and would trip the production ceiling.
+        // It raises it through config instead of bypassing the middleware entirely.
+        config(['rate_limits.exchange_code' => 2]);
+
+        for ($i = 0; $i < 2; $i++) {
+            $this->postJson('/api/auth/exchange-code', ['code' => 'any']);
+        }
+
+        $response = $this->postJson('/api/auth/exchange-code', ['code' => 'any']);
+        $response->assertStatus(429);
+    }
+
+    public function test_api_routes_are_rate_limited_per_user(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        config(['rate_limits.api' => 2]);
+
+        for ($i = 0; $i < 2; $i++) {
+            $this->actingAs($user)->getJson('/api/user')->assertStatus(200);
+        }
+
+        $this->actingAs($user)->getJson('/api/user')->assertStatus(429);
+
+        // The bucket is per user, so someone else is unaffected.
+        $this->actingAs(User::factory()->create())->getJson('/api/user')->assertStatus(200);
+    }
+
     // ────────────────────────────────────────────
     //  Dev login
     // ────────────────────────────────────────────

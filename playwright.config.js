@@ -1,10 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PORT = 8888;
-const DB_PATH = path.join(__dirname, 'tests/e2e/e2e.sqlite');
+import { PORT, e2eEnv } from './tests/e2e/env.js';
 
 export default defineConfig({
     testDir: './tests/e2e',
@@ -29,10 +24,12 @@ export default defineConfig({
     globalSetup: './tests/e2e/global-setup.js',
 
     webServer: {
-        command: `APP_ENV=testing APP_URL="http://localhost:${PORT}" DB_CONNECTION=sqlite DB_DATABASE="${DB_PATH}" php artisan serve --port=${PORT}`,
+        // Playwright merges this over process.env, so PATH and friends survive.
+        command: `php artisan serve --port=${PORT}`,
+        env: e2eEnv(),
         port: PORT,
-        timeout: 15_000,
-        reuseExistingServer: true,
+        timeout: 60_000,
+        reuseExistingServer: !process.env.CI,
     },
 
     timeout: 30_000,
