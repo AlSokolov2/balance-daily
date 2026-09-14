@@ -76,4 +76,4 @@ docker-compose exec app ./vendor/bin/phpstan analyze app --level=8  # PHP static
 
 ## Docker
 
-Local dev uses 3 containers: `app` (PHP-FPM), `nginx` (port 8000), `db` (MySQL 8.0 on port 3308). Start with `docker-compose up -d`. PHP commands that need the app container should be run through `docker-compose exec app`.
+Local dev uses 3 containers: `app` (PHP-FPM), `nginx` (port 8000), `db` (MySQL 8.4 LTS on port 3308). Start with `docker-compose up -d`. PHP commands that need the app container should be run through `docker-compose exec app`.

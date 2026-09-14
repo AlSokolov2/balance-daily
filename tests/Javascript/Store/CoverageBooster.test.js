@@ -16,8 +16,11 @@ describe('Balance Store Coverage Booster', () => {
         localStorage.clear();
         vi.clearAllMocks();
         
-        // Mock global navigator and window properties
-        global.navigator = {
+        // Mock global navigator and window properties.
+        // `vi.stubGlobal` rather than assignment: vitest 5 installs `navigator` on the jsdom
+        // window as a getter-only property, so `global.navigator = {...}` throws
+        // "Cannot set property navigator of [object Window] which has only a getter".
+        vi.stubGlobal('navigator', {
             serviceWorker: {
                 ready: Promise.resolve({
                     pushManager: {
@@ -26,7 +29,7 @@ describe('Balance Store Coverage Booster', () => {
                     }
                 })
             }
-        };
+        });
         global.window.atob = (str) => Buffer.from(str, 'base64').toString('binary');
     });
 
