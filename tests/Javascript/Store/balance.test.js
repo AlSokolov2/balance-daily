@@ -190,7 +190,16 @@ describe('Balance Store - Prioritization Engine', () => {
 
     describe('Pulse & Sync', () => {
         beforeEach(() => {
-            vi.useFakeTimers();
+            // Pinned to a fixed midday instant. The fake clock otherwise starts at the wall
+            // clock, and `lastPulse` is the calendar day at store creation, so a run beginning
+            // in the minute before midnight sees the day change between the first tick and the
+            // second: the second tick takes the day-change branch, calls fetchAll instead of
+            // recalculateAll, and the assertion below fails with "expected 2, got 1". It did
+            // exactly that in CI — once at 23:58 UTC, passing at 23:56 on the same commit.
+            // Seeding lastPulse from the pinned instant states the precondition the test always
+            // assumed: the store was created today.
+            vi.useFakeTimers({ now: new Date(2026, 5, 7, 12, 0, 0) });
+            useTasksStore().lastPulse = new Date().toDateString();
         });
 
         afterEach(() => {
