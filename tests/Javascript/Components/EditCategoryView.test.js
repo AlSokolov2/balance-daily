@@ -115,6 +115,68 @@ describe('EditCategoryView', () => {
         });
     });
 
+    it('treats a persisted category with a cat_new slug as existing (#166)', async () => {
+        // Categories created from Settings keep their generated slug after saving,
+        // so they are still prefixed. Such a category must not be treated as new:
+        // otherwise it shows the "Новая" placeholder, a grey colour and no delete button.
+        const store = useTasksStore();
+        store.categories = [
+            ...store.categories,
+            { id: 4, slug: 'cat_new_1757000000000', name: 'Sport', weight: 0.2, color: '#123456', hide_until: '08:30' },
+        ];
+        mockRoute.params = { slug: 'cat_new_1757000000000' };
+
+        const { default: EditCategoryView } = await import(
+            '../../../resources/js/views/EditCategoryView.vue'
+        );
+
+        let received = null;
+        const wrapper = mount(EditCategoryView, {
+            global: {
+                stubs: {
+                    EditCategoryModal: {
+                        template: '<div class="modal-stub" />',
+                        props: ['category', 'slug', 'isNew'],
+                        emits: ['save', 'delete'],
+                        created() {
+                            received = { category: this.category, isNew: this.isNew };
+                        },
+                    },
+                },
+            },
+        });
+
+        await wrapper.vm.$nextTick();
+
+        expect(received.isNew).toBe(false);
+        expect(received.category).toEqual({
+            name: 'Sport',
+            weight: 20,  // 0.2 → 20%
+            color: '#123456',
+            hide_until: '08:30',
+        });
+    });
+
+    it('renders real name, colour and the delete button for a persisted cat_new category (#166)', async () => {
+        const store = useTasksStore();
+        store.categories = [
+            ...store.categories,
+            { id: 4, slug: 'cat_new_1757000000000', name: 'Sport', weight: 0.2, color: '#123456', hide_until: null },
+        ];
+        mockRoute.params = { slug: 'cat_new_1757000000000' };
+
+        const { default: EditCategoryView } = await import(
+            '../../../resources/js/views/EditCategoryView.vue'
+        );
+
+        const wrapper = mount(EditCategoryView);
+        await wrapper.vm.$nextTick();
+
+        expect(wrapper.find('input[type="text"]').element.value).toBe('Sport');
+        expect(wrapper.find('input[type="color"]').element.value).toBe('#123456');
+        expect(wrapper.findAll('button').some(b => b.text().includes('common.delete'))).toBe(true);
+    });
+
     it('handleDelete sends DELETE with category id', async () => {
         mockRoute.params = { slug: 'prog' };
         window.confirm = vi.fn(() => true);
