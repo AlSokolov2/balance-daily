@@ -9,9 +9,10 @@
  * @param {Object} task - The task object.
  * @param {Object} catsMap - Map of category slugs to category objects with currentWeight.
  * @param {Object} subcatCoeffs - Map of subcategory names to coefficients.
+ * @param {Date} [now] - Reference instant; pass one to keep a whole pass on a single clock reading.
  * @returns {number} The calculated priority value.
  */
-export function calcPriority(task, catsMap, subcatCoeffs = {}) {
+export function calcPriority(task, catsMap, subcatCoeffs = {}, now = new Date()) {
     const cat = catsMap[task.category_slug];
     if (!cat) return 0;
 
@@ -21,14 +22,13 @@ export function calcPriority(task, catsMap, subcatCoeffs = {}) {
         s *= subcatCoeffs[task.subcategory];
     }
 
-    if (isEffectivelyPostponed(task, catsMap)) {
+    if (isEffectivelyPostponed(task, catsMap, now)) {
         s *= 0.7;
     }
 
     if (task.deadline) {
-        const n = new Date();
         const d = new Date(task.deadline);
-        const diff = Math.ceil((d - n) / 86400000);
+        const diff = Math.ceil((d - now) / 86400000);
         if (diff < 0) s += 5;
         else if (diff === 0) s += 4;
         else if (diff <= 2) s += 3;
@@ -61,10 +61,38 @@ export function isEffectivelyPostponed(task, catsMap, now = new Date()) {
 }
 
 /**
+ * Whole calendar days between a deadline and `now`, counting from midnight to midnight.
+ *
+ * Deliberately the same truncation `missed_count` uses below: a deadline that passed at
+ * 10:00 today reads as 0 until tomorrow. Consistent with the repeat counter beats
+ * precise-but-inconsistent, and both feed the same `(N)` badge.
+ *
+ * @param {Object} task
+ * @param {Date} now
+ * @returns {number}
+ */
+export function overdueDays(task, now = new Date()) {
+    if (task.completed || !task.deadline) return 0;
+    const deadline = new Date(task.deadline);
+    if (isNaN(deadline)) return 0;
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const deadlineDay = new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate());
+    return Math.max(0, Math.floor((today - deadlineDay) / 86400000));
+}
+
+/**
  * Recalculate all tasks in the store.
  */
 export function recalculateTasks(tasks, categories, subcatCoeffs, now = new Date()) {
-    if (!categories || !categories.length) return tasks;
+    // Materialise the derived per-task state first, at one shared `now`, so every layer renders
+    // the same thing. Three reasons it happens before the early return: the view layer reads
+    // these fields unconditionally (an empty category list must not leave them undefined), each
+    // component re-deriving the predicate from its own `new Date()` is what let the list and the
+    // charts disagree (#158, #161), and the counters below are the input to `days_overdue`, so
+    // they cannot stay behind the early return any more. It also never expired live — `new
+    // Date()` is not a reactive dependency, so cached computeds never invalidated. Mutating
+    // these properties is what the pulse propagates.
+    const catsMap = Object.fromEntries((categories || []).map(c => [c.slug, c]));
 
     // 1. Missed counts for repeats
     tasks.forEach(t => {
@@ -90,7 +118,20 @@ export function recalculateTasks(tasks, categories, subcatCoeffs, now = new Date
         }
     });
 
-    // 2. Dynamic weights
+    // 2. Postponed state and the overdue counter
+    tasks.forEach(t => {
+        t.postponed = isEffectivelyPostponed(t, catsMap, now);
+        // A repeat that has missed occurrences is overdue by definition, even without a
+        // deadline; otherwise the deadline decides. Never both added up — they describe the
+        // same lateness, and summing them would double-count a repeating task with a deadline.
+        // `completed` wins over both: a finished task is not overdue, and `missed_count` is
+        // left stale on the pass that follows a completion.
+        t.days_overdue = t.completed ? 0 : Math.max(overdueDays(t, now), t.missed_count || 0);
+    });
+
+    if (!categories || !categories.length) return tasks;
+
+    // 3. Dynamic weights
     const ARCHIVE = '__archive__';
     categories.forEach(c => {
         c.currentWeight = parseFloat(c.weight) || 0.1;
@@ -112,10 +153,9 @@ export function recalculateTasks(tasks, categories, subcatCoeffs, now = new Date
         c.currentWeight /= totalWeight;
     });
 
-    // 3. Priorities
-    const catsMap = Object.fromEntries(categories.map(c => [c.slug, c]));
+    // 4. Priorities
     tasks.forEach(t => {
-        t.calculatedPriority = t.completed ? 0 : calcPriority(t, catsMap, subcatCoeffs);
+        t.calculatedPriority = t.completed ? 0 : calcPriority(t, catsMap, subcatCoeffs, now);
     });
 
     return tasks;

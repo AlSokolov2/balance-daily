@@ -15,10 +15,14 @@
                 @open-stats="openStats"
             />
             <DesktopAddForm @open-advanced="openAdvancedAdd" />
-            <DesktopFilterBar />
+            <FilterBar />
         </template>
 
         <!-- Mobile/Handheld Swipe View -->
+        <!-- The filter bar is the only way into the archive and the hidden list, so the
+             handheld branch needs it too — without it `filterCat` stayed 'all' forever and
+             completed tasks were unreachable anywhere in the mobile layout (#151). -->
+        <FilterBar v-if="isHandheld" />
         <div
             v-if="isHandheld"
             ref="mobileScrollContainer"
@@ -98,6 +102,8 @@
                     @touchmove="handleTouchMovePull"
                     @touchend="handleTouchEndPull"
                 >
+                    <!-- Outside the scroller on purpose: the sort control stays put while the list moves (#155). -->
+                    <ListSortBar />
                     <div class="flex-1 overflow-y-auto p-3 min-h-0">
                         <div v-if="!store.filteredTasks.length" class="text-center py-12 text-[var(--color-secondary)] text-sm">
                             {{ $t('app.no_tasks_in_category') }}
@@ -118,11 +124,29 @@
 
         <!-- Desktop Content -->
         <div v-else class="flex-1 flex flex-col gap-3 min-h-0">
+            <!-- The zoom control lives inside the chart card, not beside it. Anchored to
+                 MainView it floated over whatever sat in the bottom-right corner, which in
+                 the archive — where this card is not rendered at all — was the last task's
+                 actions (#157). Inside the card it stays with the thing it zooms, and it
+                 goes away with it. -->
             <div
-                v-if="store.filterCat !== 'archive' && store.filterCat !== 'hidden'" 
+                v-if="store.filterCat !== 'archive' && store.filterCat !== 'hidden'"
                 class="flex-1 bg-[var(--bg-card)] rounded-3xl shadow-sm border border-[var(--color-border)] relative overflow-hidden flex flex-col min-h-0 min-w-0"
             >
                 <TaskVisualizer class="flex-1 w-full h-full" @edit="handleEdit" />
+
+                <!-- Zoom Controls -->
+                <div class="absolute bottom-4 right-4 flex items-center gap-1 bg-[var(--bg-card)]/80 backdrop-blur-md p-1.5 rounded-2xl border border-[var(--color-border)] shadow-sm z-50">
+                    <button class="zoom-btn" @click="store.bubbleZoom = Math.max(0.5, store.bubbleZoom - 0.1)">
+                        -
+                    </button>
+                    <button class="px-2 text-[10px] font-bold text-[var(--color-secondary)] hover:text-[var(--color-text)] transition-colors min-w-[36px] text-center" @click="store.bubbleZoom = 1">
+                        {{ store.bubbleZoom.toFixed(1) }}x
+                    </button>
+                    <button class="zoom-btn" @click="store.bubbleZoom = Math.min(2, store.bubbleZoom + 0.1)">
+                        +
+                    </button>
+                </div>
             </div>
 
             <div
@@ -130,6 +154,8 @@
                 :class="store.filterCat === 'archive' || store.filterCat === 'hidden' ? 'flex-1' : 'max-h-[40vh] shrink-0'"
                 class="card bg-[var(--bg-card)] rounded-[16px] flex flex-col shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[var(--color-border)] min-h-[100px] overflow-hidden"
             >
+                <!-- Outside the scroller on purpose: the sort control stays put while the list moves (#155). -->
+                <ListSortBar />
                 <div class="flex-1 overflow-y-auto p-4 min-h-0">
                     <div v-if="!store.filteredTasks.length" class="text-center py-8 text-[var(--color-secondary)] text-sm">
                         {{ $t('app.no_tasks') }}
@@ -144,19 +170,6 @@
                         />
                     </TransitionGroup>
                 </div>
-            </div>
-            
-            <!-- Zoom Controls -->
-            <div class="absolute bottom-4 right-4 flex items-center gap-1 bg-[var(--bg-card)]/80 backdrop-blur-md p-1.5 rounded-2xl border border-[var(--color-border)] shadow-sm z-50">
-                <button class="zoom-btn" @click="store.bubbleZoom = Math.max(0.5, store.bubbleZoom - 0.1)">
-                    -
-                </button>
-                <button class="px-2 text-[10px] font-bold text-[var(--color-secondary)] hover:text-[var(--color-text)] transition-colors min-w-[36px] text-center" @click="store.bubbleZoom = 1">
-                    {{ store.bubbleZoom.toFixed(1) }}x
-                </button>
-                <button class="zoom-btn" @click="store.bubbleZoom = Math.min(2, store.bubbleZoom + 0.1)">
-                    +
-                </button>
             </div>
         </div>
 
@@ -189,8 +202,9 @@ import { useI18n } from 'vue-i18n';
 import TaskVisualizer from '../components/TaskVisualizer.vue';
 import TaskItem from '../components/TaskItem.vue';
 import AppHeader from '../components/AppHeader.vue';
-import DesktopFilterBar from '../components/DesktopFilterBar.vue';
+import FilterBar from '../components/FilterBar.vue';
 import DesktopAddForm from '../components/DesktopAddForm.vue';
+import ListSortBar from '../components/ListSortBar.vue';
 import AppIcon from '../components/AppIcon.vue';
 
 const props = defineProps({

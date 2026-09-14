@@ -28,6 +28,12 @@
             >
                 <span class="block leading-[1.1] break-words pointer-events-none">
                     {{ t.title }}
+                    <!-- Days overdue, on its own line under the name (#156). -->
+                    <span
+                        v-if="t.days_overdue"
+                        class="block font-bold text-[var(--color-danger)]"
+                        style="font-size: 0.85em;"
+                    >({{ t.days_overdue }})</span>
                 </span>
             </div>
             
@@ -107,8 +113,8 @@ const bubbleStyles = computed(() => {
 
         const category = store.categories.find(c => c.slug === task.category_slug);
         const color = category?.color || '#8e8e93';
-        const postponed = store.isEffectivelyPostponed(task) && !task.force_active;
-        
+        const postponed = task.postponed;
+
         const matchesSearch = isSearching && (
             (task.title && task.title.toLowerCase().includes(query)) ||
             (task.notes && task.notes.toLowerCase().includes(query))
@@ -282,7 +288,10 @@ const calcBubbles = () => {
     } else {
         // Original logic for desktop/combined view
         T.forEach((t, i) => {
-            const isSide = t.ha || (store.isEffectivelyPostponed(t) && !t.force_active);
+            // An explicit "postpone until" wins over "Relevant" (force_active) — same rule the
+            // engine applies. This gate used to override it, so the bubble stayed central
+            // while the list dimmed the very same task (#161).
+            const isSide = t.ha || t.postponed;
             const data = { id: t.id, r: baseSizes[i] / 2, pri: t.calculatedPriority };
             if (isSide) side.push(data);
             else central.push(data);

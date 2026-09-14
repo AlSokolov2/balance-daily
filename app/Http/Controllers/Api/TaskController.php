@@ -29,7 +29,7 @@ class TaskController extends Controller
      */
     public function store(Request $request): Task
     {
-        $this->sanitizeDateFields($request);
+        $this->sanitizeFields($request);
 
         $validated = $request->validate([
             'title' => 'required|string',
@@ -79,7 +79,7 @@ class TaskController extends Controller
         /** @var Task $task */
         $task = $this->user()->tasks()->findOrFail($id);
 
-        $this->sanitizeDateFields($request);
+        $this->sanitizeFields($request);
 
         $validated = $request->validate([
             'title' => 'sometimes|required|string',
@@ -160,19 +160,32 @@ class TaskController extends Controller
     }
 
     /**
-     * Convert empty strings to null for datetime fields.
+     * Normalise the empty values a form sends for typed columns.
      *
-     * Without ConvertEmptyStringsToNull middleware (removed since Laravel 11),
-     * empty strings reach MySQL and cause "Incorrect datetime value: ''" errors
-     * under strict mode. This normalizes them before validation.
+     * Clearing a numeric input in the edit form yields an empty string, which the global
+     * `ConvertEmptyStringsToNull` middleware turns into null. `nullable|integer` then
+     * accepts it and `fill()` writes null into a `NOT NULL` column — a SQL error and a 500
+     * the client can only report as "cannot save" (#150).
+     *
+     * Date fields want null. `repeat_interval` and `missed_count` are declared
+     * `integer NOT NULL` with a default, so null is never a valid value for them and they
+     * fall back to that default instead.
      */
-    private function sanitizeDateFields(Request $request): void
+    private function sanitizeFields(Request $request): void
     {
         $dateFields = ['deadline', 'postpone_until', 'hidden_until', 'last_completed_date', 'completed_at'];
 
         foreach ($dateFields as $field) {
             if ($request->has($field) && $request->input($field) === '') {
                 $request->merge([$field => null]);
+            }
+        }
+
+        $numericDefaults = ['repeat_interval' => 1, 'missed_count' => 0];
+
+        foreach ($numericDefaults as $field => $default) {
+            if ($request->has($field) && $request->input($field) === null) {
+                $request->merge([$field => $default]);
             }
         }
     }

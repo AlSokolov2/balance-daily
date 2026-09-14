@@ -83,6 +83,13 @@
             "hidden": "Скрытые",
             "archive": "Архив"
         },
+        "sort": {
+            "label": "Сортировка",
+            "completed_desc": "По дате выполнения",
+            "created_desc": "По дате создания",
+            "name_asc": "По имени",
+            "appears_asc": "По дате появления"
+        },
         "sections": {
             "focus": "Фокус",
             "plans": "Планы",

@@ -36,14 +36,20 @@
                     <span 
                         :class="[
                             'block font-black break-words leading-tight',
-                            store.isEffectivelyPostponed(rect.task) && !rect.task.force_active 
-                                ? 'text-[var(--color-text)] opacity-70' 
+                            rect.task.postponed
+                                ? 'text-[var(--color-text)] opacity-70'
                                 : 'text-white drop-shadow-md'
                         ]"
                         :style="{ fontSize: getFontSize(rect) }"
                     >
                         {{ rect.task.title }}
                     </span>
+                    <!-- Days overdue, on its own line under the name (#156). -->
+                    <span
+                        v-if="rect.task.days_overdue"
+                        class="block font-bold text-[var(--color-danger)] mt-0.5 leading-none"
+                        :style="{ fontSize: fontSize(rect) * 0.85 + 'px' }"
+                    >({{ rect.task.days_overdue }})</span>
                     <span v-if="rect.task.importance === 3" class="text-[10px] sm:text-xs text-red-200 mt-1 block font-bold uppercase tracking-widest leading-none">
                         High Priority
                     </span>
@@ -102,7 +108,9 @@ const groupedTasks = computed(() => {
     const routine = [];
 
     tasks.forEach(t => {
-        if (store.isEffectivelyPostponed(t)) plans.push(t);
+        // `postponed` is materialised by the engine with the same rule as the mobile group
+        // getters in balance.js, so the treemap and the list can no longer disagree (#161).
+        if (t.postponed) plans.push(t);
         else if (t.ha) routine.push(t);
         else focus.push(t);
     });
@@ -313,7 +321,7 @@ const getZoneStyle = (zone) => ({
 const getStyle = (rect) => {
     const category = store.categories.find(c => c.slug === rect.task.category_slug);
     const color = category?.color || '#8e8e93';
-    const postponed = store.isEffectivelyPostponed(rect.task) && !rect.task.force_active;
+    const postponed = rect.task.postponed;
     const isMissed = rect.task.missed_count > 0;
     const borderColor = isMissed ? 'rgba(239,68,68,0.8)' : hexToRgba(color, 0.4);
 
@@ -328,10 +336,13 @@ const getStyle = (rect) => {
     };
 };
 
-const getFontSize = (rect) => {
+/** Font size in px, so callers that need to scale it do not have to parse a CSS string. */
+const fontSize = (rect) => {
     const area = Math.max(0, rect.w) * Math.max(0, rect.h);
-    return `${Math.max(9, Math.min(28, Math.sqrt(area) / 7.5))}px`;
+    return Math.max(9, Math.min(28, Math.sqrt(area) / 7.5));
 };
+
+const getFontSize = (rect) => `${fontSize(rect)}px`;
 
 const handleClick = (task) => {
     router.push(`/task/${task.id}`);

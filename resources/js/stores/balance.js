@@ -10,6 +10,12 @@ import { useAuthStore } from './auth.js';
 import { useSettingsStore } from './settings.js';
 import { useUiStore } from './ui.js';
 import { useTasksStore } from './tasks.js';
+import {
+    sortArchive,
+    sortHidden,
+    DEFAULT_ARCHIVE_SORT,
+    DEFAULT_HIDDEN_SORT,
+} from '../utils/task-sort.js';
 
 export const useBalanceStore = defineStore('balance', {
     state: () => ({
@@ -17,6 +23,11 @@ export const useBalanceStore = defineStore('balance', {
         filterCat: 'all',
         searchQuery: '',
         bubbleZoom: 1,
+        // Sort keys for the two lists that offer a choice (#155). Ephemeral, like
+        // `filterCat` — not persisted. The defaults reproduce the order these lists
+        // had before the control existed.
+        archiveSort: DEFAULT_ARCHIVE_SORT,
+        hiddenSort: DEFAULT_HIDDEN_SORT,
     }),
 
     getters: {
@@ -67,21 +78,21 @@ export const useBalanceStore = defineStore('balance', {
             return active.filter(t => t.category_slug === this.filterCat);
         },
 
-        focusTasks() { return this.bubbleTasks.filter(t => !t.ha && !this.isEffectivelyPostponed(t)); },
-        plansTasks() { return this.bubbleTasks.filter(t => this.isEffectivelyPostponed(t)); },
-        routineTasks() { return this.bubbleTasks.filter(t => t.ha && !this.isEffectivelyPostponed(t)); },
+        // Read the flag the engine materialised, not the predicate — see #161.
+        focusTasks() { return this.bubbleTasks.filter(t => !t.ha && !t.postponed); },
+        plansTasks() { return this.bubbleTasks.filter(t => t.postponed); },
+        routineTasks() { return this.bubbleTasks.filter(t => t.ha && !t.postponed); },
 
         filteredTasks() {
             const now = new Date();
             const tasksStore = useTasksStore();
             let tasks = tasksStore.allTasksOrdered;
             if (this.filterCat === 'hidden') {
-                return tasks.filter(t => t.hidden_until && new Date(t.hidden_until) > now && !t.completed)
-                    .sort((a, b) => new Date(a.hidden_until) - new Date(b.hidden_until));
+                const hidden = tasks.filter(t => t.hidden_until && new Date(t.hidden_until) > now && !t.completed);
+                return sortHidden(hidden, this.hiddenSort, this.locale);
             }
             if (this.filterCat === 'archive') {
-                return tasks.filter(t => t.completed)
-                    .sort((a, b) => new Date(b.completed_at || 0) - new Date(a.completed_at || 0));
+                return sortArchive(tasks.filter(t => t.completed), this.archiveSort, this.locale);
             }
             tasks = tasks.filter(t => !t.completed && (!t.hidden_until || new Date(t.hidden_until) <= now));
             if (this.filterCat !== 'all') tasks = tasks.filter(t => t.category_slug === this.filterCat);

@@ -193,7 +193,9 @@ describe('Tasks Store', () => {
 
         await tasks.deleteTask(1);
 
-        expect(tasks.tasks).toEqual([{ id: 2 }]);
+        // Asserted by id: `deleteTask` runs a recalculation pass, which materialises the
+        // engine's `postponed` flag onto every remaining task.
+        expect(tasks.tasks.map(t => t.id)).toEqual([2]);
         expect(axios.delete).toHaveBeenCalledWith('tasks/1');
     });
 
@@ -208,9 +210,11 @@ describe('Tasks Store', () => {
         expect(axios.put).toHaveBeenCalledWith('tasks/1', { title: 'Updated' });
     });
 
-    it('updateTask handles missing task gracefully', async () => {
+    it('updateTask rejects when the task is not in the store', async () => {
         const tasks = useTasksStore();
-        await tasks.updateTask(999, { title: 'Ghost' });
+        // Reporting success without sending anything is worse than failing loudly: the edit
+        // form used to close with "Saved" on top of a request that never happened (#150).
+        await expect(tasks.updateTask(999, { title: 'Ghost' })).rejects.toThrow('999');
         expect(axios.put).not.toHaveBeenCalled();
     });
 
@@ -238,6 +242,36 @@ describe('Tasks Store', () => {
         const tasks = useTasksStore();
         await tasks.completeTask(999);
         expect(axios.put).not.toHaveBeenCalled();
+    });
+
+    it('updateTask rolls a recurring task forward when it is completed', async () => {
+        const tasks = useTasksStore();
+        tasks.tasks = [{ id: 1, completed: false, repeat_type: 'interval', repeat_interval: 2 }];
+        axios.put.mockResolvedValueOnce({ data: { id: 1, completed: false } });
+
+        await tasks.updateTask(1, { completed: true, completed_at: '2026-09-13T10:00:00Z' });
+
+        const payload = axios.put.mock.calls[0][1];
+        expect(payload._was_completed).toBe(true);
+        expect(payload.completed).toBe(false);
+        expect(payload.completed_at).toBeNull();
+        expect(payload.hidden_until).toBeDefined();
+    });
+
+    it('updateTask does not re-complete an already completed recurring task', async () => {
+        const tasks = useTasksStore();
+        tasks.tasks = [{ id: 1, completed: true, repeat_type: 'interval', repeat_interval: 2 }];
+        axios.put.mockResolvedValueOnce({ data: { id: 1, completed: true } });
+
+        // The edit form sends the task's own `completed` back, so this is a plain edit — not
+        // a second completion. Branching on the raw flag used to hide the task again and add
+        // a duplicate entry to its history (#150).
+        await tasks.updateTask(1, { title: 'Renamed', completed: true, repeat_type: 'interval' });
+
+        const payload = axios.put.mock.calls[0][1];
+        expect(payload._was_completed).toBeUndefined();
+        expect(payload.completed).toBe(true);
+        expect(payload.hidden_until).toBeUndefined();
     });
 
     it('archiveTask marks completed and removes from local list', async () => {
