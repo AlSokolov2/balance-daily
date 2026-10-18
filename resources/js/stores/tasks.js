@@ -38,8 +38,10 @@ export const useTasksStore = defineStore('tasks', {
             const res = { all: 0, hidden: 0, archive: 0, byCat: {} };
             if (!Array.isArray(state.tasks)) return res;
             state.tasks.forEach(t => {
-                if (t.completed) res.archive++;
-                else if (t.hidden_until && new Date(t.hidden_until) > now) res.hidden++;
+                // A future `hidden_until` outranks completion (#205), matching
+                // `filteredTasks` in the balance store.
+                if (t.hidden_until && new Date(t.hidden_until) > now) res.hidden++;
+                else if (t.completed) res.archive++;
                 else {
                     res.all++;
                     if (t.category_slug) res.byCat[t.category_slug] = (res.byCat[t.category_slug] || 0) + 1;

@@ -122,8 +122,10 @@ const isDimmed = computed(() => isPostponed.value && !isHidden.value);
 
 // --- Action Visibility ---
 const canComplete = computed(() => !props.task.completed && !isHidden.value);
-const canRestore = computed(() => props.task.completed);
-const canReturnNow = computed(() => isHidden.value && !props.task.completed);
+// In the hidden list the meaningful action is "show now" — for a completed task
+// that moves it to the archive instead of resurrecting it (#205).
+const canRestore = computed(() => props.task.completed && !isHidden.value);
+const canReturnNow = computed(() => isHidden.value);
 
 // --- Badges Logic ---
 const activeBadges = computed(() => {
