@@ -87,12 +87,17 @@ export const useBalanceStore = defineStore('balance', {
             const now = new Date();
             const tasksStore = useTasksStore();
             let tasks = tasksStore.allTasksOrdered;
+            // #205: a future `hidden_until` outranks `completed`. The user may set
+            // both on purpose — "done, but keep it out of sight until that date" —
+            // and such a task must stay in the hidden list instead of the archive.
             if (this.filterCat === 'hidden') {
-                const hidden = tasks.filter(t => t.hidden_until && new Date(t.hidden_until) > now && !t.completed);
+                const hidden = tasks.filter(t => t.hidden_until && new Date(t.hidden_until) > now);
                 return sortHidden(hidden, this.hiddenSort, this.locale);
             }
             if (this.filterCat === 'archive') {
-                return sortArchive(tasks.filter(t => t.completed), this.archiveSort, this.locale);
+                const archived = tasks.filter(t =>
+                    t.completed && (!t.hidden_until || new Date(t.hidden_until) <= now));
+                return sortArchive(archived, this.archiveSort, this.locale);
             }
             tasks = tasks.filter(t => !t.completed && (!t.hidden_until || new Date(t.hidden_until) <= now));
             if (this.filterCat !== 'all') tasks = tasks.filter(t => t.category_slug === this.filterCat);
