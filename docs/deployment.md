@@ -42,10 +42,24 @@ Go to your repository settings **Settings > Secrets and variables > Actions** an
 
 ## 3. Deployment Process
 
-Deployment happens automatically on every `push` to the `master` or `main` branch.
+Deployment happens on every `push` of a `v*` tag (the release tag points at the merge
+commit of a `develop` → `master` pull request). Pushes to `develop` and pull requests
+into `develop`/`master` run the tests only.
+
+The pipeline (`.github/workflows/deploy.yml`) has two gates, run in parallel:
+
+*   **`ci-testing`** — ESLint, PHPStan level 8, PHPUnit, Vitest, on a frontend build.
+*   **`e2e`** — Playwright against a real `php artisan serve`. The suite is self-contained:
+    `tests/e2e/global-setup.js` builds the frontend again and migrates its own throwaway
+    `tests/e2e/e2e.sqlite`, so the job needs no `.env` and no secrets. Shared values live
+    in `tests/e2e/env.js`. The html report is uploaded as the `playwright-report` artifact
+    on every run, pass or fail.
+
+The e2e suite drives the app far harder than a person can, so it raises the rate limits
+from `config/rate_limits.php` through the environment instead of removing the middleware.
 
 **GitHub will perform:**
-1.  Run all tests (CI).
+1.  Wait for both `ci-testing` and `e2e`.
 2.  Build Vue 3 assets with absolute paths.
 3.  Synchronize files via `rsync` (excluding `.env` and other local files).
 4.  Run database migrations on the server.

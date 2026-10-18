@@ -171,6 +171,67 @@ describe('SettingsView — Accounts tab', () => {
         });
     });
 
+    describe('saveSubcats — subcategories tab', () => {
+        it('persists coefficients via the store action', async () => {
+            const TasksStore = (await import('../../../resources/js/stores/tasks')).useTasksStore;
+            setActivePinia(createPinia());
+            const tasksStore = TasksStore();
+            tasksStore.subcatCoeffs = { dev: 1.5 };
+            axios.put.mockResolvedValue({ data: { dev: 2.5 } });
+
+            await mountSettings([]);
+
+            const subTab = wrapper.findAll('button').find(
+                b => b.text().includes('settings.tabs.sub')
+            );
+            expect(subTab).toBeTruthy();
+            await subTab.trigger('click');
+            await wrapper.vm.$nextTick();
+
+            const saveBtn = wrapper.findAll('.base-btn-stub').find(
+                b => b.text().includes('settings_modal.subcategories.save_all_button')
+            );
+            expect(saveBtn).toBeTruthy();
+            await saveBtn.trigger('click');
+            await new Promise(r => setTimeout(r, 10));
+
+            expect(axios.put).toHaveBeenCalledWith('subcat-coeffs', { coefficients: { dev: 1.5 } });
+            expect(tasksStore.subcatCoeffs).toEqual({ dev: 2.5 });
+        });
+
+        it('reports a save failure', async () => {
+            const TasksStore = (await import('../../../resources/js/stores/tasks')).useTasksStore;
+            setActivePinia(createPinia());
+            const tasksStore = TasksStore();
+            tasksStore.subcatCoeffs = { dev: 1.5 };
+            axios.put.mockRejectedValueOnce(new Error('Network error'));
+
+            const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+            await mountSettings([]);
+
+            const subTab = wrapper.findAll('button').find(
+                b => b.text().includes('settings.tabs.sub')
+            );
+            await subTab.trigger('click');
+            await wrapper.vm.$nextTick();
+
+            const saveBtn = wrapper.findAll('.base-btn-stub').find(
+                b => b.text().includes('settings_modal.subcategories.save_all_button')
+            );
+            await saveBtn.trigger('click');
+            await new Promise(r => setTimeout(r, 50));
+
+            expect(consoleSpy).toHaveBeenCalledWith('Save subcategory coefficients error:', expect.any(Error));
+            expect(alertSpy).toHaveBeenCalledWith('settings_modal.subcategories.save_error');
+            expect(tasksStore.subcatCoeffs).toEqual({ dev: 1.5 });
+
+            consoleSpy.mockRestore();
+            alertSpy.mockRestore();
+        });
+    });
+
     describe('saveCats — categories tab', () => {
         it('saves categories via individual PUT requests with normalized weight', async () => {
             window.apiBaseUrl = 'https://balance.example.com';
@@ -252,6 +313,27 @@ describe('SettingsView — Accounts tab', () => {
                 color: '#34c759',
                 hide_until: null,
             });
+        });
+    });
+
+    describe('release notes link (#211)', () => {
+        it('opens the full change history from the footer', async () => {
+            await mountSettings([]);
+
+            const link = wrapper.findAll('button').find(
+                b => b.text().includes('release_notes.link')
+            );
+            expect(link).toBeTruthy();
+
+            await link.trigger('click');
+
+            const { useReleaseNotesStore } = await import(
+                '../../../resources/js/stores/releaseNotes'
+            );
+            const releaseNotes = useReleaseNotesStore();
+
+            expect(releaseNotes.visible).toBe(true);
+            expect(releaseNotes.mode).toBe('history');
         });
     });
 });

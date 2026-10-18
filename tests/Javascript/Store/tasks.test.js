@@ -60,15 +60,19 @@ describe('Tasks Store', () => {
     it('counts correctly categorizes tasks', () => {
         const tasks = useTasksStore();
         const future = new Date(Date.now() + 86400000).toISOString();
+        const past = new Date(Date.now() - 86400000).toISOString();
         tasks.tasks = [
             { id: 1, completed: false, category_slug: 'work' },
             { id: 2, completed: true },
-            { id: 3, completed: true },
+            // #205: a completed task scheduled for the future is hidden, not archived.
+            { id: 3, completed: true, hidden_until: future },
             { id: 4, completed: false, hidden_until: future },
+            // Once the date has passed, completion decides again.
+            { id: 5, completed: true, hidden_until: past },
         ];
         expect(tasks.counts.all).toBe(1);
         expect(tasks.counts.archive).toBe(2);
-        expect(tasks.counts.hidden).toBe(1);
+        expect(tasks.counts.hidden).toBe(2);
         expect(tasks.counts.byCat.work).toBe(1);
     });
 
@@ -171,6 +175,31 @@ describe('Tasks Store', () => {
         tasks.tasks = [{ id: 1 }];
         tasks.mergeCollection('tasks', null, false);
         expect(tasks.tasks).toEqual([{ id: 1 }]);
+    });
+
+    // ── Subcategory coefficients ──
+
+    it('saveSubcatCoeffs persists the map and applies the server response', async () => {
+        const tasks = useTasksStore();
+        tasks.subcatCoeffs = { dev: 2 };
+        axios.put.mockResolvedValueOnce({ data: { dev: 2.5 } });
+        const recalcSpy = vi.spyOn(tasks, 'recalculateAll').mockImplementation(() => {});
+
+        await tasks.saveSubcatCoeffs();
+
+        expect(axios.put).toHaveBeenCalledWith('subcat-coeffs', { coefficients: { dev: 2 } });
+        expect(tasks.subcatCoeffs).toEqual({ dev: 2.5 });
+        expect(recalcSpy).toHaveBeenCalled();
+        recalcSpy.mockRestore();
+    });
+
+    it('saveSubcatCoeffs propagates errors and keeps local state', async () => {
+        const tasks = useTasksStore();
+        tasks.subcatCoeffs = { dev: 2 };
+        axios.put.mockRejectedValueOnce(new Error('Network error'));
+
+        await expect(tasks.saveSubcatCoeffs()).rejects.toThrow('Network error');
+        expect(tasks.subcatCoeffs).toEqual({ dev: 2 });
     });
 
     // ── Task CRUD ──

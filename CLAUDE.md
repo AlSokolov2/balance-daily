@@ -71,6 +71,7 @@ docker-compose exec app ./vendor/bin/phpstan analyze app --level=8  # PHP static
 - **Commits**: Conventional Commits in English.
 - **Issues/tickets**: Written in Russian.
 - **Versioning**: Release without `v` prefix (use `2.5.0`, not `v2.5.0`) — the tooling adds it automatically.
+- **Release notes**: user-facing changes go to `resources/js/release-notes.json` (ru/en) when the version is bumped; internal refactors and dependency updates are omitted.
 - **Code style**: ESLint with 4-space indent, single quotes, no console warnings, Vue multi-word component names allowed for views. PHP: Laravel Pint.
 - **Documentation**: JSDoc for JS, PHPDoc for PHP. Detailed docs in `docs/` directory.
 

@@ -38,8 +38,10 @@ export const useTasksStore = defineStore('tasks', {
             const res = { all: 0, hidden: 0, archive: 0, byCat: {} };
             if (!Array.isArray(state.tasks)) return res;
             state.tasks.forEach(t => {
-                if (t.completed) res.archive++;
-                else if (t.hidden_until && new Date(t.hidden_until) > now) res.hidden++;
+                // A future `hidden_until` outranks completion (#205), matching
+                // `filteredTasks` in the balance store.
+                if (t.hidden_until && new Date(t.hidden_until) > now) res.hidden++;
+                else if (t.completed) res.archive++;
                 else {
                     res.all++;
                     if (t.category_slug) res.byCat[t.category_slug] = (res.byCat[t.category_slug] || 0) + 1;
@@ -114,6 +116,19 @@ export const useTasksStore = defineStore('tasks', {
                     this[key] = this[key].filter(x => !data.deleted.includes(x.id));
                 }
             }
+        },
+
+        /**
+         * Persist the subcategory coefficients edited in Settings.
+         *
+         * Until #198 they existed only in memory: the save button sent categories
+         * and the next sync replaced the map from the server. The response is the
+         * server's full map, so assigning it keeps both sides in step.
+         */
+        async saveSubcatCoeffs() {
+            const res = await axios.put('subcat-coeffs', { coefficients: this.subcatCoeffs });
+            this.subcatCoeffs = res.data;
+            this.recalculateAll();
         },
 
         // ── Task CRUD ──

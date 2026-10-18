@@ -189,7 +189,8 @@
             "save_error": "Error saving categories"
         },
         "subcategories": {
-            "save_all_button": "Save All"
+            "save_all_button": "Save All",
+            "save_error": "Error saving subcategories"
         },
         "notepad": {
             "placeholder": "Notes...",
@@ -202,6 +203,16 @@
             "sync_button": "Force Sync",
             "bug_report": "Report a Bug",
             "suggest_feature": "Suggest an Idea"
+        }
+    },
+    "release_notes": {
+        "title": "What's new",
+        "link": "What's new",
+        "got_it": "Got it",
+        "empty": "No change notes yet",
+        "types": {
+            "feature": "New",
+            "fix": "Fixed"
         }
     },
     "stats": {

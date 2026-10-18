@@ -40,6 +40,7 @@ class Task extends Model
         'title' => 'encrypted',
         'notes' => 'encrypted',
         'subcategory' => 'encrypted',
+        'importance' => 'float',
         'repeat_days' => 'array',
         'reminder_times' => 'array',
         'ha' => 'boolean',
@@ -60,6 +61,7 @@ class Task extends Model
 
     /**
      * Get the completion history for the task.
+     *
      * @return HasMany<TaskCompletion, $this>
      */
     public function completions(): HasMany
@@ -69,6 +71,7 @@ class Task extends Model
 
     /**
      * Get the latest completion record.
+     *
      * @return HasOne<TaskCompletion, $this>
      */
     public function latestCompletion(): HasOne

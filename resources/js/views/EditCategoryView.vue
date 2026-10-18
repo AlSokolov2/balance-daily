@@ -1,7 +1,8 @@
 <template>
-    <div 
+    <div
         class="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-        @click.self="router.push('/settings')"
+        @mousedown="handleBackdropMousedown"
+        @click.self="handleBackdropClick"
     >
         <EditCategoryModal 
             v-if="categoryData"
@@ -32,6 +33,23 @@ const { t } = useI18n();
 
 const slug = computed(() => route.params.slug);
 const existingCategory = computed(() => store.categories.find(c => c.slug === slug.value));
+
+// #165: a click is dispatched on the common ancestor of mousedown and mouseup.
+// Selecting text in the name field and releasing over the backdrop therefore
+// produced a click on the overlay and closed the editor. Close only when the
+// press itself started on the backdrop.
+let pressStartedOnBackdrop = false;
+
+const handleBackdropMousedown = (event) => {
+    pressStartedOnBackdrop = event.target === event.currentTarget;
+};
+
+const handleBackdropClick = () => {
+    if (pressStartedOnBackdrop) {
+        router.push('/settings');
+    }
+    pressStartedOnBackdrop = false;
+};
 
 // The `cat_new_` prefix only marks a category created from Settings in this session.
 // The API persists the slug verbatim, so a saved category keeps that prefix forever —

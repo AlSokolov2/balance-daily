@@ -213,7 +213,7 @@
                         variant="secondary"
                         size="md"
                         class="w-full py-4 mt-6"
-                        @click="saveCats"
+                        @click="saveSubcats"
                     >
                         {{ $t('settings_modal.subcategories.save_all_button') }}
                     </BaseButton>
@@ -307,9 +307,18 @@
         </div>
 
         <!-- Footer -->
-        <div class="p-4 sm:p-5 border-t border-[var(--color-border)] flex justify-between items-center opacity-40">
-            <span class="text-[9px] font-black uppercase tracking-widest text-[var(--color-secondary)]">Balance.Daily</span>
-            <span class="text-[9px] font-bold font-mono text-[var(--color-secondary)]">v{{ version }}</span>
+        <div class="p-4 sm:p-5 border-t border-[var(--color-border)] flex justify-between items-center">
+            <span class="text-[9px] font-black uppercase tracking-widest text-[var(--color-secondary)] opacity-40">Balance.Daily</span>
+            <div class="flex items-center gap-3">
+                <button
+                    type="button"
+                    class="text-[9px] font-bold uppercase tracking-widest text-[var(--color-secondary)] hover:text-[var(--color-text)] transition-colors"
+                    @click="releaseNotes.openHistory()"
+                >
+                    {{ $t('release_notes.link') }}
+                </button>
+                <span class="text-[9px] font-bold font-mono text-[var(--color-secondary)] opacity-40">v{{ version }}</span>
+            </div>
         </div>
     </div>
 </template>
@@ -318,6 +327,7 @@
 import { ref, onMounted, reactive, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBalanceStore } from '../stores/balance';
+import { useReleaseNotesStore } from '../stores/releaseNotes';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 import AppIcon from '../components/AppIcon.vue';
@@ -336,6 +346,7 @@ const vizPlugins = computed(() => listPlugins());
 
 const { locale, t } = useI18n();
 const store = useBalanceStore();
+const releaseNotes = useReleaseNotesStore();
 const router = useRouter();
 const version = __APP_VERSION__;
 const linkedProviders = computed(() => store.user?.providers || []);
@@ -400,6 +411,15 @@ const saveCats = async () => {
     } catch (e) {
         console.error('Save categories error:', e);
         window.alert(t('settings_modal.categories.save_error'));
+    }
+};
+
+const saveSubcats = async () => {
+    try {
+        await store.saveSubcatCoeffs();
+    } catch (e) {
+        console.error('Save subcategory coefficients error:', e);
+        window.alert(t('settings_modal.subcategories.save_error'));
     }
 };
 

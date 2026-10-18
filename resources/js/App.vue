@@ -45,6 +45,9 @@
         <!-- Toast Notification -->
         <ToastNotification />
 
+        <!-- One-time "what's new" after a version change (#211) -->
+        <ReleaseNotesModal />
+
         <!-- PWA Update Notification -->
         <div v-if="needRefresh" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-[100] cursor-pointer group" @click="updateServiceWorker(true)">
             <div class="bg-[var(--bg-card)]/80 backdrop-blur-xl border border-[var(--color-border)] rounded-full px-4 py-2 shadow-2xl flex items-center gap-3 animate-[slide-up_0.3s_ease-out] hover:scale-105 transition-all active:scale-95">
@@ -67,13 +70,16 @@ import { useI18n } from 'vue-i18n';
 import AuthScreen from './components/AuthScreen.vue';
 import MobileBottomNav from './components/MobileBottomNav.vue';
 import ToastNotification from './components/ToastNotification.vue';
+import ReleaseNotesModal from './components/ReleaseNotesModal.vue';
 import AppIcon from './components/AppIcon.vue';
 import AppSkeleton from './components/AppSkeleton.vue';
+import { useReleaseNotesStore } from './stores/releaseNotes';
 
 const { locale } = useI18n();
 const { offlineReady, needRefresh, updateServiceWorker } = useRegisterSW();
 
 const store = useBalanceStore();
+const releaseNotes = useReleaseNotesStore();
 const router = useRouter();
 const route = useRoute();
 
@@ -102,6 +108,10 @@ watch(() => route.name, (toName, fromName) => {
 
 // Watchers
 watch(() => offlineReady.value, (val) => { if (val) isActuallyOfflineReady.value = true; }, { immediate: true });
+// Check once the session is restored, so the sheet never covers the login screen.
+watch(() => store.isAuthenticated, (authenticated) => {
+    if (authenticated) releaseNotes.checkAfterUpdate();
+}, { immediate: true });
 watch(() => store.locale, (newLocale) => { if (newLocale) locale.value = String(newLocale); }, { immediate: true });
 
 // Layout Detection
