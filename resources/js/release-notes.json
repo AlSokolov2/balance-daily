@@ -1,5 +1,16 @@
 [
     {
+        "version": "2.19.1",
+        "date": "2026-10-18",
+        "items": [
+            {
+                "type": "fix",
+                "ru": "Лист «Что нового» теперь показывается и после обновления до 2.19.0.",
+                "en": "The \"What's new\" sheet is now shown after updating to 2.19.0 as well."
+            }
+        ]
+    },
+    {
         "version": "2.19.0",
         "date": "2026-10-18",
         "items": [
