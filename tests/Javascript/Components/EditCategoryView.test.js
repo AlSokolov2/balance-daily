@@ -275,4 +275,38 @@ describe('EditCategoryView', () => {
 
         expect(axios.delete).not.toHaveBeenCalled();
     });
+
+    describe('backdrop dismissal (#165)', () => {
+        it('keeps the editor open when a press inside the panel ends on the backdrop', async () => {
+            mockRoute.params = { slug: 'chor' };
+            const { default: EditCategoryView } = await import(
+                '../../../resources/js/views/EditCategoryView.vue'
+            );
+
+            const wrapper = mount(EditCategoryView);
+            await wrapper.vm.$nextTick();
+
+            const overlay = wrapper.find('.fixed.inset-0');
+            await wrapper.find('input[type="text"]').trigger('mousedown');
+            await overlay.trigger('click');
+
+            expect(mockPush).not.toHaveBeenCalled();
+        });
+
+        it('closes when the press started on the backdrop', async () => {
+            mockRoute.params = { slug: 'chor' };
+            const { default: EditCategoryView } = await import(
+                '../../../resources/js/views/EditCategoryView.vue'
+            );
+
+            const wrapper = mount(EditCategoryView);
+            await wrapper.vm.$nextTick();
+
+            const overlay = wrapper.find('.fixed.inset-0');
+            await overlay.trigger('mousedown');
+            await overlay.trigger('click');
+
+            expect(mockPush).toHaveBeenCalledWith('/settings');
+        });
+    });
 });
