@@ -140,6 +140,7 @@ export const useBalanceStore = defineStore('balance', {
         async fetchStats(params) { await useTasksStore().fetchStats(params); },
         async sync(forceFull = false) { await useTasksStore().sync(forceFull); },
         mergeCollection(key, data, isFull) { useTasksStore().mergeCollection(key, data, isFull); },
+        async saveSubcatCoeffs() { await useTasksStore().saveSubcatCoeffs(); },
 
         // ── Task CRUD ──
 

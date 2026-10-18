@@ -50,6 +50,19 @@ describe('EditTaskModal Component', () => {
         expect(wrapper.find('select').exists()).toBe(true);
     });
 
+    it('selects importance when the API sends a decimal string', async () => {
+        const wrapper = mount(EditTaskModal, {
+            props: { task: { ...mockTask, importance: '2.0' }, isNew: false }
+        });
+
+        const setupTab = wrapper.findAll('button').find(b => b.text() === 'edit_task.tabs.setup');
+        await setupTab.trigger('click');
+
+        // Category select comes first, importance second.
+        const importanceSelect = wrapper.findAll('select')[1];
+        expect(importanceSelect.element.value).toBe('2');
+    });
+
     it('switches tabs on horizontal swipe', async () => {
         const wrapper = mount(EditTaskModal, {
             props: { task: mockTask, isNew: false }

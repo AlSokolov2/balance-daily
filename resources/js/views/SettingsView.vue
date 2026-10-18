@@ -213,7 +213,7 @@
                         variant="secondary"
                         size="md"
                         class="w-full py-4 mt-6"
-                        @click="saveCats"
+                        @click="saveSubcats"
                     >
                         {{ $t('settings_modal.subcategories.save_all_button') }}
                     </BaseButton>
@@ -400,6 +400,15 @@ const saveCats = async () => {
     } catch (e) {
         console.error('Save categories error:', e);
         window.alert(t('settings_modal.categories.save_error'));
+    }
+};
+
+const saveSubcats = async () => {
+    try {
+        await store.saveSubcatCoeffs();
+    } catch (e) {
+        console.error('Save subcategory coefficients error:', e);
+        window.alert(t('settings_modal.subcategories.save_error'));
     }
 };
 

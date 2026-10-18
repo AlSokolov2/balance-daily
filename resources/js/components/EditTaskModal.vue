@@ -397,6 +397,9 @@ const handleTouchEnd = (e) => {
 
 const editData = reactive({
     ...props.task,
+    // DECIMAL columns arrive as strings ("2.0"), which never match the select's
+    // option values ("2") — the field looked empty (#198).
+    importance: Number(props.task.importance),
     // UTC instant from the API -> local wall-clock for input[type="datetime-local"]
     deadline: toLocalInputValue(props.task.deadline),
     postpone_until: toLocalInputValue(props.task.postpone_until),

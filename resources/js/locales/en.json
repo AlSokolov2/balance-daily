@@ -189,7 +189,8 @@
             "save_error": "Error saving categories"
         },
         "subcategories": {
-            "save_all_button": "Save All"
+            "save_all_button": "Save All",
+            "save_error": "Error saving subcategories"
         },
         "notepad": {
             "placeholder": "Notes...",

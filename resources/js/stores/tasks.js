@@ -116,6 +116,19 @@ export const useTasksStore = defineStore('tasks', {
             }
         },
 
+        /**
+         * Persist the subcategory coefficients edited in Settings.
+         *
+         * Until #198 they existed only in memory: the save button sent categories
+         * and the next sync replaced the map from the server. The response is the
+         * server's full map, so assigning it keeps both sides in step.
+         */
+        async saveSubcatCoeffs() {
+            const res = await axios.put('subcat-coeffs', { coefficients: this.subcatCoeffs });
+            this.subcatCoeffs = res.data;
+            this.recalculateAll();
+        },
+
         // ── Task CRUD ──
 
         async addTask(taskData) {

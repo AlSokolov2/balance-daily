@@ -173,6 +173,31 @@ describe('Tasks Store', () => {
         expect(tasks.tasks).toEqual([{ id: 1 }]);
     });
 
+    // ── Subcategory coefficients ──
+
+    it('saveSubcatCoeffs persists the map and applies the server response', async () => {
+        const tasks = useTasksStore();
+        tasks.subcatCoeffs = { dev: 2 };
+        axios.put.mockResolvedValueOnce({ data: { dev: 2.5 } });
+        const recalcSpy = vi.spyOn(tasks, 'recalculateAll').mockImplementation(() => {});
+
+        await tasks.saveSubcatCoeffs();
+
+        expect(axios.put).toHaveBeenCalledWith('subcat-coeffs', { coefficients: { dev: 2 } });
+        expect(tasks.subcatCoeffs).toEqual({ dev: 2.5 });
+        expect(recalcSpy).toHaveBeenCalled();
+        recalcSpy.mockRestore();
+    });
+
+    it('saveSubcatCoeffs propagates errors and keeps local state', async () => {
+        const tasks = useTasksStore();
+        tasks.subcatCoeffs = { dev: 2 };
+        axios.put.mockRejectedValueOnce(new Error('Network error'));
+
+        await expect(tasks.saveSubcatCoeffs()).rejects.toThrow('Network error');
+        expect(tasks.subcatCoeffs).toEqual({ dev: 2 });
+    });
+
     // ── Task CRUD ──
 
     it('addTask creates task and recalculates', async () => {
