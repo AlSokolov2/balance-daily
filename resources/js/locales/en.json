@@ -205,6 +205,16 @@
             "suggest_feature": "Suggest an Idea"
         }
     },
+    "release_notes": {
+        "title": "What's new",
+        "link": "What's new",
+        "got_it": "Got it",
+        "empty": "No change notes yet",
+        "types": {
+            "feature": "New",
+            "fix": "Fixed"
+        }
+    },
     "stats": {
         "title": "Statistics & Analytics",
         "counters": {
