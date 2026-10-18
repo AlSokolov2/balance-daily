@@ -10,7 +10,12 @@ import { defineStore } from 'pinia';
 import releaseNotes from '../release-notes.json';
 import { compareVersions } from '../utils/version';
 
-const LAST_SEEN_KEY = 'last_seen_version';
+// 2.19.0 shipped the sheet with `last_seen_version`, which was written silently
+// for every existing device. The new key lets those devices show the notes once
+// instead of being mistaken for first launches; the old key stays a prior-use hint.
+const LAST_SEEN_KEY = 'release_notes_seen_version';
+const LEGACY_LAST_SEEN_KEY = 'last_seen_version';
+const PRIOR_USE_KEYS = ['last_sync', LEGACY_LAST_SEEN_KEY];
 const VERSION_PATTERN = /^\d+(\.\d+)*$/;
 
 /**
@@ -71,7 +76,16 @@ export const useReleaseNotesStore = defineStore('releaseNotes', {
          */
         checkAfterUpdate() {
             if (!this.lastSeen) {
-                this.markSeen();
+                const hasNotes = this.notes.some(note =>
+                    compareVersions(note.version, this.currentVersion) <= 0);
+
+                if (this.hasPriorUse() && hasNotes) {
+                    this.mode = 'update';
+                    this.visible = true;
+                } else {
+                    this.markSeen();
+                }
+
                 return;
             }
 
@@ -103,6 +117,18 @@ export const useReleaseNotesStore = defineStore('releaseNotes', {
         markSeen() {
             this.lastSeen = this.currentVersion;
             writeLastSeen(this.currentVersion);
+        },
+
+        /**
+         * A device that has synced before (or carries the key written by the
+         * 2.19.0 build) is an existing user, not a first launch.
+         */
+        hasPriorUse() {
+            try {
+                return PRIOR_USE_KEYS.some(key => localStorage.getItem(key) !== null);
+            } catch {
+                return false;
+            }
         },
     },
 });

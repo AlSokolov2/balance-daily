@@ -6,6 +6,7 @@ const NOTES = [
     { version: '2.17.0', date: '2026-10-01', items: [] },
     { version: '2.18.0', date: '2026-10-05', items: [] },
     { version: '2.19.0', date: '2026-10-18', items: [] },
+    { version: '2.19.1', date: '2026-10-18', items: [] },
     { version: '2.20.0', date: '2026-11-01', items: [] },
 ];
 
@@ -14,7 +15,7 @@ const NOTES = [
  * @returns {ReturnType<typeof useReleaseNotesStore>}
  */
 function makeStore(lastSeen) {
-    if (lastSeen !== undefined) localStorage.setItem('last_seen_version', lastSeen);
+    if (lastSeen !== undefined) localStorage.setItem('release_notes_seen_version', lastSeen);
 
     const store = useReleaseNotesStore();
     store.notes = NOTES;
@@ -40,7 +41,51 @@ describe('Release notes store (#211)', () => {
 
         expect(store.visible).toBe(false);
         expect(store.lastSeen).toBe('2.19.0');
-        expect(localStorage.getItem('last_seen_version')).toBe('2.19.0');
+        expect(localStorage.getItem('release_notes_seen_version')).toBe('2.19.0');
+    });
+
+    it('shows the sheet once on a device that already ran 2.19.0', () => {
+        // 2.19.0 wrote the old key silently for everyone; the new key is absent.
+        localStorage.setItem('last_sync', '2026-10-18T10:00:00Z');
+        localStorage.setItem('last_seen_version', '2.19.0');
+
+        const store = useReleaseNotesStore();
+        store.notes = NOTES;
+        store.currentVersion = '2.19.1';
+
+        store.checkAfterUpdate();
+
+        expect(store.visible).toBe(true);
+        expect(store.mode).toBe('update');
+        expect(store.visibleNotes.map(note => note.version))
+            .toEqual(['2.19.1', '2.19.0', '2.18.0', '2.17.0']);
+    });
+
+    it('shows the notes on an existing device that skipped 2.19.0', () => {
+        localStorage.setItem('last_sync', '2026-10-18T10:00:00Z');
+
+        const store = useReleaseNotesStore();
+        store.notes = NOTES;
+        store.currentVersion = '2.19.0';
+
+        store.checkAfterUpdate();
+
+        expect(store.visible).toBe(true);
+        expect(store.visibleNotes.map(note => note.version))
+            .toEqual(['2.19.0', '2.18.0', '2.17.0']);
+    });
+
+    it('does not open an empty sheet on an existing device', () => {
+        localStorage.setItem('last_sync', '2026-10-18T10:00:00Z');
+
+        const store = useReleaseNotesStore();
+        store.notes = [{ version: '2.20.0', date: '2026-11-01', items: [] }];
+        store.currentVersion = '2.19.1';
+
+        store.checkAfterUpdate();
+
+        expect(store.visible).toBe(false);
+        expect(store.lastSeen).toBe('2.19.1');
     });
 
     it('does nothing when the version has not changed', () => {
@@ -79,7 +124,7 @@ describe('Release notes store (#211)', () => {
 
         expect(store.visible).toBe(false);
         expect(store.lastSeen).toBe('2.19.0');
-        expect(localStorage.getItem('last_seen_version')).toBe('2.19.0');
+        expect(localStorage.getItem('release_notes_seen_version')).toBe('2.19.0');
     });
 
     it('does not show notes after a rollback', () => {
@@ -99,7 +144,7 @@ describe('Release notes store (#211)', () => {
         expect(store.visible).toBe(true);
         expect(store.mode).toBe('history');
         expect(store.visibleNotes.map(note => note.version))
-            .toEqual(['2.20.0', '2.19.0', '2.18.0', '2.17.0']);
+            .toEqual(['2.20.0', '2.19.1', '2.19.0', '2.18.0', '2.17.0']);
         expect(store.lastSeen).toBe('2.19.0');
     });
 
@@ -111,7 +156,7 @@ describe('Release notes store (#211)', () => {
 
         expect(store.visible).toBe(false);
         expect(store.lastSeen).toBe('2.19.0');
-        expect(localStorage.getItem('last_seen_version')).toBe('2.19.0');
+        expect(localStorage.getItem('release_notes_seen_version')).toBe('2.19.0');
     });
 
     it('treats a corrupt stored version as a first launch', () => {
@@ -141,7 +186,6 @@ describe('Release notes store (#211)', () => {
         const store = makeStore();
         expect(store.lastSeen).toBeNull();
 
-        vi.restoreAllMocks();
         vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
             throw new Error('blocked');
         });
