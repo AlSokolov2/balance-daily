@@ -11,4 +11,8 @@ class SubcatCoeff extends Model
         'name',
         'coefficient',
     ];
+
+    protected $casts = [
+        'coefficient' => 'float',
+    ];
 }

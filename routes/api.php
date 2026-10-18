@@ -3,10 +3,11 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\PushSubscriptionController;
-use App\Http\Controllers\Api\TaskCompletionController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\StatsController;
+use App\Http\Controllers\Api\SubcatCoeffController;
 use App\Http\Controllers\Api\SyncController;
+use App\Http\Controllers\Api\TaskCompletionController;
 use App\Http\Controllers\Api\TaskController;
 use Illuminate\Support\Facades\Route;
 
@@ -37,6 +38,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
     Route::get('settings', [SettingsController::class, 'index']);
     Route::post('settings', [SettingsController::class, 'update']);
+
+    Route::put('subcat-coeffs', [SubcatCoeffController::class, 'update']);
 
     Route::post('push-subscriptions', [PushSubscriptionController::class, 'store']);
     Route::delete('push-subscriptions', [PushSubscriptionController::class, 'destroy']);
