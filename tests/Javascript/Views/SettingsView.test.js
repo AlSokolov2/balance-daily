@@ -315,4 +315,25 @@ describe('SettingsView — Accounts tab', () => {
             });
         });
     });
+
+    describe('release notes link (#211)', () => {
+        it('opens the full change history from the footer', async () => {
+            await mountSettings([]);
+
+            const link = wrapper.findAll('button').find(
+                b => b.text().includes('release_notes.link')
+            );
+            expect(link).toBeTruthy();
+
+            await link.trigger('click');
+
+            const { useReleaseNotesStore } = await import(
+                '../../../resources/js/stores/releaseNotes'
+            );
+            const releaseNotes = useReleaseNotesStore();
+
+            expect(releaseNotes.visible).toBe(true);
+            expect(releaseNotes.mode).toBe('history');
+        });
+    });
 });

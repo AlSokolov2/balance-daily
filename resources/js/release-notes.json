@@ -1,0 +1,33 @@
+[
+    {
+        "version": "2.19.0",
+        "date": "2026-10-18",
+        "items": [
+            {
+                "type": "fix",
+                "ru": "Коэффициенты важности подкатегорий снова сохраняются.",
+                "en": "Subcategory importance coefficients are saved again."
+            },
+            {
+                "type": "fix",
+                "ru": "Поле «Важность» в параметрах задачи больше не остаётся пустым.",
+                "en": "The importance field in task settings no longer appears empty."
+            },
+            {
+                "type": "fix",
+                "ru": "Окно категории больше не закрывается, если выделить текст и вывести курсор за пределы окна.",
+                "en": "The category editor no longer closes when a text selection leaves the window."
+            },
+            {
+                "type": "fix",
+                "ru": "Задача с будущей датой появления остаётся в скрытом списке, даже если отмечена выполненной.",
+                "en": "A task with a future appearance date stays hidden even when marked done."
+            },
+            {
+                "type": "feature",
+                "ru": "В настройках появилась ссылка «Что нового» с историей изменений.",
+                "en": "Settings now has a \"What's new\" link with the change history."
+            }
+        ]
+    }
+]
