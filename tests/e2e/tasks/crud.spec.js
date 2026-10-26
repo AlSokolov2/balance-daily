@@ -40,7 +40,7 @@ test.describe('Task CRUD', () => {
 
         // Navigate directly to the edit task page
         await page.goto(`/#/task/${task.id}`);
-        await page.waitForSelector('input[type="text"]', { timeout: 5_000 });
+        await page.waitForSelector('textarea.task-title-input', { timeout: 5_000 });
 
         // Click Save
         const saveBtn = page.locator('button:has-text("Save")');

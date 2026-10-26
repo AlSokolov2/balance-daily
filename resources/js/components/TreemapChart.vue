@@ -35,7 +35,7 @@
                 <div class="p-2 sm:p-4 text-center w-full max-w-full">
                     <span 
                         :class="[
-                            'block font-black break-words leading-tight',
+                            'block font-black break-words whitespace-pre-line leading-tight',
                             rect.task.postponed
                                 ? 'text-[var(--color-text)] opacity-70'
                                 : 'text-white drop-shadow-md'

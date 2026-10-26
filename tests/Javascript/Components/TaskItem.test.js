@@ -33,6 +33,16 @@ describe('TaskItem Component', () => {
         expect(badge.text()).toContain('task.status.missed');
     });
 
+    it('preserves manual line breaks in the title (#201)', () => {
+        const wrapper = mount(TaskItem, {
+            props: { task: { ...mockTask, title: 'First line\nSecond line' } }
+        });
+
+        const title = wrapper.find('.task-title');
+        expect(title.classes()).toContain('whitespace-pre-line');
+        expect(title.text()).toContain('First line\nSecond line');
+    });
+
     it('emits edit event when edit button is clicked', async () => {
         const wrapper = mount(TaskItem, {
             props: { task: mockTask }

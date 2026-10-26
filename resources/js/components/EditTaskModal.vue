@@ -10,12 +10,14 @@
             </button>
             
             <div class="flex-1 px-4 min-w-0">
-                <input
+                <textarea
+                    ref="titleTextarea"
                     v-model="editData.title"
-                    type="text" 
-                    class="w-full p-0 bg-transparent border-none text-lg font-black text-[var(--color-text)] outline-none placeholder:opacity-30" 
+                    rows="1"
+                    class="task-title-input w-full max-h-[40vh] p-0 bg-transparent border-none text-lg font-black text-[var(--color-text)] outline-none placeholder:opacity-30 resize-none overflow-y-auto leading-snug custom-scrollbar"
                     :placeholder="$t('edit_task.title')"
-                >
+                    @input="autoResizeTitle"
+                />
             </div>
 
             <button 
@@ -52,7 +54,7 @@
                 <textarea
                     ref="notesTextarea" 
                     v-model="editData.notes" 
-                    class="flex-1 w-full p-0 bg-transparent border-none text-sm resize-none outline-none text-[var(--color-text)] placeholder:text-[var(--color-secondary)]/50 leading-relaxed custom-scrollbar" 
+                    class="task-notes-input flex-1 w-full p-0 bg-transparent border-none text-sm resize-none outline-none text-[var(--color-text)] placeholder:text-[var(--color-secondary)]/50 leading-relaxed custom-scrollbar"
                     :placeholder="$t('edit_task.notes_placeholder')"
                 />
             </div>
@@ -309,6 +311,7 @@ const emit = defineEmits(['close', 'saved']);
 const store = useBalanceStore();
 const { t } = useI18n();
 const toast = useToast();
+const titleTextarea = ref(null);
 const notesTextarea = ref(null);
 const activeTab = ref('notes');
 const tabs = ['notes', 'setup', 'schedule', 'history'];
@@ -417,6 +420,15 @@ const autoResize = () => {
     }
 };
 
+// The title is a textarea so the user can break it into lines by hand (#201).
+// Grow it with the content until the header stops being usable.
+const autoResizeTitle = () => {
+    const el = titleTextarea.value;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+};
+
 const formatDate = (d) => {
     if (!d) return '';
     const dateLocale = store.locale === 'ru' ? 'ru-RU' : 'en-US';
@@ -497,6 +509,7 @@ const handleDelete = async () => {
 
 onMounted(() => {
     fetchFullDetails();
+    autoResizeTitle();
     window.setTimeout(autoResize, 50);
 });
 </script>

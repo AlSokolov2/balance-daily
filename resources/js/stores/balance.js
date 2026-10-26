@@ -102,10 +102,13 @@ export const useBalanceStore = defineStore('balance', {
             tasks = tasks.filter(t => !t.completed && (!t.hidden_until || new Date(t.hidden_until) <= now));
             if (this.filterCat !== 'all') tasks = tasks.filter(t => t.category_slug === this.filterCat);
             if (this.searchQuery) {
-                const q = this.searchQuery.toLowerCase();
+                // Titles can contain manual line breaks (#201), so a query written with
+                // spaces must still match text broken across lines.
+                const normalize = (text) => text.toLowerCase().replace(/\s+/g, ' ');
+                const q = normalize(this.searchQuery);
                 tasks = tasks.filter(t =>
-                    (t.title && t.title.toLowerCase().includes(q)) ||
-                    (t.notes && t.notes.toLowerCase().includes(q)));
+                    (t.title && normalize(t.title).includes(q)) ||
+                    (t.notes && normalize(t.notes).includes(q)));
             }
             return tasks;
         },

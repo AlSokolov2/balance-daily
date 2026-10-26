@@ -11,7 +11,7 @@
         />
         
         <div class="task-info flex-[3] min-w-0">
-            <div class="task-title font-bold text-[15px] mb-0.5 text-[var(--color-text)]">
+            <div class="task-title font-bold text-[15px] mb-0.5 text-[var(--color-text)] whitespace-pre-line break-words">
                 {{ task.title }}
                 
                 <BaseBadge

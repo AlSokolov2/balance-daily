@@ -51,6 +51,18 @@ describe('TreemapChart Component', () => {
         });
     });
 
+    it('preserves manual line breaks in the title (#201)', async () => {
+        const tasks = [{ id: 1, title: 'First line\nSecond line', calculatedPriority: 10, category_slug: 'work' }];
+        const wrapper = mount(TreemapChart, { props: { tasks } });
+
+        wrapper.vm.dimensions = { width: 800, height: 600 };
+        await wrapper.vm.$nextTick();
+
+        const title = wrapper.find('.shadow-sm.cursor-pointer span');
+        expect(title.classes()).toContain('whitespace-pre-line');
+        expect(title.text()).toContain('First line\nSecond line');
+    });
+
     it('navigates to edit screen when a block is clicked', async () => {
         const tasks = [{ id: 1, title: 'Task 1', calculatedPriority: 10, category_slug: 'work' }];
         const wrapper = mount(TreemapChart, {
