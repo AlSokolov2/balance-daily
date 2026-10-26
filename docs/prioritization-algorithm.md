@@ -40,10 +40,10 @@ The application maintains a **1-minute pulse**. Every minute, the store triggers
 
 The circle packing algorithm is executed in a **Web Worker** to prevent blocking the main UI thread. It works as follows:
 
-1.  **Size:** Bubble diameter is directly proportional to the `calculatedPriority` value.
+1.  **Size:** Bubble diameter is directly proportional to the `calculatedPriority` value, multiplied by the task's manual `size_scale` (0.5–2.0, 1.0 = automatic). The scale can be changed with the mouse wheel over a bubble (#197) and is stored with the task.
 2.  **Grouping:** 
     *   **Center:** Primary active tasks.
     *   **Side:** Tasks marked as "High Attention" (HA) or postponed tasks.
 3.  **Iterative Tightening:** The algorithm performs multiple passes to find the most dense packing without overlaps. It uses a "repulsion" force between bubbles and an "attraction" force toward the center of their respective groups.
 4.  **Auto-Scaling:** If the total area of bubbles exceeds the viewport, the system automatically reduces the global scale until they fit perfectly.
-5.  **Interactivity:** Supports **Pinch-to-Zoom** and **Drag** gestures for detailed inspection on mobile devices.
+5.  **Interactivity:** Supports **Pinch-to-Zoom** and **Drag** gestures for detailed inspection on mobile devices; on desktop, the mouse wheel over a bubble adjusts that task's `size_scale`.

@@ -206,4 +206,42 @@ class TaskIsolationTest extends TestCase
         $response->assertStatus(204);
         $this->assertDatabaseMissing('tasks', ['id' => $task->id]);
     }
+
+    public function test_task_size_scale_is_created_and_defaults_to_one(): void
+    {
+        $user = User::factory()->create();
+        Category::create(['slug' => 'work', 'name' => 'Work', 'weight' => 0.1, 'user_id' => $user->id]);
+
+        $this->actingAs($user)->postJson('/api/tasks', [
+            'title' => 'Default size',
+            'category_slug' => 'work',
+            'importance' => 2,
+        ])->assertStatus(201)->assertJsonPath('size_scale', 1);
+
+        $this->actingAs($user)->postJson('/api/tasks', [
+            'title' => 'Manual size',
+            'category_slug' => 'work',
+            'importance' => 2,
+            'size_scale' => 1.6,
+        ])->assertStatus(201)->assertJsonPath('size_scale', 1.6);
+    }
+
+    public function test_task_size_scale_can_be_updated_and_is_validated(): void
+    {
+        $user = User::factory()->create();
+        Category::create(['slug' => 'work', 'name' => 'Work', 'weight' => 0.1, 'user_id' => $user->id]);
+        $task = Task::create(['title' => 'Resize Me', 'category_slug' => 'work', 'importance' => 2, 'user_id' => $user->id]);
+
+        $this->actingAs($user)->putJson("/api/tasks/{$task->id}", ['size_scale' => 0.7])
+            ->assertOk()
+            ->assertJsonPath('size_scale', 0.7);
+        $this->assertDatabaseHas('tasks', ['id' => $task->id, 'size_scale' => 0.7]);
+
+        $this->actingAs($user)->putJson("/api/tasks/{$task->id}", ['size_scale' => 0.4])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('size_scale');
+        $this->actingAs($user)->putJson("/api/tasks/{$task->id}", ['size_scale' => 2.1])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('size_scale');
+    }
 }

@@ -24,6 +24,7 @@
                 @pointerdown="handlePointerDown($event, t)"
                 @pointerup="handlePointerUp($event, t)"
                 @pointercancel="handlePointerUp($event, t)"
+                @wheel="handleWheel($event, t)"
                 @contextmenu.prevent
             >
                 <span class="block leading-[1.1] break-words whitespace-pre-line pointer-events-none">
@@ -86,6 +87,20 @@ const isTouchDevice = ref(false);
 const tooltip = ref({ visible: false, text: '', x: 0, y: 0, taskId: null });
 
 let worker = null;
+
+// Manual bubble resize (#197). 1.0 means "the automatic, priority-based size".
+const SIZE_SCALE_MIN = 0.5;
+const SIZE_SCALE_MAX = 2;
+const SIZE_SAVE_DELAY_MS = 400;
+
+const sizeScaleOf = (task) => {
+    // A task created before the next sync may not carry the column yet; null/'' must mean
+    // "automatic", not zero (which would clamp down to the minimum).
+    if (task.size_scale === null || task.size_scale === undefined || task.size_scale === '') return 1;
+    const scale = Number(task.size_scale);
+    if (!Number.isFinite(scale)) return 1;
+    return Math.min(SIZE_SCALE_MAX, Math.max(SIZE_SCALE_MIN, scale));
+};
 
 const bubbleContainerStyle = computed(() => {
     if (store.bubbleZoom !== 1) {
@@ -230,6 +245,53 @@ const handleTouchEnd = (e) => {
     }
 };
 
+// Wheel resizing is optimistic: the layout repacks as the user scrolls, while the API
+// call is debounced until the gesture stops, so one gesture is a single PUT.
+const pendingSizeSaves = new Map();
+
+const saveSizeScale = (id, sizeScale) => {
+    store.updateTask(id, { size_scale: sizeScale }).catch((e) => {
+        console.error('Size scale save error:', e);
+    });
+};
+
+const scheduleSizeSave = (id, sizeScale) => {
+    const pending = pendingSizeSaves.get(id);
+    if (pending) window.clearTimeout(pending.timer);
+    const timer = window.setTimeout(() => {
+        pendingSizeSaves.delete(id);
+        saveSizeScale(id, sizeScale);
+    }, SIZE_SAVE_DELAY_MS);
+    pendingSizeSaves.set(id, { sizeScale, timer });
+};
+
+const flushSizeSaves = () => {
+    pendingSizeSaves.forEach(({ sizeScale, timer }, id) => {
+        window.clearTimeout(timer);
+        saveSizeScale(id, sizeScale);
+    });
+    pendingSizeSaves.clear();
+};
+
+const handleWheel = (event, task) => {
+    // Ctrl/Cmd+wheel is browser zoom; touch devices have pinch-to-zoom instead.
+    if (event.ctrlKey || event.metaKey || !event.deltaY) return;
+    event.preventDefault();
+
+    // A mouse notch is ~100px while a trackpad reports much smaller deltas. Scaling the
+    // step by the delta keeps both usable, and the 0.02 floor lets slow gestures add up.
+    const direction = event.deltaY < 0 ? 1 : -1;
+    const step = Math.min(0.1, Math.max(0.02, Math.abs(event.deltaY) / 1000)) * direction;
+    const current = sizeScaleOf(task);
+    const next = Math.round(
+        Math.min(SIZE_SCALE_MAX, Math.max(SIZE_SCALE_MIN, current + step)) * 100
+    ) / 100;
+    if (next === current) return;
+
+    task.size_scale = next;
+    scheduleSizeSave(task.id, next);
+};
+
 const handlePointerDown = (event, task) => {
     if (!isTouchDevice.value) return;
     touchMoved = false;
@@ -279,7 +341,7 @@ const calcBubbles = () => {
     const maxP = T[0].calculatedPriority;
     const minP = T[T.length - 1].calculatedPriority;
     const rng = maxP - minP || 1;
-    const baseSizes = T.map(t => 25 + ((t.calculatedPriority - minP) / rng) * 50);
+    const baseSizes = T.map(t => (25 + ((t.calculatedPriority - minP) / rng) * 50) * sizeScaleOf(t));
 
     const central = [], side = [];
     
@@ -339,6 +401,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+    flushSizeSaves();
     window.removeEventListener('resize', calcBubbles);
     if (worker) worker.terminate();
 });
