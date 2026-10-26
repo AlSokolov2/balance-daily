@@ -23,6 +23,7 @@ class TaskFactory extends Factory
             'title' => $this->faker->sentence(),
             'category_slug' => 'chor',
             'importance' => 2,
+            'size_scale' => 1,
             'completed' => false,
         ];
     }

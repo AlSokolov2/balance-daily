@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import BubbleChart from '../../../resources/js/components/BubbleChart.vue';
 import { useBalanceStore } from '../../../resources/js/stores/balance';
@@ -238,5 +238,124 @@ describe('BubbleChart — overdue day counter (#156)', () => {
 
         expect(bubbleFor(wrapper, 'Iron').find('span span').exists()).toBe(false);
         expect(bubbleFor(wrapper, 'Dust').find('span span').exists()).toBe(false);
+    });
+});
+
+describe('BubbleChart — manual bubble resize (#197)', () => {
+    beforeEach(() => {
+        setActivePinia(createPinia());
+        vi.useFakeTimers();
+        mockPush.mockClear();
+        Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, value: 800 });
+        Object.defineProperty(HTMLElement.prototype, 'clientHeight', { configurable: true, value: 600 });
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.unstubAllGlobals();
+    });
+
+    const render = (tasks) => {
+        useTasksStore().categories = [{ slug: 'work', weight: 1, color: '#ff0000' }];
+        useTasksStore().tasks = tasks;
+        return mount(BubbleChart);
+    };
+
+    const bubbleFor = (wrapper, title) =>
+        wrapper.findAll('.bubble').find(b => b.text().includes(title));
+
+    const task = (overrides = {}) => ({
+        id: 1,
+        title: 'Resize me',
+        category_slug: 'work',
+        importance: 2,
+        calculatedPriority: 5,
+        size_scale: 1,
+        ...overrides,
+    });
+
+    it('multiplies the automatic bubble size by size_scale', async () => {
+        const posted = [];
+        vi.stubGlobal('Worker', class {
+            postMessage(message) { posted.push(message); }
+            terminate() {}
+        });
+
+        render([
+            task({ id: 1, title: 'Normal', size_scale: 1 }),
+            task({ id: 2, title: 'Double', size_scale: 2 }),
+            task({ id: 3, title: 'Missing', size_scale: undefined }),
+        ]);
+        vi.advanceTimersByTime(100);
+        await flushPromises();
+
+        const central = posted.at(-1).central;
+        const normal = central.find(p => p.id === 1);
+        const doubled = central.find(p => p.id === 2);
+        const missing = central.find(p => p.id === 3);
+        expect(doubled.r).toBeCloseTo(normal.r * 2);
+        // A payload without the column behaves like the default, not like 0.5.
+        expect(missing.r).toBeCloseTo(normal.r);
+    });
+
+    it('resizes only the hovered bubble and saves the final value once', async () => {
+        const store = useBalanceStore();
+        const updateSpy = vi.spyOn(store, 'updateTask').mockResolvedValue();
+
+        const wrapper = render([task()]);
+        wrapper.vm.isTouchDevice = false;
+        wrapper.vm.bubblePositions = [{ id: 1, x: 100, y: 100, size: 40 }];
+
+        const bubble = bubbleFor(wrapper, 'Resize me');
+        await bubble.trigger('wheel', { deltaY: -100 });
+        await bubble.trigger('wheel', { deltaY: -100 });
+
+        expect(useTasksStore().tasks[0].size_scale).toBe(1.2);
+        expect(updateSpy).not.toHaveBeenCalled();
+
+        vi.advanceTimersByTime(400);
+        await flushPromises();
+
+        expect(updateSpy).toHaveBeenCalledTimes(1);
+        expect(updateSpy).toHaveBeenCalledWith(1, { size_scale: 1.2 });
+    });
+
+    it('clamps the manual size to 0.5–2.0 and ignores browser zoom', async () => {
+        const store = useBalanceStore();
+        const updateSpy = vi.spyOn(store, 'updateTask').mockResolvedValue();
+
+        const wrapper = render([task({ size_scale: 2 })]);
+        wrapper.vm.isTouchDevice = false;
+        wrapper.vm.bubblePositions = [{ id: 1, x: 100, y: 100, size: 40 }];
+        const bubble = bubbleFor(wrapper, 'Resize me');
+
+        await bubble.trigger('wheel', { deltaY: -100 });
+        expect(useTasksStore().tasks[0].size_scale).toBe(2);
+
+        // Ctrl+wheel belongs to the browser (page zoom), so the bubble must not react.
+        bubble.element.dispatchEvent(new window.WheelEvent('wheel', {
+            deltaY: -100,
+            ctrlKey: true,
+            cancelable: true,
+        }));
+        await wrapper.vm.$nextTick();
+        expect(useTasksStore().tasks[0].size_scale).toBe(2);
+
+        vi.advanceTimersByTime(400);
+        expect(updateSpy).not.toHaveBeenCalled();
+    });
+
+    it('flushes a pending size change when the chart unmounts', async () => {
+        const store = useBalanceStore();
+        const updateSpy = vi.spyOn(store, 'updateTask').mockResolvedValue();
+
+        const wrapper = render([task()]);
+        wrapper.vm.isTouchDevice = false;
+        wrapper.vm.bubblePositions = [{ id: 1, x: 100, y: 100, size: 40 }];
+
+        await bubbleFor(wrapper, 'Resize me').trigger('wheel', { deltaY: -100 });
+        wrapper.unmount();
+
+        expect(updateSpy).toHaveBeenCalledWith(1, { size_scale: 1.1 });
     });
 });

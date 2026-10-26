@@ -58,6 +58,7 @@ Encryption is transparent — the API returns decrypted values to authenticated 
   "title": "Go to the gym",
   "category_slug": "life",
   "importance": 2.0,
+  "size_scale": 1.0,
   "repeat_type": "weekly",
   "repeat_days": [1, 3, 5],
   "deadline": "2026-06-01",

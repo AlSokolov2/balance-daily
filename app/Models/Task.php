@@ -14,11 +14,22 @@ class Task extends Model
     /** @use HasFactory<TaskFactory> */
     use HasFactory;
 
+    /**
+     * Keep the in-memory model in step with the column default, so the create response
+     * already carries `size_scale` instead of `null` until the next sync (#197).
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'size_scale' => 1,
+    ];
+
     protected $fillable = [
         'user_id',
         'title',
         'category_slug',
         'importance',
+        'size_scale',
         'subcategory',
         'deadline',
         'postpone_until',
@@ -41,6 +52,7 @@ class Task extends Model
         'notes' => 'encrypted',
         'subcategory' => 'encrypted',
         'importance' => 'float',
+        'size_scale' => 'float',
         'repeat_days' => 'array',
         'reminder_times' => 'array',
         'ha' => 'boolean',
