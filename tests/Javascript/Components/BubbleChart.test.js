@@ -207,6 +207,29 @@ describe('BubbleChart — overdue day counter (#156)', () => {
         expect(counter.text()).toBe('(2)');
     });
 
+    it('preserves manual line breaks in the title (#201)', () => {
+        const wrapper = render([
+            { id: 1, title: 'First line\nSecond line', category_slug: 'work', importance: 2, calculatedPriority: 5 },
+        ]);
+
+        const titleSpan = bubbleFor(wrapper, 'First line').find('span');
+        expect(titleSpan.classes()).toContain('whitespace-pre-line');
+    });
+
+    it('highlights a search match across a manual line break (#201)', async () => {
+        const store = useBalanceStore();
+        store.searchQuery = 'first line';
+
+        const wrapper = render([
+            { id: 1, title: 'First line\nSecond line', category_slug: 'work', importance: 2, calculatedPriority: 5 },
+        ]);
+        wrapper.vm.bubblePositions = [{ id: 1, x: 100, y: 100, size: 40 }];
+        await wrapper.vm.$nextTick();
+
+        const bubble = bubbleFor(wrapper, 'First line');
+        expect(bubble.attributes('style')).toContain('opacity: 1');
+    });
+
     it('shows nothing for a task that is not overdue', () => {
         const wrapper = render([
             { id: 1, title: 'Iron', category_slug: 'work', importance: 3, calculatedPriority: 5, days_overdue: 0 },

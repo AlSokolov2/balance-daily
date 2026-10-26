@@ -26,7 +26,7 @@
                 @pointercancel="handlePointerUp($event, t)"
                 @contextmenu.prevent
             >
-                <span class="block leading-[1.1] break-words pointer-events-none">
+                <span class="block leading-[1.1] break-words whitespace-pre-line pointer-events-none">
                     {{ t.title }}
                     <!-- Days overdue, on its own line under the name (#156). -->
                     <span
@@ -102,7 +102,10 @@ const bubbleStyles = computed(() => {
     const T = props.tasks || store.bubbleTasks;
     const styles = {};
     const isSearching = !!store.searchQuery;
-    const query = store.searchQuery.toLowerCase();
+    // Same normalization as the store's search (#201): a newline in the title must not
+    // stop a query written with spaces from highlighting the bubble.
+    const normalize = (text) => text.toLowerCase().replace(/\s+/g, ' ');
+    const query = normalize(store.searchQuery);
 
     T.forEach(task => {
         const pos = bubblePositions.value.find(p => p.id === task.id);
@@ -116,8 +119,8 @@ const bubbleStyles = computed(() => {
         const postponed = task.postponed;
 
         const matchesSearch = isSearching && (
-            (task.title && task.title.toLowerCase().includes(query)) ||
-            (task.notes && task.notes.toLowerCase().includes(query))
+            (task.title && normalize(task.title).includes(query)) ||
+            (task.notes && normalize(task.notes).includes(query))
         );
 
         const s = pos.size;
@@ -352,7 +355,8 @@ onUnmounted(() => {
 }
 .bubble span {
     display: block;
-    white-space: normal;
+    /* Keep manual line breaks in the title (#201); auto-wrapping still applies. */
+    white-space: pre-line;
     word-break: break-word;
     line-height: 1.1;
 }

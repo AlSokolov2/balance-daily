@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import EditTaskModal from '../../../resources/js/components/EditTaskModal.vue';
 import { useBalanceStore } from '../../../resources/js/stores/balance';
@@ -28,8 +28,27 @@ describe('EditTaskModal Component', () => {
             props: { task: mockTask, isNew: false }
         });
         
-        const titleInput = wrapper.find('input[type="text"]');
+        const titleInput = wrapper.find('textarea.task-title-input');
         expect(titleInput.element.value).toBe('Original Task');
+    });
+
+    it('saves manual line breaks in the title (#201)', async () => {
+        const store = useBalanceStore();
+        const updateSpy = vi.spyOn(store, 'updateTask').mockResolvedValue();
+
+        const wrapper = mount(EditTaskModal, {
+            props: { task: mockTask, isNew: false }
+        });
+
+        await wrapper.find('textarea.task-title-input').setValue('First line\nSecond line');
+
+        const saveBtn = wrapper.findAll('button').find(b => b.text().includes('common.save'));
+        await saveBtn.trigger('click');
+        await flushPromises();
+
+        expect(updateSpy).toHaveBeenCalledWith(1, expect.objectContaining({
+            title: 'First line\nSecond line'
+        }));
     });
 
     it('switches tabs correctly', async () => {
@@ -38,7 +57,7 @@ describe('EditTaskModal Component', () => {
         });
 
         // Default tab is 'notes'
-        expect(wrapper.find('textarea').exists()).toBe(true);
+        expect(wrapper.find('textarea.task-notes-input').exists()).toBe(true);
         expect(wrapper.find('select').exists()).toBe(false);
 
         // Click 'Setup' tab
@@ -46,7 +65,7 @@ describe('EditTaskModal Component', () => {
         const setupTab = buttons.find(b => b.text() === 'edit_task.tabs.setup');
         await setupTab.trigger('click');
 
-        expect(wrapper.find('textarea').exists()).toBe(false);
+        expect(wrapper.find('textarea.task-notes-input').exists()).toBe(false);
         expect(wrapper.find('select').exists()).toBe(true);
     });
 

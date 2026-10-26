@@ -45,6 +45,18 @@ describe('Balance Store - Search Logic', () => {
         expect(store.filteredTasks[0].id).toBe(1);
     });
 
+    it('matches a query written with a space across a manual line break (#201)', () => {
+        const store = useBalanceStore();
+        useTasksStore().tasks = [
+            { id: 1, title: 'Buy\nmilk', category_slug: 'all' },
+            { id: 2, title: 'Clean room', category_slug: 'all' }
+        ];
+
+        store.searchQuery = 'buy milk';
+        expect(store.filteredTasks.length).toBe(1);
+        expect(store.filteredTasks[0].id).toBe(1);
+    });
+
     it('returns all tasks when query is empty', () => {
         const store = useBalanceStore();
         useTasksStore().tasks = [
